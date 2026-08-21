@@ -86,7 +86,18 @@ export function groupListings(
   // Case-insensitive canonical lookup: providers spell the same upstream model
   // id differently ("MiniMax-M2" vs "minimax-m2") — they must land in one group.
   const canonicalByLower = new Map<string, CanonicalModel>();
-  for (const m of canonicalById.values()) canonicalByLower.set(m.id.toLowerCase(), m);
+  // Bare gateway ids ("qwen-flash", "hy3") matching the tail segment of exactly
+  // one canonical id ("qwen/qwen-flash", "tencent/hy3") resolve to that canonical.
+  const canonicalByLowerTail = new Map<string, CanonicalModel>();
+  for (const m of canonicalById.values()) {
+    canonicalByLower.set(m.id.toLowerCase(), m);
+    const segs = m.id.split("/");
+    if (segs.length > 1) {
+      const tail = segs[segs.length - 1].toLowerCase();
+      if (canonicalByLowerTail.has(tail)) canonicalByLowerTail.set(tail, null as unknown as CanonicalModel);
+      else canonicalByLowerTail.set(tail, m);
+    }
+  }
   for (const l of listings) {
     let gid: string;
     if (l.canonicalId) {
@@ -94,7 +105,10 @@ export function groupListings(
     } else {
       // No canonical entry — merge listings that share the same model id across
       // providers so one real-world model doesn't fragment into N catalog rows.
-      gid = canonicalByLower.get(l.modelId.toLowerCase())?.id ?? l.modelId.toLowerCase();
+      const lower = l.modelId.toLowerCase();
+      const byExact = canonicalByLower.get(lower);
+      const byTail = canonicalByLowerTail.get(lower);
+      gid = byExact?.id ?? byTail?.id ?? lower;
     }
     const arr = map.get(gid);
     if (arr) arr.push(l);

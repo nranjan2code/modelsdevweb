@@ -94,15 +94,17 @@ export function sortEvents(events: Event[]): Event[] {
 export function diffListings(prev: Listing[], next: Listing[], date: string): Event[] {
   const prevMap = new Map(prev.map((l) => [l.key, l]));
   const nextMap = new Map(next.map((l) => [l.key, l]));
-  const prevCanonicals = new Set(prev.flatMap((l) => (l.canonicalId ? [l.canonicalId] : [])));
+  const prevProviders = new Set(prev.map((l) => l.providerId));
   const events: Event[] = [];
   const keys = new Set([...prevMap.keys(), ...nextMap.keys()]);
   for (const key of keys) {
     const before = prevMap.get(key);
     const after = nextMap.get(key);
     if (!before && after) {
-      const isNewCanonical = after.canonicalId != null && !prevCanonicals.has(after.canonicalId);
-      events.push(makeEvent(date, isNewCanonical ? "model_added" : "provider_added", after, []));
+      // A listing appearing on an already-known provider is a new MODEL;
+      // provider_added is reserved for providers entering the catalog wholesale.
+      const type: EventType = prevProviders.has(after.providerId) ? "model_added" : "provider_added";
+      events.push(makeEvent(date, type, after, []));
       continue;
     }
     if (before && !after) {

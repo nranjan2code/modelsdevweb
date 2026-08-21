@@ -153,8 +153,15 @@ export default async function HomePage() {
     getBenchmarkBoards(),
   ]);
   const s = catalog.stats;
+  const seenName = new Set<string>();
   const fresh = [...catalog.groups]
     .sort((a, b) => (groupReleaseDate(b) ?? "").localeCompare(groupReleaseDate(a) ?? ""))
+    .filter((g) => {
+      const key = g.name.toLowerCase();
+      if (seenName.has(key)) return false;
+      seenName.add(key);
+      return true;
+    })
     .slice(0, 6);
   const drops = priceDrops(events);
   const digest = weekDigest(events);
@@ -175,6 +182,7 @@ export default async function HomePage() {
   const caps = capabilityAdoption(catalog.groups).slice(0, 6);
   const buckets = priceBuckets(catalog.groups);
   const bucketMax = Math.max(...buckets.map((b) => b.count), 1);
+  const seenFrontier = new Set<string>();
 
   return (
     <div className="space-y-16">
@@ -277,11 +285,12 @@ export default async function HomePage() {
                 href={digest.biggest.id ? `/m/${digest.biggest.id}` : "/changelog"}
                 className="card-flat lift p-4 transition-colors hover:border-blue-600"
               >
-                <div className="truncate font-mono text-lg font-bold text-blue-700">
+                <div className="font-mono text-lg font-bold text-blue-700">
                   −{Math.round((1 - digest.biggest.newV / digest.biggest.oldV) * 100)}% input
                 </div>
-                <div className="mono-label mt-0.5 truncate">
-                  {digest.biggest.name} · ${digest.biggest.oldV}→${digest.biggest.newV}
+                <div className="mono-label mt-0.5 truncate">{digest.biggest.name}</div>
+                <div className="mt-0.5 font-mono text-xs tabular-nums text-black/60">
+                  {fmtPerM(digest.biggest.oldV)} → {fmtPerM(digest.biggest.newV)}
                 </div>
               </Link>
             ) : (
@@ -352,7 +361,7 @@ export default async function HomePage() {
                       {d.name} <span className="text-xs text-black/45">via {d.providerId}</span>
                     </span>
                     <span className="shrink-0 font-mono text-xs tabular-nums font-semibold text-emerald-600">
-                      ${d.oldV} → ${d.newV}
+                      {fmtPerM(d.oldV)} → {fmtPerM(d.newV)}
                     </span>
                   </li>
                 ))}
@@ -463,6 +472,14 @@ export default async function HomePage() {
               {[...catalog.groups]
                 .filter((g) => g.best && (groupContext(g) ?? 0) >= 200_000)
                 .sort((a, b) => a.best!.input - b.best!.input)
+                .filter((g) => {
+                  // models.dev sometimes carries the same model under several
+                  // canonical labs — show each model once at its cheapest.
+                  const key = g.name.toLowerCase();
+                  if (seenFrontier.has(key)) return false;
+                  seenFrontier.add(key);
+                  return true;
+                })
                 .slice(0, 8)
                 .map((g) => {
                   const ctx = groupContext(g);

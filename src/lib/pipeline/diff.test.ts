@@ -99,8 +99,9 @@ describe("diffListings", () => {
   type FixtureApi = Record<string, FixtureProvider>;
   const clone = () => structuredClone(API_RAW) as unknown as FixtureApi;
 
-  it("emits model_added for brand-new canonical and provider_added for mirrors", () => {
+  it("emits provider_added only for brand-new providers; new listings on known providers are model_added", () => {
     const nextRaw = clone();
+    // brand-new provider "other"
     nextRaw.other = {
       id: "other",
       name: "Other",
@@ -114,11 +115,20 @@ describe("diffListings", () => {
         },
       },
     };
+    // brand-new model on the EXISTING acme provider
+    nextRaw.acme.models.g2 = {
+      id: "g2",
+      name: "G2",
+      release_date: "2026-08-20",
+      modalities: { input: ["text"], output: ["text"] },
+      limit: {},
+    } as Record<string, unknown>;
     const next = normalizeApi(nextRaw, index);
     const events = diffListings(base.listings, next.listings, "2026-08-21");
-    const added = events.filter((e) => e.type === "provider_added");
-    expect(added).toHaveLength(1);
-    expect(added[0].modelKey).toBe("other/acme/g1");
+    const pa = events.find((e) => e.type === "provider_added");
+    expect(pa?.modelKey).toBe("other/acme/g1");
+    const ma = events.find((e) => e.type === "model_added");
+    expect(ma?.modelKey).toBe("acme/g2");
   });
 
   it("classifies repriced events with field-level changes", () => {
