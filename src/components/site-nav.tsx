@@ -42,10 +42,7 @@ const GROUPS: NavGroup[] = [
   },
 ];
 
-const DIRECT = [
-  { href: "/search", label: "Search" },
-  { href: "/about", label: "About" },
-];
+const DIRECT = [{ href: "/about", label: "About" }];
 
 function Chevron({ open }: { open: boolean }) {
   return (

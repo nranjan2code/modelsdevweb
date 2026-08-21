@@ -9,7 +9,7 @@ Production: https://modelsdevweb.vercel.app
 pnpm lint          # eslint
 npx tsc --noEmit   # typecheck (no dedicated script)
 pnpm test          # vitest
-pnpm build         # pnpm og + pnpm badges + next build (static export) + pagefind index → out/
+pnpm build         # pnpm og + pnpm badges + next build (static export) → out/
 pnpm sync          # fetch models.dev, diff, write snapshots/ + events/
 pnpm news          # Tavily daily news → news/index.json (--force to refetch same day)
 pnpm og            # satori-render OG cards → public/og/ (site + top 300 models)

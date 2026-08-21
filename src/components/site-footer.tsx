@@ -8,7 +8,6 @@ const COLUMNS: { title: string; links: { href: string; label: string; external?:
       { href: "/browse", label: "Browse catalog" },
       { href: "/compare", label: "Compare models" },
       { href: "/calculator", label: "Cost calculator" },
-      { href: "/search", label: "Search" },
     ],
   },
   {
