@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import { existsSync } from "node:fs";
+import path from "node:path";
 import { getModel, getCatalog } from "@/lib/data";
+import { SITE_URL } from "@/lib/site";
 import { getPriceHistory } from "@/lib/data/history";
 import { slugify } from "@/lib/data/benchmarks";
 import { PriceTable } from "@/components/price-table";
@@ -17,7 +20,15 @@ export async function generateMetadata({ params }: { params: Promise<{ model: st
   const { model } = await params;
   const group = await getModel(model.join("/"));
   if (!group) return { title: "Model not found" };
-  return { title: `${group.name} — prices across ${group.listings.length} providers` };
+  const ogPath = `/og/m/${group.id}.png`;
+  const hasOg = existsSync(path.join(process.cwd(), "public", ogPath));
+  return {
+    title: `${group.name} — prices across ${group.listings.length} providers`,
+    openGraph: {
+      images: [`${SITE_URL}${hasOg ? ogPath : "/og/site.png"}`],
+    },
+    twitter: { card: "summary_large_image" },
+  };
 }
 
 export default async function ModelPage({ params }: { params: Promise<{ model: string[] }> }) {

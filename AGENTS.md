@@ -9,9 +9,10 @@ Production: https://modelsdevweb.vercel.app
 pnpm lint          # eslint
 npx tsc --noEmit   # typecheck (no dedicated script)
 pnpm test          # vitest
-pnpm build         # next build (static export) + pagefind index → out/
+pnpm build         # pnpm og + next build (static export) + pagefind index → out/
 pnpm sync          # fetch models.dev, diff, write snapshots/ + events/
 pnpm news          # Tavily daily news → news/index.json (--force to refetch same day)
+pnpm og            # satori-render OG cards → public/og/ (site + top 300 models)
 ```
 
 ## Architecture constraints
@@ -36,6 +37,9 @@ hourly GH Action (sync.yml)
   dedupes URLs, tags items with canonical model IDs for deep-linking to `/m/<id>`.
 - If all Tavily queries fail, the previous `news/index.json` is kept (stale over empty).
 - Missing `TAVILY_API_KEY` → script exits 0 with a warning (CI stays green).
+- `scripts/og.tsx` renders OG social cards (satori + resvg) into `public/og/` during
+  `pnpm build`; gitignored, never committed. Model pages reference their card when present,
+  others fall back to `/og/site.png`. Absolute URLs come from `NEXT_PUBLIC_SITE_URL`.
 
 ## Deployment (Vercel)
 

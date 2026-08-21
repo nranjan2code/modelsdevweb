@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { SITE_NAME, SITE_TAGLINE } from "@/lib/site";
+import { SITE_NAME, SITE_TAGLINE, SITE_URL } from "@/lib/site";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -10,6 +10,13 @@ export const metadata: Metadata = {
   },
   description:
     "Compare AI model prices across inference providers, track releases, price drops and deprecations. Built on open data from models.dev.",
+  openGraph: {
+    type: "website",
+    images: [`${SITE_URL}/og/site.png`],
+  },
+  twitter: {
+    card: "summary_large_image",
+  },
 };
 
 const NAV = [
