@@ -15,8 +15,9 @@ LLM Pulse is a price-comparison and changelog site for AI models, built entirely
 GitHub Actions (hourly cron)
   └─ fetch https://models.dev/{api,models}.json
   └─ validate + normalize + diff against previous snapshot
-  └─ commit snapshots/ + events/ to this repo   ← git history is the database
-  └─ static rebuild & deploy
+  └─ fetch daily model news via Tavily (skips after first run of the day)
+  └─ commit snapshots/ + events/ + news/ to this repo   ← git history is the database
+  └─ push triggers Vercel git integration → static rebuild & deploy
 ```
 
 No server, no database. Snapshots are committed to git; a pure-TypeScript diff pipeline turns
@@ -28,10 +29,14 @@ changes into typed events (`repriced`, `deprecated`, `model_added`, `provider_ad
 ```bash
 pnpm install
 pnpm sync        # fetch models.dev, diff vs last snapshot, update snapshots/ + events/
+pnpm news        # fetch daily model news via Tavily into news/index.json (--force to refetch)
 pnpm test        # pipeline unit tests (vitest)
 pnpm dev         # local dev server
 pnpm build       # static export to out/
 ```
+
+Local secrets live in `.env.local` (gitignored): `TAVILY_API_KEY` is read automatically by
+`scripts/news.ts`.
 
 ## Project layout
 
@@ -39,8 +44,10 @@ pnpm build       # static export to out/
 |------|---------|
 | `src/lib/pipeline/` | schema validation (zod), normalization, diff engine |
 | `scripts/sync.ts` | hourly sync job: fetch → diff → commit |
+| `scripts/news.ts` | daily Tavily news job: top models → headlines → `news/index.json` |
 | `snapshots/latest/` | most recent raw models.dev data |
 | `events/index.json` | merged changelog events, newest first |
+| `news/index.json` | daily model news items (title, source, favicon, matched model IDs) |
 | `src/app/` | Next.js App Router pages (static export) |
 
 ## Machine interfaces
@@ -102,13 +109,39 @@ Client config example:
 }
 ```
 
-## Deployment
+## Deployment (Vercel)
 
-Static export (`out/`) — deploy anywhere:
+Static export (`out/`), deployed via **Vercel git integration** — every push to `main`
+(including sync-bot commits) triggers a production build automatically. No deploy hook or
+`DEPLOY_HOOK_URL` needed anymore.
 
-- **Vercel / Cloudflare Pages**: import the repo, build `pnpm build`, output `out`.
-  Add a deploy hook secret `DEPLOY_HOOK_URL` so the hourly sync triggers redeploys.
-- Set `NEXT_PUBLIC_SITE_URL` to the production URL for absolute links in feeds.
+```
+push to main ──► Vercel build (pnpm build → out/) ──► production
+     ▲
+     └─ hourly sync Action commits data, which re-triggers the above
+```
+
+### Environment & secrets
+
+| Where | Name | Purpose |
+|-------|------|---------|
+| GitHub repo secrets | `TAVILY_API_KEY` | daily news fetch in CI (`scripts/news.ts`) |
+| Vercel project env | `TAVILY_API_KEY` | optional; only if building news during Vercel builds |
+| Vercel project env | `NEXT_PUBLIC_SITE_URL` | production URL for absolute links in feeds |
+| local `.env.local` | `TAVILY_API_KEY` | manual `pnpm news` runs; auto-loaded by the script |
+
+The key is only ever used server-side in scripts/CI — it never reaches the browser bundle.
+
+### Deploy verification
+
+```bash
+vercel ls                          # latest production deployment status
+curl -s https://modelsdevweb.vercel.app | grep -c "In the news"
+gh run list --limit 3              # sync workflow health
+```
+
+If a sync run fails, check `gh run view <id> --log-failed`. Tavily failures keep the previous
+`news/index.json`, so stale-but-valid news is preferred over an empty section.
 
 ## Data & pricing caveats
 

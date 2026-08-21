@@ -52,9 +52,3 @@ jobs:
             git commit -m "sync: $(date -u '+%Y-%m-%d %H:%M UTC')"
             git push
           fi
-
-      - name: Trigger deploy hook
-        env:
-          DEPLOY_HOOK_URL: ${{ secrets.DEPLOY_HOOK_URL }}
-        if: env.DEPLOY_HOOK_URL != ''
-        run: curl -sfS -X POST "$DEPLOY_HOOK_URL"
