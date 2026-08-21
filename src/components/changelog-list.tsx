@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import type { Event, EventType } from "@/lib/pipeline/types";
 import { EventCard } from "@/components/event-card";
 
@@ -14,18 +14,94 @@ const TYPES: { value: EventType | "all"; label: string }[] = [
   { value: "capability_changed", label: "Capabilities" },
 ];
 
+const WINDOWS: { value: number; label: string }[] = [
+  { value: 0, label: "Any time" },
+  { value: 7, label: "Last 7 days" },
+  { value: 30, label: "Last 30 days" },
+];
+
+const KNOWN_TYPES = new Set(TYPES.map((t) => t.value));
+
+interface Filters {
+  type: EventType | "all";
+  days: number;
+  /** Epoch ms below which events are excluded; computed when the filter is applied, not during render. */
+  cutoff: number;
+}
+
+const DEFAULT_FILTERS: Filters = { type: "all", days: 0, cutoff: 0 };
+
+function makeFilters(type: EventType | "all", days: number): Filters {
+  return { type, days, cutoff: days ? Date.now() - days * 86_400_000 : 0 };
+}
+
+function readFilters(): Filters {
+  if (typeof window === "undefined") return DEFAULT_FILTERS;
+  try {
+    const p = new URLSearchParams(window.location.search);
+    const rawType = p.get("type");
+    const rawDays = Number(p.get("days"));
+    const type =
+      rawType && KNOWN_TYPES.has(rawType as EventType | "all") ? (rawType as EventType | "all") : "all";
+    const days = rawDays === 7 || rawDays === 30 ? rawDays : 0;
+    return makeFilters(type, days);
+  } catch {
+    return DEFAULT_FILTERS;
+  }
+}
+
+let cache: Filters | null = null;
+const listeners = new Set<() => void>();
+
+function subscribe(onChange: () => void): () => void {
+  listeners.add(onChange);
+  const onPop = () => {
+    cache = null;
+    onChange();
+  };
+  window.addEventListener("popstate", onPop);
+  return () => {
+    listeners.delete(onChange);
+    window.removeEventListener("popstate", onPop);
+  };
+}
+
+function getSnapshot(): Filters {
+  return cache ?? (cache = readFilters());
+}
+
+function getServerSnapshot(): Filters {
+  return DEFAULT_FILTERS;
+}
+
+function setFilters(next: Filters): void {
+  cache = next;
+  if (typeof window !== "undefined") {
+    const p = new URLSearchParams();
+    if (next.type !== "all") p.set("type", next.type);
+    if (next.days) p.set("days", String(next.days));
+    const qs = p.toString();
+    window.history.replaceState(null, "", qs ? `${window.location.pathname}?${qs}` : window.location.pathname);
+  }
+  for (const l of listeners) l();
+}
+function useFilters(): Filters {
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+}
+
 export function ChangelogList({ events }: { events: Event[] }) {
-  const [type, setType] = useState<EventType | "all">("all");
+  const { type, days, cutoff } = useFilters();
   const [q, setQ] = useState("");
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
     return events.filter((e) => {
       if (type !== "all" && e.type !== type) return false;
+      if (cutoff && new Date(`${e.date}T00:00:00Z`).getTime() < cutoff) return false;
       if (needle && !`${e.modelName} ${e.modelKey} ${e.providerId ?? ""}`.toLowerCase().includes(needle)) return false;
       return true;
     });
-  }, [events, type, q]);
+  }, [events, type, cutoff, q]);
 
   const grouped = useMemo(() => {
     const groups: { date: string; events: Event[] }[] = [];
@@ -37,6 +113,8 @@ export function ChangelogList({ events }: { events: Event[] }) {
     return groups;
   }, [filtered]);
 
+  const isFiltered = type !== "all" || days !== 0;
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
@@ -45,7 +123,7 @@ export function ChangelogList({ events }: { events: Event[] }) {
           {TYPES.map((t) => (
             <button
               key={t.value}
-              onClick={() => setType(t.value)}
+              onClick={() => setFilters(makeFilters(t.value, days))}
               aria-pressed={type === t.value}
               className={`rounded-full border px-2.5 py-1 text-xs font-medium transition-all ${
                 type === t.value
@@ -57,12 +135,45 @@ export function ChangelogList({ events }: { events: Event[] }) {
             </button>
           ))}
         </div>
+        <div className="flex flex-wrap gap-1.5">
+          {WINDOWS.map((w) => (
+            <button
+              key={w.value}
+              onClick={() => setFilters(makeFilters(type, w.value))}
+              aria-pressed={days === w.value}
+              className={`rounded-full border px-2.5 py-1 text-xs font-medium transition-all ${
+                days === w.value
+                  ? "border-blue-600 bg-blue-600 text-white shadow-[2px_2px_0_0_rgba(0,0,0,0.3)]"
+                  : "border-black/15 bg-white text-black/55 hover:border-black hover:text-black"
+              }`}
+            >
+              {w.label}
+            </button>
+          ))}
+        </div>
         <span className="ml-auto font-mono text-xs tabular-nums text-black/45">{filtered.length} events</span>
       </div>
 
-      {filtered.length === 0 ? (
+      {isFiltered && (
+        <div className="flex items-center gap-2 rounded-md border border-blue-600/25 bg-blue-50 px-3 py-1.5 text-xs text-blue-800">
+          <span>
+            Filtered view — {TYPES.find((t) => t.value === type)?.label.toLowerCase()}
+            {days ? ` · last ${days} days` : ""}
+          </span>
+          <button
+            onClick={() => setFilters(DEFAULT_FILTERS)}
+            className="ml-auto rounded border border-blue-600/40 px-1.5 py-0.5 font-semibold transition-colors hover:border-blue-600 hover:bg-white"
+          >
+            clear ×
+          </button>
+        </div>
+      )}
+
+      {grouped.length === 0 ? (
         <p className="card-dashed p-6 text-sm text-black/50">
-          No events yet. The first sync captured a baseline; diffs appear here as models.dev data changes.
+          {isFiltered || q
+            ? "No events match this filter."
+            : "No events yet. The first sync captured a baseline; diffs appear here as models.dev data changes."}
         </p>
       ) : (
         <div className="space-y-8">

@@ -232,18 +232,48 @@ export default async function HomePage() {
           </p>
         ) : (
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            <Link href="/changelog" className="card-flat lift p-4 transition-colors hover:border-purple-600">
-              <div className="font-mono text-2xl font-bold tabular-nums text-purple-700">{digest.repriced}</div>
-              <div className="mono-label mt-0.5">repricings</div>
-            </Link>
-            <Link href="/changelog" className="card-flat lift p-4 transition-colors hover:border-emerald-600">
-              <div className="font-mono text-2xl font-bold tabular-nums text-emerald-700">{digest.added}</div>
-              <div className="mono-label mt-0.5">new models</div>
-            </Link>
-            <Link href="/deprecations" className="card-flat lift p-4 transition-colors hover:border-red-500">
-              <div className="font-mono text-2xl font-bold tabular-nums text-red-600">{digest.deprecated}</div>
-              <div className="mono-label mt-0.5">deprecations</div>
-            </Link>
+            {digest.repriced > 0 ? (
+              <Link
+                href="/changelog?type=repriced&days=7"
+                className="card-flat lift p-4 transition-colors hover:border-purple-600"
+              >
+                <div className="font-mono text-2xl font-bold tabular-nums text-purple-700">{digest.repriced}</div>
+                <div className="mono-label mt-0.5">repricings</div>
+              </Link>
+            ) : (
+              <div className="card-flat p-4 opacity-40">
+                <div className="font-mono text-2xl font-bold tabular-nums text-black/40">{digest.repriced}</div>
+                <div className="mono-label mt-0.5">repricings</div>
+              </div>
+            )}
+            {digest.added > 0 ? (
+              <Link
+                href="/changelog?type=model_added&days=7"
+                className="card-flat lift p-4 transition-colors hover:border-emerald-600"
+              >
+                <div className="font-mono text-2xl font-bold tabular-nums text-emerald-700">{digest.added}</div>
+                <div className="mono-label mt-0.5">new models</div>
+              </Link>
+            ) : (
+              <div className="card-flat p-4 opacity-40">
+                <div className="font-mono text-2xl font-bold tabular-nums text-black/40">{digest.added}</div>
+                <div className="mono-label mt-0.5">new models</div>
+              </div>
+            )}
+            {digest.deprecated > 0 ? (
+              <Link
+                href="/changelog?type=deprecated&days=7"
+                className="card-flat lift p-4 transition-colors hover:border-red-500"
+              >
+                <div className="font-mono text-2xl font-bold tabular-nums text-red-600">{digest.deprecated}</div>
+                <div className="mono-label mt-0.5">deprecations</div>
+              </Link>
+            ) : (
+              <div className="card-flat p-4 opacity-40">
+                <div className="font-mono text-2xl font-bold tabular-nums text-black/40">{digest.deprecated}</div>
+                <div className="mono-label mt-0.5">deprecations</div>
+              </div>
+            )}
             {digest.biggest ? (
               <Link
                 href={digest.biggest.id ? `/m/${digest.biggest.id}` : "/changelog"}
@@ -257,7 +287,7 @@ export default async function HomePage() {
                 </div>
               </Link>
             ) : (
-              <div className="card-flat p-4">
+              <div className="card-flat p-4 opacity-40">
                 <div className="font-mono text-2xl font-bold text-black/25">—</div>
                 <div className="mono-label mt-0.5">no input-price cuts</div>
               </div>
