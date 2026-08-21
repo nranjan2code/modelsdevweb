@@ -19,7 +19,6 @@ async function post(url: string, body: string): Promise<number> {
   const headers: Record<string, string> = { "content-type": "application/json" };
   if (SECRET) {
     headers["x-model-pulse-signature"] = `sha256=${createHmac("sha256", SECRET).update(body).digest("hex")}`;
-    headers["x-llm-pulse-signature"] = headers["x-model-pulse-signature"];
   }
   const res = await fetch(url, { method: "POST", headers, body, signal: AbortSignal.timeout(10_000) });
   return res.status;

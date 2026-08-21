@@ -67,7 +67,7 @@ Local secrets live in `.env.local` (gitignored): `TAVILY_API_KEY` is read automa
 Expose Model Pulse as tools to any MCP client (Claude, opencode, Cursor, …):
 
 ```bash
-pnpm mcp   # stdio transport; set MODEL_PULSE_URL to your deployment (legacy LLM_PULSE_URL still accepted)
+pnpm mcp   # stdio transport; set MODEL_PULSE_URL to your deployment
 ```
 
 Tools: `search_models` (capability/price/context filters), `get_model_prices`
@@ -91,7 +91,7 @@ Get POSTed whenever tracked changes happen. Add entries to `watchers.json`:
 Both `types` and `labs` are optional filters. The hourly sync delivers new matching
 events as a batch; delivery state is tracked in `events/notified.json`, and failed
 endpoints retry on the next run. If the `WATCHER_SECRET` repo secret is set, each
-request carries `x-model-pulse-signature: sha256=<hmac(body)>` (legacy header also sent) for verification:
+request carries `x-model-pulse-signature: sha256=<hmac(body)>` for verification:
 
 ```ts
 const valid = crypto.timingSafeEqual(

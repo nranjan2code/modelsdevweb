@@ -2,7 +2,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 
-const BASE = (process.env.MODEL_PULSE_URL ?? process.env.LLM_PULSE_URL ?? "http://localhost:3000").replace(/\/$/, "");
+const BASE = (process.env.MODEL_PULSE_URL ?? "http://localhost:3000").replace(/\/$/, "");
 
 interface ModelSummary {
   id: string;
