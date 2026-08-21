@@ -40,6 +40,14 @@ const PRICE_OPTIONS = [
 
 const PAGE_SIZE = 50;
 
+const CAPS = [
+  ["reasoning", "reasoning"],
+  ["tools", "tools"],
+  ["structured", "structured"],
+  ["vision", "vision"],
+  ["open", "open weights"],
+] as const;
+
 export function BrowseTable({ rows }: { rows: BrowseRow[] }) {
   const [q, setQ] = useState("");
   const [ctxMin, setCtxMin] = useState(0);
@@ -147,59 +155,54 @@ export function BrowseTable({ rows }: { rows: BrowseRow[] }) {
           <option value="swe">Sort: best SWE-Bench</option>
         </select>
         <div className="flex flex-wrap gap-1.5">
-          {[
-            ["reasoning", "reasoning"],
-            ["tools", "tools"],
-            ["structured", "structured"],
-            ["vision", "vision"],
-            ["open", "open weights"],
-          ].map(([cap, label]) => (
+          {CAPS.map(([cap, label]) => (
             <button
               key={cap}
               onClick={() => toggleCap(cap)}
-              className={`rounded-md px-2 py-1 text-xs transition-colors ${
+              aria-pressed={caps.has(cap)}
+              className={`rounded-full border px-2.5 py-1 text-xs font-medium transition-all ${
                 caps.has(cap)
-                  ? "bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-600/40"
-                  : "bg-zinc-900 text-zinc-400 ring-1 ring-zinc-800 hover:text-zinc-200"
+                  ? "border-black bg-black text-white shadow-[2px_2px_0_0_rgba(0,0,0,0.3)]"
+                  : "border-black/15 bg-white text-black/55 hover:border-black hover:text-black"
               }`}
             >
               {label}
             </button>
           ))}
         </div>
-        <span className="ml-auto text-xs text-zinc-500 tabular-nums">
-          {filtered.length} of {rows.length}
+        <span className="ml-auto font-mono text-xs tabular-nums text-black/45">
+          {filtered.length} / {rows.length}
         </span>
       </div>
 
       <div className="card overflow-x-auto" ref={tableRef}>
-        <table className="w-full min-w-[820px] text-sm">
+        <table className="table-base min-w-[820px]">
           <thead>
-            <tr className="border-b border-zinc-800 text-left text-xs uppercase tracking-wide text-zinc-500">
-              <th className="px-4 py-3 font-medium">Model</th>
-              <th className="px-4 py-3 font-medium text-right">Best in /M</th>
-              <th className="px-4 py-3 font-medium text-right">Best out /M</th>
-              <th className="px-4 py-3 font-medium text-right">Context</th>
-              <th className="px-4 py-3 font-medium">Caps</th>
-              <th className="px-4 py-3 font-medium">Weights</th>
-              <th className="px-4 py-3 font-medium text-right">SWE-Bench</th>
-              <th className="px-4 py-3 font-medium text-right">Providers</th>
-              <th className="px-4 py-3 font-medium">Released</th>
+            <tr>
+              <th>Model</th>
+              <th className="text-right">Best in /M</th>
+              <th className="text-right">Best out /M</th>
+              <th className="text-right">Context</th>
+              <th>Caps</th>
+              <th>Weights</th>
+              <th className="text-right">SWE-Bench</th>
+              <th className="text-right">Providers</th>
+              <th>Released</th>
             </tr>
           </thead>
           <tbody>
             {paged.map((r) => (
-              <tr key={r.id} className="border-b border-zinc-800/60 last:border-0 hover:bg-zinc-900/50">
-                <td className="px-4 py-3">
-                  <Link href={`/m/${r.id}`} className="font-medium text-zinc-100 hover:text-emerald-400 transition-colors">
+              <tr key={r.id}>
+                <td>
+                  <Link href={`/m/${r.id}`} className="font-medium text-black transition-colors hover:text-blue-600">
                     {r.name}
                   </Link>
-                  <span className="ml-2 text-xs text-zinc-500">{r.lab}</span>
+                  <span className="ml-2 text-xs text-black/45">{r.lab}</span>
                 </td>
-                <td className="px-4 py-3 text-right font-mono tabular-nums">{fmtPerM(r.input)}</td>
-                <td className="px-4 py-3 text-right font-mono tabular-nums">{fmtPerM(r.output)}</td>
-                <td className="px-4 py-3 text-right font-mono tabular-nums">{fmtTokens(r.ctx)}</td>
-                <td className="px-4 py-3">
+                <td className="text-right font-mono tabular-nums">{fmtPerM(r.input)}</td>
+                <td className="text-right font-mono tabular-nums">{fmtPerM(r.output)}</td>
+                <td className="text-right font-mono tabular-nums">{fmtTokens(r.ctx)}</td>
+                <td>
                   <span className="inline-flex gap-1">
                     {(
                       [
@@ -212,8 +215,10 @@ export function BrowseTable({ rows }: { rows: BrowseRow[] }) {
                       <span
                         key={ch}
                         title={{ R: "reasoning", T: "tool call", S: "structured output", V: "vision/attachment" }[ch]}
-                        className={`inline-flex size-5 items-center justify-center rounded text-[11px] ${
-                          on ? "bg-emerald-500/10 text-emerald-400" : "bg-zinc-800/60 text-zinc-600"
+                        className={`inline-flex size-5 items-center justify-center rounded border text-[11px] font-semibold ${
+                          on
+                            ? "border-emerald-600/30 bg-emerald-50 text-emerald-700"
+                            : "border-black/10 bg-black/[0.03] text-black/25"
                         }`}
                       >
                         {ch}
@@ -221,19 +226,27 @@ export function BrowseTable({ rows }: { rows: BrowseRow[] }) {
                     ))}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-xs">
-                  {r.open ? <span className="text-emerald-400">open</span> : <span className="text-zinc-500">closed</span>}
+                <td className="text-xs">
+                  {r.open ? (
+                    <span className="rounded-full border border-emerald-600/30 bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
+                      open
+                    </span>
+                  ) : (
+                    <span className="rounded-full border border-black/10 bg-black/[0.03] px-2 py-0.5 text-[11px] text-black/40">
+                      closed
+                    </span>
+                  )}
                 </td>
-                <td className="px-4 py-3 text-right font-mono tabular-nums">
-                  {r.swe != null ? <span className="text-zinc-100">{r.swe.toFixed(1)}</span> : <span className="text-zinc-600">—</span>}
+                <td className="text-right font-mono tabular-nums">
+                  {r.swe != null ? <span className="font-semibold">{r.swe.toFixed(1)}</span> : <span className="text-black/30">—</span>}
                 </td>
-                <td className="px-4 py-3 text-right tabular-nums text-zinc-400">{r.providers}</td>
-                <td className="px-4 py-3 text-xs text-zinc-500 whitespace-nowrap">{fmtDate(r.released)}</td>
+                <td className="text-right tabular-nums text-black/55">{r.providers}</td>
+                <td className="whitespace-nowrap text-xs text-black/45">{fmtDate(r.released)}</td>
               </tr>
             ))}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={9} className="px-4 py-8 text-center text-zinc-500">
+                <td colSpan={9} className="py-10 text-center text-sm text-black/45">
                   No models match these filters.
                 </td>
               </tr>
@@ -247,23 +260,24 @@ export function BrowseTable({ rows }: { rows: BrowseRow[] }) {
           <button
             onClick={() => goTo(current - 1)}
             disabled={current === 1}
-            className="rounded-md bg-zinc-900 px-3 py-1.5 text-zinc-300 ring-1 ring-zinc-800 disabled:opacity-40 hover:text-zinc-100 transition-colors"
+            className="rounded-md border-2 border-black bg-white px-3 py-1.5 font-medium shadow-[2px_2px_0_0_rgba(0,0,0,1)] transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0_0_rgba(0,0,0,1)] disabled:opacity-40 disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-[2px_2px_0_0_rgba(0,0,0,1)]"
           >
             ← Prev
           </button>
           {pageWindow(current, totalPages).map((p, i) =>
             p === "…" ? (
-              <span key={`gap-${i}`} className="px-1 text-zinc-600">
+              <span key={`gap-${i}`} className="px-1 text-black/35">
                 …
               </span>
             ) : (
               <button
                 key={p}
                 onClick={() => goTo(p as number)}
-                className={`min-w-8 rounded-md px-2 py-1.5 tabular-nums transition-colors ${
+                aria-current={p === current ? "page" : undefined}
+                className={`min-w-8 rounded-md border-2 px-2 py-1.5 tabular-nums transition-all ${
                   p === current
-                    ? "bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-600/40"
-                    : "bg-zinc-900 text-zinc-400 ring-1 ring-zinc-800 hover:text-zinc-100"
+                    ? "border-black bg-black font-semibold text-white shadow-[2px_2px_0_0_rgba(0,0,0,0.3)]"
+                    : "border-black bg-white font-medium shadow-[2px_2px_0_0_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0_0_rgba(0,0,0,1)]"
                 }`}
               >
                 {p}
@@ -273,7 +287,7 @@ export function BrowseTable({ rows }: { rows: BrowseRow[] }) {
           <button
             onClick={() => goTo(current + 1)}
             disabled={current === totalPages}
-            className="rounded-md bg-zinc-900 px-3 py-1.5 text-zinc-300 ring-1 ring-zinc-800 disabled:opacity-40 hover:text-zinc-100 transition-colors"
+            className="rounded-md border-2 border-black bg-white px-3 py-1.5 font-medium shadow-[2px_2px_0_0_rgba(0,0,0,1)] transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0_0_rgba(0,0,0,1)] disabled:opacity-40 disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-[2px_2px_0_0_rgba(0,0,0,1)]"
           >
             Next →
           </button>

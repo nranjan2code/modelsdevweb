@@ -33,9 +33,10 @@ export default async function BrowsePage() {
 
   return (
     <div className="space-y-6">
-      <header className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight text-zinc-50">Browse models</h1>
-        <p className="text-sm text-zinc-500">
+      <header className="space-y-2">
+        <p className="mono-label">Catalog</p>
+        <h1 className="text-3xl font-bold tracking-tight text-black sm:text-4xl">Browse models</h1>
+        <p className="max-w-2xl text-sm leading-relaxed text-black/55">
           Best listed price across all serving providers. R = reasoning, T = tool call, S = structured output,
           V = vision/attachments. SWE-Bench = SWE-Bench Pro (fallback: Verified) score where published.
         </p>

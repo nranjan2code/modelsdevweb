@@ -41,25 +41,32 @@ export default async function ModelPage({ params }: { params: Promise<{ model: s
 
   return (
     <div className="space-y-8">
-      <nav className="text-sm text-zinc-500">
-        <Link href="/browse" className="hover:text-zinc-300">
+      <nav className="text-sm text-black/45">
+        <Link href="/browse" className="transition-colors hover:text-blue-600">
           Browse
         </Link>
         <span className="mx-1.5">/</span>
-        <Link href={`/lab/${group.labId}`} className="hover:text-zinc-300">
+        <Link href={`/lab/${group.labId}`} className="transition-colors hover:text-blue-600">
           {group.labId}
         </Link>
       </nav>
 
       <header className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight text-zinc-50">{group.name}</h1>
-        {c?.description && <p className="max-w-3xl text-zinc-400">{c.description}</p>}
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-zinc-500">
+        <p className="mono-label">Model</p>
+        <h1 className="text-3xl font-bold tracking-tight text-black sm:text-4xl">{group.name}</h1>
+        {c?.description && <p className="max-w-3xl leading-relaxed text-black/60">{c.description}</p>}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-black/50">
           <span>{group.listings.length} providers</span>
           {c?.releaseDate && <span>released {fmtDate(c.releaseDate)}</span>}
           {c?.knowledge && <span>knowledge cutoff {c.knowledge}</span>}
           {c?.openWeights != null && (
-            <span className={c.openWeights ? "text-emerald-400" : ""}>
+            <span
+              className={
+                c.openWeights
+                  ? "rounded-full border border-emerald-600/30 bg-emerald-50 px-2 py-0.5 font-medium text-emerald-700"
+                  : "rounded-full border border-black/10 bg-black/[0.03] px-2 py-0.5 text-black/45"
+              }
+            >
               {c.openWeights ? "open weights" : "closed weights"}
             </span>
           )}
@@ -69,35 +76,34 @@ export default async function ModelPage({ params }: { params: Promise<{ model: s
       {group.best && (
         <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <div className="card px-4 py-3">
-            <div className="text-lg font-semibold text-emerald-400 font-mono tabular-nums">
-              {fmtPerM(group.best.input)}
-            </div>
-            <div className="text-xs text-zinc-500">best input /M · {group.best.providerName}</div>
+            <div className="font-mono text-lg font-bold tabular-nums text-blue-700">{fmtPerM(group.best.input)}</div>
+            <div className="mono-label mt-0.5">best input /M · {group.best.providerName}</div>
           </div>
           <div className="card px-4 py-3">
-            <div className="text-lg font-semibold text-emerald-400 font-mono tabular-nums">
-              {fmtPerM(group.best.output)}
-            </div>
-            <div className="text-xs text-zinc-500">best output /M</div>
+            <div className="font-mono text-lg font-bold tabular-nums text-blue-700">{fmtPerM(group.best.output)}</div>
+            <div className="mono-label mt-0.5">best output /M</div>
           </div>
-          <div className="card px-4 py-3">
-            <div className="text-lg font-semibold text-zinc-50 font-mono tabular-nums">
+          <div className="card-flat px-4 py-3">
+            <div className="font-mono text-lg font-bold tabular-nums text-black">
               {fmtTokens(c?.limit?.context ?? Math.max(...group.listings.map((l) => l.limit.context ?? 0)))}
             </div>
-            <div className="text-xs text-zinc-500">context window</div>
+            <div className="mono-label mt-0.5">context window</div>
           </div>
-          <div className="card px-4 py-3">
-            <div className="text-lg font-semibold text-zinc-50 font-mono tabular-nums">
+          <div className="card-flat px-4 py-3">
+            <div className="font-mono text-lg font-bold tabular-nums text-black">
               {fmtTokens(c?.limit?.output ?? Math.max(...group.listings.map((l) => l.limit.output ?? 0)))}
             </div>
-            <div className="text-xs text-zinc-500">max output</div>
+            <div className="mono-label mt-0.5">max output</div>
           </div>
         </section>
       )}
 
-      <section className="space-y-3">
-        <h2 className="text-lg font-semibold text-zinc-100">
-          Compare providers <span className="text-sm font-normal text-zinc-500">(sorted by listed input price)</span>
+      <section className="space-y-4">
+        <h2 className="font-hand text-3xl font-bold tracking-tight text-black">
+          Compare providers{" "}
+          <span className="align-middle font-sans text-sm font-normal text-black/45">
+            (sorted by listed input price)
+          </span>
         </h2>
         <PriceTable listings={group.listings} />
       </section>
@@ -107,28 +113,33 @@ export default async function ModelPage({ params }: { params: Promise<{ model: s
       {(c?.benchmarks.length || c?.weights.length) ? (
         <section className="grid gap-6 md:grid-cols-2">
           {c.benchmarks.length > 0 && (
-            <div className="space-y-3">
-              <h2 className="text-lg font-semibold text-zinc-100">Benchmarks</h2>
-              <ul className="card divide-y divide-zinc-800/60 text-sm">
+            <div className="space-y-4">
+              <h2 className="font-hand text-3xl font-bold tracking-tight text-black">Benchmarks</h2>
+              <ul className="card divide-y divide-black/10 text-sm">
                 {c.benchmarks.map((b, i) => (
-                  <li key={i} className="px-4 py-2.5 flex items-center justify-between gap-2">
-                    <Link href={`/benchmarks/${slugify(b.name)}`} className="hover:text-emerald-400 transition-colors">
+                  <li key={i} className="flex items-center justify-between gap-2 px-4 py-2.5">
+                    <Link href={`/benchmarks/${slugify(b.name)}`} className="transition-colors hover:text-blue-600">
                       {b.name}
-                      {b.metric ? <span className="ml-1 text-xs text-zinc-500">({b.metric})</span> : null}
+                      {b.metric ? <span className="ml-1 text-xs text-black/45">({b.metric})</span> : null}
                     </Link>
-                    <span className="font-mono tabular-nums text-zinc-100">{b.score}</span>
+                    <span className="font-mono font-semibold tabular-nums text-black">{b.score}</span>
                   </li>
                 ))}
               </ul>
             </div>
           )}
           {c.weights.length > 0 && (
-            <div className="space-y-3">
-              <h2 className="text-lg font-semibold text-zinc-100">Weights</h2>
-              <ul className="card divide-y divide-zinc-800/60 text-sm">
+            <div className="space-y-4">
+              <h2 className="font-hand text-3xl font-bold tracking-tight text-black">Weights</h2>
+              <ul className="card divide-y divide-black/10 text-sm">
                 {c.weights.map((w, i) => (
                   <li key={i} className="px-4 py-2.5">
-                    <a href={w.url} target="_blank" rel="noreferrer" className="text-emerald-400 hover:text-emerald-300">
+                    <a
+                      href={w.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="font-medium text-blue-600 underline decoration-wavy underline-offset-4 hover:text-blue-700"
+                    >
                       {w.label}
                     </a>
                   </li>
@@ -139,7 +150,7 @@ export default async function ModelPage({ params }: { params: Promise<{ model: s
         </section>
       ) : null}
 
-      <p className="text-xs text-zinc-600">
+      <p className="text-xs leading-relaxed text-black/40">
         Prices are per million tokens (USD). “—” means the provider does not publicly list a price for this
         model. Data from models.dev; verify with the provider before purchasing.
       </p>

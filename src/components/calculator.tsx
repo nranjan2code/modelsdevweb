@@ -37,64 +37,66 @@ export function Calculator({ rows }: { rows: CalcRow[] }) {
 
   return (
     <div className="space-y-5">
-      <div className="card grid gap-5 p-5 sm:grid-cols-3">
-        <label className="space-y-2 text-sm">
-          <span className="flex justify-between text-zinc-400">
-            Input tokens / month <b className="font-mono text-zinc-100">{inM}M</b>
+      <div className="card grid gap-6 p-5 sm:grid-cols-3">
+        <label className="space-y-2 text-sm font-medium">
+          <span className="flex justify-between text-black/60">
+            Input tokens / month <b className="font-mono text-black">{inM}M</b>
           </span>
-          <input type="range" min={0.1} max={500} step={0.1} value={inM} onChange={(e) => setInM(Number(e.target.value))} className="w-full accent-emerald-500" />
+          <input type="range" min={0.1} max={500} step={0.1} value={inM} onChange={(e) => setInM(Number(e.target.value))} className="w-full accent-blue-600" />
         </label>
-        <label className="space-y-2 text-sm">
-          <span className="flex justify-between text-zinc-400">
-            Output tokens / month <b className="font-mono text-zinc-100">{outM}M</b>
+        <label className="space-y-2 text-sm font-medium">
+          <span className="flex justify-between text-black/60">
+            Output tokens / month <b className="font-mono text-black">{outM}M</b>
           </span>
-          <input type="range" min={0.1} max={100} step={0.1} value={outM} onChange={(e) => setOutM(Number(e.target.value))} className="w-full accent-emerald-500" />
+          <input type="range" min={0.1} max={100} step={0.1} value={outM} onChange={(e) => setOutM(Number(e.target.value))} className="w-full accent-blue-600" />
         </label>
-        <label className="space-y-2 text-sm">
-          <span className="flex justify-between text-zinc-400">
-            Cache hit rate <b className="font-mono text-zinc-100">{hitPct}%</b>
+        <label className="space-y-2 text-sm font-medium">
+          <span className="flex justify-between text-black/60">
+            Cache hit rate <b className="font-mono text-black">{hitPct}%</b>
           </span>
-          <input type="range" min={0} max={95} step={5} value={hitPct} onChange={(e) => setHitPct(Number(e.target.value))} className="w-full accent-emerald-500" />
+          <input type="range" min={0} max={95} step={5} value={hitPct} onChange={(e) => setHitPct(Number(e.target.value))} className="w-full accent-blue-600" />
         </label>
       </div>
 
       <input className="input w-56" placeholder="Filter models…" value={q} onChange={(e) => setQ(e.target.value)} />
 
       <div className="card overflow-x-auto">
-        <table className="w-full min-w-[680px] text-sm">
+        <table className="table-base min-w-[680px]">
           <thead>
-            <tr className="border-b border-zinc-800 text-left text-xs uppercase tracking-wide text-zinc-500">
-              <th className="px-4 py-3 font-medium">#</th>
-              <th className="px-4 py-3 font-medium">Model</th>
-              <th className="px-4 py-3 font-medium text-right">Est. monthly</th>
-              <th className="px-4 py-3 font-medium">Relative</th>
-              <th className="px-4 py-3 font-medium text-right">In / Out per M</th>
+            <tr>
+              <th>#</th>
+              <th>Model</th>
+              <th className="text-right">Est. monthly</th>
+              <th>Relative</th>
+              <th className="text-right">In / Out per M</th>
             </tr>
           </thead>
           <tbody>
             {priced.slice(0, 30).map((r, i) => (
-              <tr key={r.id} className="border-b border-zinc-800/60 last:border-0 hover:bg-zinc-900/50">
-                <td className="px-4 py-2.5 tabular-nums text-zinc-500">{i + 1}</td>
-                <td className="px-4 py-2.5">
-                  <Link href={`/m/${r.id}`} className="hover:text-emerald-400 transition-colors">
+              <tr key={r.id}>
+                <td className="tabular-nums text-black/40">{i + 1}</td>
+                <td>
+                  <Link href={`/m/${r.id}`} className="font-medium transition-colors hover:text-blue-600">
                     {r.name}
                   </Link>
-                  <span className="ml-2 text-xs text-zinc-500">{r.lab}</span>
+                  <span className="ml-2 text-xs text-black/45">{r.lab}</span>
                 </td>
-                <td className="px-4 py-2.5 text-right font-mono tabular-nums text-emerald-400">
+                <td className="text-right font-mono font-semibold tabular-nums text-blue-700">
                   ${r.monthly < 1 ? r.monthly.toFixed(2) : r.monthly.toFixed(0)}
                 </td>
-                <td className="px-4 py-2.5 w-40">
-                  <div className="h-1.5 rounded bg-emerald-500/70" style={{ width: `${Math.max(2, (r.monthly / max) * 100)}%` }} />
+                <td className="w-40">
+                  <div className="h-2 rounded-sm border border-black bg-white">
+                    <div className="h-full rounded-sm bg-blue-600" style={{ width: `${Math.max(2, (r.monthly / max) * 100)}%` }} />
+                  </div>
                 </td>
-                <td className="px-4 py-2.5 text-right font-mono tabular-nums text-zinc-400 whitespace-nowrap">
+                <td className="whitespace-nowrap text-right font-mono tabular-nums text-black/55">
                   {fmtPerM(r.input)} / {fmtPerM(r.output)}
                 </td>
               </tr>
             ))}
             {priced.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-zinc-500">
+                <td colSpan={5} className="py-10 text-center text-sm text-black/45">
                   No models match.
                 </td>
               </tr>
@@ -102,7 +104,7 @@ export function Calculator({ rows }: { rows: CalcRow[] }) {
           </tbody>
         </table>
       </div>
-      <p className="text-xs text-zinc-600">
+      <p className="text-xs leading-relaxed text-black/45">
         Estimate uses each model&apos;s cheapest listed provider. Cache-hit spend is billed at the
         provider&apos;s cache-read rate when published, otherwise at the input rate.
       </p>

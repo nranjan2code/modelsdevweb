@@ -46,28 +46,29 @@ export function ChangelogList({ events }: { events: Event[] }) {
             <button
               key={t.value}
               onClick={() => setType(t.value)}
-              className={`rounded-md px-2 py-1 text-xs transition-colors ${
+              aria-pressed={type === t.value}
+              className={`rounded-full border px-2.5 py-1 text-xs font-medium transition-all ${
                 type === t.value
-                  ? "bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-600/40"
-                  : "bg-zinc-900 text-zinc-400 ring-1 ring-zinc-800 hover:text-zinc-200"
+                  ? "border-black bg-black text-white shadow-[2px_2px_0_0_rgba(0,0,0,0.3)]"
+                  : "border-black/15 bg-white text-black/55 hover:border-black hover:text-black"
               }`}
             >
               {t.label}
             </button>
           ))}
         </div>
-        <span className="ml-auto text-xs text-zinc-500 tabular-nums">{filtered.length} events</span>
+        <span className="ml-auto font-mono text-xs tabular-nums text-black/45">{filtered.length} events</span>
       </div>
 
       {filtered.length === 0 ? (
-        <p className="card p-6 text-sm text-zinc-500">
+        <p className="card-dashed p-6 text-sm text-black/50">
           No events yet. The first sync captured a baseline; diffs appear here as models.dev data changes.
         </p>
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-8">
           {grouped.map((group) => (
-            <div key={group.date} className="space-y-2">
-              <h2 className="text-sm font-medium text-zinc-400 sticky top-14 bg-zinc-950/90 backdrop-blur py-1">
+            <div key={group.date} className="space-y-3">
+              <h2 className="sticky top-16 z-10 -rotate-1 bg-amber-100 px-2 py-0.5 font-hand text-xl font-bold text-black shadow-[1px_1px_0_0_rgba(0,0,0,1)] w-fit">
                 {group.date}
               </h2>
               {group.events.map((e) => (

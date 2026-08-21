@@ -53,8 +53,8 @@ const SHARED_STYLES = {
   flexDirection: "column",
   width: "100%",
   height: "100%",
-  backgroundColor: "#09090b",
-  color: "#e4e4e7",
+  backgroundColor: "#fafaf9",
+  color: "#0a0a0a",
   fontFamily: "Inter",
 } as const;
 
@@ -62,10 +62,10 @@ function Brand({ right }: { right?: string }) {
   return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
       <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-        <div style={{ width: "10px", height: "10px", borderRadius: "9999px", backgroundColor: "#34d399" }} />
-        <div style={{ fontSize: "26px", fontWeight: 700, color: "#fafafa" }}>LLM Pulse</div>
+        <div style={{ width: "10px", height: "10px", borderRadius: "9999px", backgroundColor: "#10b981" }} />
+        <div style={{ fontSize: "26px", fontWeight: 700, color: "#0a0a0a" }}>LLM Pulse</div>
       </div>
-      {right && <div style={{ fontSize: "20px", color: "#a1a1aa" }}>{right}</div>}
+      {right && <div style={{ fontSize: "20px", color: "#737373" }}>{right}</div>}
     </div>
   );
 }
@@ -73,8 +73,8 @@ function Brand({ right }: { right?: string }) {
 function Stat({ value, label }: { value: string; label: string }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-      <div style={{ fontSize: "40px", fontWeight: 700, color: "#fafafa" }}>{value}</div>
-      <div style={{ fontSize: "19px", color: "#71717a" }}>{label}</div>
+      <div style={{ fontSize: "40px", fontWeight: 700, color: "#0a0a0a" }}>{value}</div>
+      <div style={{ fontSize: "19px", color: "#737373" }}>{label}</div>
     </div>
   );
 }
@@ -91,14 +91,14 @@ function siteCard(stats: { models: number; providers: number; listings: number; 
             fontSize: "54px",
             fontWeight: 700,
             lineHeight: 1.2,
-            color: "#fafafa",
+            color: "#0a0a0a",
             maxWidth: "1000px",
           }}
         >
           Every AI model. Every provider.
-          <span style={{ color: "#34d399" }}>&nbsp;Every change.</span>
+          <span style={{ color: "#2563eb" }}>&nbsp;Every change.</span>
         </div>
-        <div style={{ fontSize: "26px", color: "#a1a1aa" }}>
+        <div style={{ fontSize: "26px", color: "#525252" }}>
           Live price comparison and changelog for AI models — diffed hourly from open data.
         </div>
       </div>
@@ -106,7 +106,7 @@ function siteCard(stats: { models: number; providers: number; listings: number; 
         style={{
           display: "flex",
           gap: "56px",
-          borderTop: "1px solid #27272a",
+          borderTop: "3px solid #0a0a0a",
           paddingTop: "32px",
         }}
       >
@@ -125,13 +125,13 @@ function modelCard(g: ModelGroup) {
     <div style={{ ...SHARED_STYLES, padding: "64px", justifyContent: "space-between" }}>
       <Brand right={g.labId} />
       <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-        <div style={{ fontSize: "64px", fontWeight: 700, lineHeight: 1.1, color: "#fafafa" }}>{g.name}</div>
+        <div style={{ fontSize: "64px", fontWeight: 700, lineHeight: 1.1, color: "#0a0a0a" }}>{g.name}</div>
         {g.canonical?.description && (
           <div
             style={{
               fontSize: "23px",
               lineHeight: 1.4,
-              color: "#a1a1aa",
+              color: "#525252",
               maxWidth: "980px",
               lineClamp: 2,
             }}
@@ -140,7 +140,7 @@ function modelCard(g: ModelGroup) {
           </div>
         )}
       </div>
-      <div style={{ display: "flex", gap: "56px", borderTop: "1px solid #27272a", paddingTop: "32px" }}>
+      <div style={{ display: "flex", gap: "56px", borderTop: "3px solid #0a0a0a", paddingTop: "32px" }}>
         <Stat value={g.best ? fmtPerM(g.best.input) : "—"} label="best input /M" />
         <Stat value={g.best ? fmtPerM(g.best.output) : "—"} label="best output /M" />
         <Stat value={fmtTokens(ctx)} label="context" />

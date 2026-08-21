@@ -72,22 +72,18 @@ export function SearchUI() {
         disabled={!ready}
         autoFocus
       />
-      <div className="space-y-3">
+      <div className="space-y-4">
         {results.map((r) => (
-          <a
-            key={r.url}
-            href={r.url}
-            className="card block p-4 hover:border-emerald-700/60 transition-colors"
-          >
-            <div className="font-medium text-zinc-100">{r.title}</div>
+          <a key={r.url} href={r.url} className="card lift block p-4">
+            <div className="font-medium text-black">{r.title}</div>
             <div
-              className="mt-1 text-sm text-zinc-400 [&_mark]:bg-emerald-500/20 [&_mark]:text-emerald-300 [&_mark]:rounded [&_mark]:px-0.5"
+              className="mt-1 text-sm leading-relaxed text-black/60 [&_mark]:rounded-sm [&_mark]:bg-blue-100 [&_mark]:px-0.5 [&_mark]:text-blue-700"
               dangerouslySetInnerHTML={{ __html: r.excerpt }}
             />
           </a>
         ))}
         {q.trim().length >= 2 && results.length === 0 && ready && (
-          <p className="text-sm text-zinc-500">No results for “{q}”.</p>
+          <p className="card-dashed p-6 text-sm text-black/50">No results for “{q}”.</p>
         )}
       </div>
     </div>

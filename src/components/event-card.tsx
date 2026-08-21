@@ -3,20 +3,20 @@ import type { Event, EventType } from "@/lib/pipeline/types";
 import { fmtDate } from "@/lib/format";
 
 const TYPE_STYLES: Record<EventType, { label: string; cls: string }> = {
-  model_added: { label: "new model", cls: "bg-emerald-500/10 text-emerald-400" },
-  provider_added: { label: "new provider", cls: "bg-teal-500/10 text-teal-300" },
-  repriced: { label: "repriced", cls: "bg-violet-500/10 text-violet-300" },
-  deprecated: { label: "deprecated", cls: "bg-red-500/10 text-red-400" },
-  context_changed: { label: "context", cls: "bg-sky-500/10 text-sky-300" },
-  capability_changed: { label: "capability", cls: "bg-amber-500/10 text-amber-300" },
-  model_removed: { label: "removed", cls: "bg-zinc-700/40 text-zinc-400" },
-  provider_removed: { label: "provider left", cls: "bg-zinc-700/40 text-zinc-400" },
+  model_added: { label: "new model", cls: "bg-emerald-50 text-emerald-700 border-emerald-600/30" },
+  provider_added: { label: "new provider", cls: "bg-teal-50 text-teal-700 border-teal-600/30" },
+  repriced: { label: "repriced", cls: "bg-purple-50 text-purple-700 border-purple-600/30" },
+  deprecated: { label: "deprecated", cls: "bg-red-50 text-red-600 border-red-500/30" },
+  context_changed: { label: "context", cls: "bg-blue-50 text-blue-700 border-blue-600/30" },
+  capability_changed: { label: "capability", cls: "bg-amber-50 text-amber-700 border-amber-600/40" },
+  model_removed: { label: "removed", cls: "bg-black/5 text-black/50 border-black/15" },
+  provider_removed: { label: "provider left", cls: "bg-black/5 text-black/50 border-black/15" },
 };
 
 export function EventTypeBadge({ type }: { type: EventType }) {
   const s = TYPE_STYLES[type];
   return (
-    <span className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-medium ${s.cls}`}>
+    <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold ${s.cls}`}>
       {s.label}
     </span>
   );
@@ -35,26 +35,24 @@ function changeText(c: Event["changes"][number]): string {
 export function EventCard({ event }: { event: Event }) {
   const href = event.canonicalId ? `/m/${event.canonicalId}` : null;
   return (
-    <div className="card p-4 flex flex-col gap-1.5">
+    <div className="card lift flex flex-col gap-1.5 p-4">
       <div className="flex items-center gap-2 flex-wrap">
         <EventTypeBadge type={event.type} />
         {href ? (
-          <Link href={href} className="font-medium text-zinc-100 hover:text-emerald-400 transition-colors">
+          <Link href={href} className="font-medium text-black hover:text-blue-600 transition-colors">
             {event.modelName}
           </Link>
         ) : (
-          <span className="font-medium text-zinc-100">{event.modelName}</span>
+          <span className="font-medium text-black">{event.modelName}</span>
         )}
-        <span className="text-xs text-zinc-500">
+        <span className="text-xs text-black/45">
           {event.providerId ? `via ${event.providerId}` : ""} · {fmtDate(event.date)}
         </span>
       </div>
       {event.changes.length > 0 && (
-        <ul className="text-xs text-zinc-400 space-y-0.5">
+        <ul className="space-y-0.5 font-mono text-xs text-black/60">
           {event.changes.slice(0, 4).map((c, i) => (
-            <li key={i} className="font-mono">
-              {changeText(c)}
-            </li>
+            <li key={i}>{changeText(c)}</li>
           ))}
           {event.changes.length > 4 && <li>+{event.changes.length - 4} more</li>}
         </ul>

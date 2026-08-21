@@ -22,45 +22,46 @@ export default async function LabPage({ params }: { params: Promise<{ lab: strin
 
   return (
     <div className="space-y-6">
-      <nav className="text-sm text-zinc-500">
-        <Link href="/browse" className="hover:text-zinc-300">
+      <nav className="text-sm text-black/45">
+        <Link href="/browse" className="transition-colors hover:text-blue-600">
           Browse
         </Link>
         <span className="mx-1.5">/</span>
-        <span className="text-zinc-300">{lab}</span>
+        <span className="font-medium text-black">{lab}</span>
       </nav>
-      <header className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight text-zinc-50">{lab}</h1>
-        <p className="text-sm text-zinc-500">{groups.length} canonical models tracked</p>
+      <header className="space-y-2">
+        <p className="mono-label">Lab</p>
+        <h1 className="text-3xl font-bold tracking-tight text-black sm:text-4xl">{lab}</h1>
+        <p className="max-w-2xl text-sm leading-relaxed text-black/55">{groups.length} canonical models tracked</p>
       </header>
 
       <div className="card overflow-x-auto">
-        <table className="w-full min-w-[680px] text-sm">
+        <table className="table-base min-w-[680px]">
           <thead>
-            <tr className="border-b border-zinc-800 text-left text-xs uppercase tracking-wide text-zinc-500">
-              <th className="px-4 py-3 font-medium">Model</th>
-              <th className="px-4 py-3 font-medium text-right">Best in /M</th>
-              <th className="px-4 py-3 font-medium text-right">Best out /M</th>
-              <th className="px-4 py-3 font-medium text-right">Context</th>
-              <th className="px-4 py-3 font-medium text-right">Providers</th>
-              <th className="px-4 py-3 font-medium">Released</th>
+            <tr>
+              <th>Model</th>
+              <th className="text-right">Best in /M</th>
+              <th className="text-right">Best out /M</th>
+              <th className="text-right">Context</th>
+              <th className="text-right">Providers</th>
+              <th>Released</th>
             </tr>
           </thead>
           <tbody>
             {groups
               .sort((a, b) => (b.canonical?.releaseDate ?? "").localeCompare(a.canonical?.releaseDate ?? ""))
               .map((g) => (
-                <tr key={g.id} className="border-b border-zinc-800/60 last:border-0 hover:bg-zinc-900/50">
-                  <td className="px-4 py-3">
-                    <Link href={`/m/${g.id}`} className="font-medium text-zinc-100 hover:text-emerald-400 transition-colors">
+                <tr key={g.id}>
+                  <td>
+                    <Link href={`/m/${g.id}`} className="font-medium text-black transition-colors hover:text-blue-600">
                       {g.name}
                     </Link>
                   </td>
-                  <td className="px-4 py-3 text-right font-mono tabular-nums">{fmtPerM(g.best?.input ?? null)}</td>
-                  <td className="px-4 py-3 text-right font-mono tabular-nums">{fmtPerM(g.best?.output ?? null)}</td>
-                  <td className="px-4 py-3 text-right font-mono tabular-nums">{fmtTokens(g.canonical?.limit?.context ?? null)}</td>
-                  <td className="px-4 py-3 text-right tabular-nums text-zinc-400">{g.listings.length}</td>
-                  <td className="px-4 py-3 text-xs text-zinc-500 whitespace-nowrap">{fmtDate(g.canonical?.releaseDate)}</td>
+                  <td className="text-right font-mono tabular-nums">{fmtPerM(g.best?.input ?? null)}</td>
+                  <td className="text-right font-mono tabular-nums">{fmtPerM(g.best?.output ?? null)}</td>
+                  <td className="text-right font-mono tabular-nums">{fmtTokens(g.canonical?.limit?.context ?? null)}</td>
+                  <td className="text-right tabular-nums text-black/55">{g.listings.length}</td>
+                  <td className="whitespace-nowrap text-xs text-black/45">{fmtDate(g.canonical?.releaseDate)}</td>
                 </tr>
               ))}
           </tbody>
