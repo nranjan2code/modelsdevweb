@@ -1,36 +1,61 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# LLM Pulse
 
-## Getting Started
+**Every AI model. Every provider. Every change.**
 
-First, run the development server:
+LLM Pulse is a price-comparison and changelog site for AI models, built entirely on the open
+[models.dev](https://models.dev) dataset. It answers three questions:
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+1. **Compare** — which inference provider serves this model cheapest right now?
+2. **Track** — what changed in the model landscape today? (releases, price moves, deprecations)
+3. **Automate** — can my code or AI agent consume all of this as JSON?
+
+## How it works
+
+```
+GitHub Actions (hourly cron)
+  └─ fetch https://models.dev/{api,models}.json
+  └─ validate + normalize + diff against previous snapshot
+  └─ commit snapshots/ + events/ to this repo   ← git history is the database
+  └─ static rebuild & deploy
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+No server, no database. Snapshots are committed to git; a pure-TypeScript diff pipeline turns
+changes into typed events (`repriced`, `deprecated`, `model_added`, `provider_added`,
+`context_changed`, `capability_changed`, …).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Development
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+pnpm install
+pnpm sync        # fetch models.dev, diff vs last snapshot, update snapshots/ + events/
+pnpm test        # pipeline unit tests (vitest)
+pnpm dev         # local dev server
+pnpm build       # static export to out/
+```
 
-## Learn More
+## Project layout
 
-To learn more about Next.js, take a look at the following resources:
+| Path | Purpose |
+|------|---------|
+| `src/lib/pipeline/` | schema validation (zod), normalization, diff engine |
+| `scripts/sync.ts` | hourly sync job: fetch → diff → commit |
+| `snapshots/latest/` | most recent raw models.dev data |
+| `events/index.json` | merged changelog events, newest first |
+| `src/app/` | Next.js App Router pages (static export) |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Machine interfaces
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- `/api/events.json` — changelog feed
+- `/api/models.json` — canonical model catalog with best prices
+- `/rss.xml` — RSS feed of changes
+- `/llms.txt` — index for AI agents
 
-## Deploy on Vercel
+## Data & pricing caveats
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Prices are per 1M tokens (USD) as published by models.dev contributors. A dash (`—`) means the
+provider does not publicly list a price — it is **not** necessarily free. Always verify with the
+provider before purchasing.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## License
+
+MIT
