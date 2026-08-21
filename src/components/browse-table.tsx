@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { fmtPerM, fmtTokens, fmtDate } from "@/lib/format";
 
 export interface BrowseRow {
@@ -38,12 +38,15 @@ const PRICE_OPTIONS = [
   { label: "Free-ish (< $0.10)", value: 0.1 },
 ];
 
+const PAGE_SIZE = 50;
+
 export function BrowseTable({ rows }: { rows: BrowseRow[] }) {
   const [q, setQ] = useState("");
   const [ctxMin, setCtxMin] = useState(0);
   const [priceMax, setPriceMax] = useState(Number.POSITIVE_INFINITY);
   const [caps, setCaps] = useState<Set<string>>(new Set());
   const [sort, setSort] = useState<SortKey>("input");
+  const [page, setPage] = useState(1);
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -75,6 +78,23 @@ export function BrowseTable({ rows }: { rows: BrowseRow[] }) {
     });
     return out;
   }, [rows, q, ctxMin, priceMax, caps, sort]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const current = Math.min(page, totalPages);
+  const paged = filtered.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE);
+
+  const filterKey = `${q}|${ctxMin}|${priceMax}|${sort}|${[...caps].join(",")}`;
+  const [lastFilterKey, setLastFilterKey] = useState(filterKey);
+  if (filterKey !== lastFilterKey) {
+    setLastFilterKey(filterKey);
+    setPage(1);
+  }
+
+  const tableRef = useRef<HTMLDivElement>(null);
+  function goTo(p: number) {
+    setPage(Math.min(Math.max(1, p), totalPages));
+    tableRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
 
   function toggleCap(cap: string) {
     setCaps((prev) => {
@@ -152,7 +172,7 @@ export function BrowseTable({ rows }: { rows: BrowseRow[] }) {
         </span>
       </div>
 
-      <div className="card overflow-x-auto">
+      <div className="card overflow-x-auto" ref={tableRef}>
         <table className="w-full min-w-[820px] text-sm">
           <thead>
             <tr className="border-b border-zinc-800 text-left text-xs uppercase tracking-wide text-zinc-500">
@@ -168,7 +188,7 @@ export function BrowseTable({ rows }: { rows: BrowseRow[] }) {
             </tr>
           </thead>
           <tbody>
-            {filtered.map((r) => (
+            {paged.map((r) => (
               <tr key={r.id} className="border-b border-zinc-800/60 last:border-0 hover:bg-zinc-900/50">
                 <td className="px-4 py-3">
                   <Link href={`/m/${r.id}`} className="font-medium text-zinc-100 hover:text-emerald-400 transition-colors">
@@ -221,6 +241,60 @@ export function BrowseTable({ rows }: { rows: BrowseRow[] }) {
           </tbody>
         </table>
       </div>
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2 text-sm">
+          <button
+            onClick={() => goTo(current - 1)}
+            disabled={current === 1}
+            className="rounded-md bg-zinc-900 px-3 py-1.5 text-zinc-300 ring-1 ring-zinc-800 disabled:opacity-40 hover:text-zinc-100 transition-colors"
+          >
+            ← Prev
+          </button>
+          {pageWindow(current, totalPages).map((p, i) =>
+            p === "…" ? (
+              <span key={`gap-${i}`} className="px-1 text-zinc-600">
+                …
+              </span>
+            ) : (
+              <button
+                key={p}
+                onClick={() => goTo(p as number)}
+                className={`min-w-8 rounded-md px-2 py-1.5 tabular-nums transition-colors ${
+                  p === current
+                    ? "bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-600/40"
+                    : "bg-zinc-900 text-zinc-400 ring-1 ring-zinc-800 hover:text-zinc-100"
+                }`}
+              >
+                {p}
+              </button>
+            ),
+          )}
+          <button
+            onClick={() => goTo(current + 1)}
+            disabled={current === totalPages}
+            className="rounded-md bg-zinc-900 px-3 py-1.5 text-zinc-300 ring-1 ring-zinc-800 disabled:opacity-40 hover:text-zinc-100 transition-colors"
+          >
+            Next →
+          </button>
+        </div>
+      )}
     </div>
   );
+}
+
+function pageWindow(current: number, total: number): (number | "…")[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  const pages = new Set<number>([1, total, current - 1, current, current + 1]);
+  if (current <= 3) [2, 3, 4].forEach((p) => pages.add(p));
+  if (current >= total - 2) [total - 3, total - 2, total - 1].forEach((p) => pages.add(p));
+  const sorted = [...pages].filter((p) => p >= 1 && p <= total).sort((a, b) => a - b);
+  const out: (number | "…")[] = [];
+  let prev = 0;
+  for (const p of sorted) {
+    if (prev && p - prev > 1) out.push("…");
+    out.push(p);
+    prev = p;
+  }
+  return out;
 }

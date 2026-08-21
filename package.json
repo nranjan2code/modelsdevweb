@@ -4,10 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build && pagefind --site out",
     "start": "next start",
     "lint": "eslint",
     "sync": "tsx scripts/sync.ts",
+    "notify": "tsx scripts/notify.ts",
     "mcp": "tsx mcp/server.ts",
     "test": "vitest run"
   },
@@ -25,6 +26,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.3.1",
+    "pagefind": "^1.5.2",
     "tailwindcss": "^4",
     "tsx": "^4.23.12",
     "typescript": "^5",

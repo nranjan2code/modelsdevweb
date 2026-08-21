@@ -61,6 +61,32 @@ pnpm mcp   # stdio transport; set LLM_PULSE_URL to your deployment
 Tools: `search_models` (capability/price/context filters), `get_model_prices`
 (per-provider comparison), `get_changes` (recent landscape events).
 
+### Webhook watchdog
+
+Get POSTed whenever tracked changes happen. Add entries to `watchers.json`:
+
+```json
+[
+  {
+    "url": "https://example.com/hooks/llm-pulse",
+    "types": ["repriced", "deprecated"],
+    "labs": ["openai", "anthropic"]
+  }
+]
+```
+
+Both `types` and `labs` are optional filters. The hourly sync delivers new matching
+events as a batch; delivery state is tracked in `events/notified.json`, and failed
+endpoints retry on the next run. If the `WATCHER_SECRET` repo secret is set, each
+request carries `x-llm-pulse-signature: sha256=<hmac(body)>` for verification:
+
+```ts
+const valid = crypto.timingSafeEqual(
+  Buffer.from(sig),
+  Buffer.from("sha256=" + crypto.createHmac("sha256", SECRET).update(rawBody).digest("hex")),
+);
+```
+
 Client config example:
 
 ```json
