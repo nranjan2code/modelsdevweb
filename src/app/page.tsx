@@ -7,17 +7,26 @@ import { EventCard } from "@/components/event-card";
 import { fmtPerM, fmtTokens, fmtAgo } from "@/lib/format";
 import type { Event, NewsItem } from "@/lib/pipeline/types";
 
-function SectionHead({ title, href, label = "View all" }: { title: string; href?: string; label?: string }) {
+function SectionHead({ title, href, label = "View all", external }: { title: string; href?: string; label?: string; external?: boolean }) {
   return (
     <div className="mb-5 flex items-center justify-between gap-4">
       <h2 className="font-hand text-3xl font-bold tracking-tight text-black sm:text-4xl">{title}</h2>
       {href && (
-        <Link
-          href={href}
-          className="shrink-0 rounded-full border border-black/15 bg-white px-3 py-1 text-xs font-medium text-black/60 transition-colors hover:border-black hover:text-black"
-        >
-          {label} →
-        </Link>
+        external ? (
+          <a
+            href={href}
+            className="shrink-0 rounded-full border border-black/15 bg-white px-3 py-1 text-xs font-medium text-black/60 transition-colors hover:border-black hover:text-black"
+          >
+            {label} →
+          </a>
+        ) : (
+          <Link
+            href={href}
+            className="shrink-0 rounded-full border border-black/15 bg-white px-3 py-1 text-xs font-medium text-black/60 transition-colors hover:border-black hover:text-black"
+          >
+            {label} →
+          </Link>
+        )
       )}
     </div>
   );
@@ -130,7 +139,7 @@ function weekDigest(events: Event[]) {
 
 function MiniBar({ pct, color = "bg-blue-600" }: { pct: number; color?: string }) {
   return (
-    <div className="h-1.5 min-w-10 flex-1 overflow-hidden rounded-sm border border-black bg-white">
+    <div className="h-1.5 min-w-6 flex-1 overflow-hidden rounded-sm border border-black bg-white">
       <div className={`h-full ${color}`} style={{ width: `${Math.max(2, Math.min(100, pct * 100))}%` }} />
     </div>
   );
@@ -200,18 +209,6 @@ export default async function HomePage() {
             >
               See what changed
             </Link>
-          </div>
-          <div className="card-flat mx-auto mt-9 max-w-md p-4 text-left font-mono text-sm">
-            <div className="min-h-[24px]">
-              <span className="mr-2 text-black/35">$</span>
-              llm-pulse watch --all-providers
-              <span className="ml-1 inline-block h-4 w-2 animate-pulse bg-black/40 align-middle" />
-            </div>
-            <div className="my-2 h-px w-full bg-black/10" />
-            <div className="flex items-center justify-between text-[10px] uppercase tracking-widest text-black/35">
-              <span>LLM PULSE · open data</span>
-              <span>{s.models}_models_indexed</span>
-            </div>
           </div>
         </div>
 
@@ -415,15 +412,15 @@ export default async function HomePage() {
 
       <section>
         <SectionHead title="Market snapshot" href="/trends" label="Full trends" />
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4 lg:grid-cols-2">
           <div className="card p-4">
             <div className="mono-label mb-3">capability adoption · {catalog.groups.length} models</div>
             <ul className="space-y-2.5">
               {caps.map((c) => (
-                <li key={c.label} className="flex items-center gap-3 text-sm">
-                  <span className="w-36 shrink-0 truncate text-black/60">{c.label}</span>
+                <li key={c.label} className="flex items-center gap-2 text-sm sm:gap-3">
+                  <span className="w-28 shrink-0 truncate text-black/60 sm:w-32">{c.label}</span>
                   <MiniBar pct={c.pct} />
-                  <span className="w-14 shrink-0 text-right font-mono text-xs tabular-nums text-black/70">
+                  <span className="w-12 shrink-0 text-right font-mono text-xs tabular-nums text-black/70">
                     {Math.round(c.pct * 100)}%
                   </span>
                 </li>
@@ -434,7 +431,7 @@ export default async function HomePage() {
             <div className="mono-label mb-3">blended price distribution</div>
             <ul className="space-y-2.5">
               {buckets.map((b) => (
-                <li key={b.label} className="flex items-center gap-3 text-sm">
+                <li key={b.label} className="flex items-center gap-2 text-sm sm:gap-3">
                   <span className="w-20 shrink-0 font-mono text-xs text-black/60">{b.label}</span>
                   <MiniBar pct={b.count / bucketMax} color="bg-purple-500" />
                   <span className="w-8 shrink-0 text-right font-mono text-xs tabular-nums text-black/70">{b.count}</span>
@@ -486,7 +483,7 @@ export default async function HomePage() {
       </section>
 
       <section>
-        <SectionHead title="Built for machines too" href="/llms.txt" label="llms.txt" />
+        <SectionHead title="Built for machines too" href="/llms.txt" label="llms.txt" external />
         <div className="grid gap-4 md:grid-cols-3">
           <div className="card-flat p-4">
             <div className="mono-label mb-2">JSON APIs</div>

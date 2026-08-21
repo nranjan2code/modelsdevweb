@@ -50,14 +50,14 @@ function readFilters(): Filters {
   }
 }
 
-let cache: Filters | null = null;
+let cacheUrl: string | null = null;
+let cacheVal: Filters = DEFAULT_FILTERS;
 const listeners = new Set<() => void>();
 
 function subscribe(onChange: () => void): () => void {
   listeners.add(onChange);
   const onPop = () => {
-    cache = null;
-    onChange();
+    for (const l of listeners) l();
   };
   window.addEventListener("popstate", onPop);
   return () => {
@@ -66,8 +66,18 @@ function subscribe(onChange: () => void): () => void {
   };
 }
 
+/**
+ * Snapshot is keyed by the current query string so client-side navigations
+ * (pushState — which fires no popstate) re-read the URL instead of serving
+ * a stale cached filter from a previous visit.
+ */
 function getSnapshot(): Filters {
-  return cache ?? (cache = readFilters());
+  const url = window.location.search;
+  if (url !== cacheUrl) {
+    cacheUrl = url;
+    cacheVal = readFilters();
+  }
+  return cacheVal;
 }
 
 function getServerSnapshot(): Filters {
@@ -75,7 +85,8 @@ function getServerSnapshot(): Filters {
 }
 
 function setFilters(next: Filters): void {
-  cache = next;
+  cacheVal = next;
+  cacheUrl = typeof window !== "undefined" ? window.location.search : null;
   if (typeof window !== "undefined") {
     const p = new URLSearchParams();
     if (next.type !== "all") p.set("type", next.type);

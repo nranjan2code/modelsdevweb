@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from "react";
 
-export const COMPARE_KEY = "llm-pulse:compare";
+export const COMPARE_KEY = "model-pulse:compare";
 export const COMPARE_MAX = 4;
 
 const EMPTY: string[] = [];

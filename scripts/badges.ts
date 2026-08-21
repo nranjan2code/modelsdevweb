@@ -54,12 +54,12 @@ async function main(): Promise<void> {
     let svg: string;
     if (g.best && g.best.input != null) {
       svg = badge(
-        "LLM Pulse",
+        "Model Pulse",
         `${fmtPerM(g.best.input)} in · ${fmtPerM(g.best.output ?? 0)} out per M`,
         "#2563eb",
       );
     } else {
-      svg = badge("LLM Pulse", "price unlisted", "#737373");
+      svg = badge("Model Pulse", "price unlisted", "#737373");
     }
     const file = path.join(OUT_DIR, `${g.id}.svg`);
     await mkdir(path.dirname(file), { recursive: true });

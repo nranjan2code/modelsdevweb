@@ -18,7 +18,8 @@ async function readJson<T>(file: string, fallback: T): Promise<T> {
 async function post(url: string, body: string): Promise<number> {
   const headers: Record<string, string> = { "content-type": "application/json" };
   if (SECRET) {
-    headers["x-llm-pulse-signature"] = `sha256=${createHmac("sha256", SECRET).update(body).digest("hex")}`;
+    headers["x-model-pulse-signature"] = `sha256=${createHmac("sha256", SECRET).update(body).digest("hex")}`;
+    headers["x-llm-pulse-signature"] = headers["x-model-pulse-signature"];
   }
   const res = await fetch(url, { method: "POST", headers, body, signal: AbortSignal.timeout(10_000) });
   return res.status;
@@ -39,7 +40,7 @@ async function main(): Promise<void> {
   }
   for (const { watcher, events: batch } of selections) {
     const body = JSON.stringify({
-      type: "llm-pulse.watch",
+      type: "model-pulse.watch",
       sentAt: new Date().toISOString(),
       filter: { types: watcher.types ?? null, labs: watcher.labs ?? null },
       events: batch,

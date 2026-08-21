@@ -63,7 +63,7 @@ function Brand({ right }: { right?: string }) {
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
       <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
         <div style={{ width: "10px", height: "10px", borderRadius: "9999px", backgroundColor: "#10b981" }} />
-        <div style={{ fontSize: "26px", fontWeight: 700, color: "#0a0a0a" }}>LLM Pulse</div>
+        <div style={{ fontSize: "26px", fontWeight: 700, color: "#0a0a0a" }}>Model Pulse</div>
       </div>
       {right && <div style={{ fontSize: "20px", color: "#737373" }}>{right}</div>}
     </div>

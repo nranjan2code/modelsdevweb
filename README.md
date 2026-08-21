@@ -1,8 +1,8 @@
-# LLM Pulse
+# Model Pulse
 
 **Every AI model. Every provider. Every change.**
 
-LLM Pulse is a price-comparison and changelog site for AI models, built entirely on the open
+Model Pulse is a price-comparison and changelog site for AI models, built entirely on the open
 [models.dev](https://models.dev) dataset. It answers three questions:
 
 1. **Compare** — which inference provider serves this model cheapest right now?
@@ -64,10 +64,10 @@ Local secrets live in `.env.local` (gitignored): `TAVILY_API_KEY` is read automa
 
 ### MCP server (for AI agents)
 
-Expose LLM Pulse as tools to any MCP client (Claude, opencode, Cursor, …):
+Expose Model Pulse as tools to any MCP client (Claude, opencode, Cursor, …):
 
 ```bash
-pnpm mcp   # stdio transport; set LLM_PULSE_URL to your deployment
+pnpm mcp   # stdio transport; set MODEL_PULSE_URL to your deployment (legacy LLM_PULSE_URL still accepted)
 ```
 
 Tools: `search_models` (capability/price/context filters), `get_model_prices`
@@ -81,7 +81,7 @@ Get POSTed whenever tracked changes happen. Add entries to `watchers.json`:
 ```json
 [
   {
-    "url": "https://example.com/hooks/llm-pulse",
+    "url": "https://example.com/hooks/model-pulse",
     "types": ["repriced", "deprecated"],
     "labs": ["openai", "anthropic"]
   }
@@ -91,7 +91,7 @@ Get POSTed whenever tracked changes happen. Add entries to `watchers.json`:
 Both `types` and `labs` are optional filters. The hourly sync delivers new matching
 events as a batch; delivery state is tracked in `events/notified.json`, and failed
 endpoints retry on the next run. If the `WATCHER_SECRET` repo secret is set, each
-request carries `x-llm-pulse-signature: sha256=<hmac(body)>` for verification:
+request carries `x-model-pulse-signature: sha256=<hmac(body)>` (legacy header also sent) for verification:
 
 ```ts
 const valid = crypto.timingSafeEqual(
@@ -105,11 +105,11 @@ Client config example:
 ```json
 {
   "mcpServers": {
-    "llm-pulse": {
+    "model-pulse": {
       "command": "pnpm",
       "args": ["mcp"],
-      "cwd": "/path/to/llm-pulse",
-      "env": { "LLM_PULSE_URL": "https://your-deployment.example.com" }
+      "cwd": "/path/to/model-pulse",
+      "env": { "MODEL_PULSE_URL": "https://your-deployment.example.com" }
     }
   }
 }

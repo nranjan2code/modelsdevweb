@@ -31,10 +31,10 @@ const COLUMNS: { title: string; links: { href: string; label: string; external?:
   {
     title: "Data",
     links: [
-      { href: "/rss.xml", label: "RSS feed" },
-      { href: "/api/models.json", label: "Models JSON" },
-      { href: "/api/events.json", label: "Events JSON" },
-      { href: "/llms.txt", label: "llms.txt for agents" },
+      { href: "/rss.xml", label: "RSS feed", external: true },
+      { href: "/api/models.json", label: "Models JSON", external: true },
+      { href: "/api/events.json", label: "Events JSON", external: true },
+      { href: "/llms.txt", label: "llms.txt for agents", external: true },
     ],
   },
 ];

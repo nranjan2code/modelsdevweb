@@ -2,7 +2,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 
-const BASE = (process.env.LLM_PULSE_URL ?? "http://localhost:3000").replace(/\/$/, "");
+const BASE = (process.env.MODEL_PULSE_URL ?? process.env.LLM_PULSE_URL ?? "http://localhost:3000").replace(/\/$/, "");
 
 interface ModelSummary {
   id: string;
@@ -44,7 +44,7 @@ function text(payload: unknown): { content: [{ type: "text"; text: string }] } {
 }
 
 const server = new McpServer({
-  name: "llm-pulse",
+  name: "model-pulse",
   version: "0.1.0",
 });
 
@@ -53,7 +53,7 @@ server.registerTool(
   {
     title: "Search AI models",
     description:
-      "Search the LLM Pulse catalog of AI models. Filter by capability, context window, price, or free-text query. Returns canonical models with best listed prices.",
+      "Search the Model Pulse catalog of AI models. Filter by capability, context window, price, or free-text query. Returns canonical models with best listed prices.",
     inputSchema: {
       query: z.string().optional().describe("Free-text match on model name or id"),
       min_context: z.number().optional().describe("Minimum context window in tokens"),
@@ -179,10 +179,10 @@ server.registerTool(
 async function main(): Promise<void> {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error(`llm-pulse MCP server ready (${BASE})`);
+  console.error(`model-pulse MCP server ready (${BASE})`);
 }
 
 main().catch((err) => {
-  console.error("llm-pulse MCP server failed:", err);
+  console.error("model-pulse MCP server failed:", err);
   process.exit(1);
 });

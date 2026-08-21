@@ -20,7 +20,7 @@ function median(values: number[]): number | null {
 
 function Bar({ pct, color = "bg-blue-600" }: { pct: number; color?: string }) {
   return (
-    <div className="h-2 min-w-16 flex-1 overflow-hidden rounded-sm border border-black bg-white">
+    <div className="h-2 min-w-6 flex-1 overflow-hidden rounded-sm border border-black bg-white">
       <div className={`h-full ${color}`} style={{ width: `${Math.max(1, Math.min(100, pct * 100))}%` }} />
     </div>
   );
@@ -148,15 +148,15 @@ export default async function TrendsPage() {
         </p>
       </header>
 
-      <section className="grid gap-6 md:grid-cols-2">
+      <section className="grid gap-6 lg:grid-cols-2">
         <div className="space-y-3">
           <h2 className="font-hand text-2xl font-bold tracking-tight text-black">Capability adoption</h2>
           <ul className="card space-y-3 p-4">
             {caps.map((c) => (
-              <li key={c.label} className="flex items-center gap-3 text-sm">
-                <span className="w-40 shrink-0 text-black/60">{c.label}</span>
+              <li key={c.label} className="flex items-center gap-2 text-sm sm:gap-3">
+                <span className="w-28 shrink-0 truncate text-black/60 sm:w-36">{c.label}</span>
                 <Bar pct={c.pct} />
-                <span className="w-20 shrink-0 text-right font-mono tabular-nums text-black/70">
+                <span className="w-16 shrink-0 text-right font-mono text-xs tabular-nums text-black/70 sm:w-20">
                   {c.count} · {Math.round(c.pct * 100)}%
                 </span>
               </li>
@@ -170,8 +170,8 @@ export default async function TrendsPage() {
             <div className="mono-label mb-3">blended price /M · {priced.length} priced models</div>
             <ul className="space-y-2.5">
               {buckets.map((b) => (
-                <li key={b.label} className="flex items-center gap-3 text-sm">
-                  <span className="w-24 shrink-0 font-mono text-xs text-black/60">{b.label}</span>
+                <li key={b.label} className="flex items-center gap-2 text-sm sm:gap-3">
+                  <span className="w-20 shrink-0 font-mono text-xs text-black/60">{b.label}</span>
                   <Bar pct={b.count / bucketMax} />
                   <span className="w-8 shrink-0 text-right font-mono tabular-nums text-black/70">{b.count}</span>
                 </li>

@@ -1,4 +1,4 @@
-# Agent guide — LLM Pulse
+# Agent guide — Model Pulse
 
 Price-comparison & changelog site for AI models, built on the open models.dev dataset.
 Production: https://modelsdevweb.vercel.app
@@ -48,7 +48,7 @@ hourly GH Action (sync.yml)
 
 - Static pages: `/compare` (2–4 model diff), `/trends` (market aggregates), per-lab feeds at
   `/feeds/[lab]/rss.xml`. All computed from the same snapshot data as every other page.
-- `/compare` selection lives in localStorage (`llm-pulse:compare`) via `src/lib/compare.ts`
+- `/compare` selection lives in localStorage (`model-pulse:compare`) via `src/lib/compare.ts`
   (`useSyncExternalStore`). Never read it with useState+useEffect — the
   `react-hooks/set-state-in-effect` lint rule rejects that pattern.
 - Benchmark boards expose `pointsPerDollar` (score ÷ blended price); see

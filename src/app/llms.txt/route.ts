@@ -61,7 +61,7 @@ An MCP (Model Context Protocol) server ships in this repo for direct tool access
 - get_changes — recent releases, repricings, deprecations
 - get_news — daily model news headlines, filterable by query or model id
 
-Run with LLM_PULSE_URL=https://your-deployment pnpm mcp (stdio transport).
+Run with MODEL_PULSE_URL=https://your-deployment pnpm mcp (stdio transport); legacy LLM_PULSE_URL accepted.
 `;
 
   return new Response(body, { headers: { "content-type": "text/plain; charset=utf-8" } });

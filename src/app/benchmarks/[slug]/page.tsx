@@ -75,7 +75,7 @@ export default async function BenchmarkPage({ params }: { params: Promise<{ slug
         </p>
         <p className="max-w-2xl text-xs leading-relaxed text-black/45">
           Scores are facts as publicly reported by labs (see report links below and on each model page) and
-          aggregated via models.dev. {board.name} is maintained by its own project — LLM Pulse is not
+          aggregated via models.dev. {board.name} is maintained by its own project — Model Pulse is not
           affiliated with or endorsed by it.
         </p>
       </header>

@@ -3,7 +3,7 @@ import { JsonLd } from "@/components/jsonld";
 
 export const metadata: Metadata = {
   title: "About",
-  description: "How LLM Pulse diffs models.dev hourly into a typed event stream; data sources, licenses and methodology.",
+  description: "How Model Pulse diffs models.dev hourly into a typed event stream; data sources, licenses and methodology.",
   alternates: { canonical: "/about" },
 };
 
@@ -162,7 +162,7 @@ export default function AboutPage() {
             <a href="https://artificialanalysis.ai" target="_blank" rel="noreferrer" className="font-medium text-blue-600 hover:text-blue-700">
               Artificial Analysis
             </a>
-            ). Benchmark names are trademarks of their respective maintainers; LLM Pulse is not affiliated
+            ). Benchmark names are trademarks of their respective maintainers; Model Pulse is not affiliated
             with or endorsed by them.
           </li>
           <li>
@@ -184,7 +184,7 @@ export default function AboutPage() {
             >
               MIT licensed
             </a>
-            . Reuse the data or badges freely with attribution to LLM Pulse and models.dev.
+            . Reuse the data or badges freely with attribution to Model Pulse and models.dev.
           </li>
         </ul>
         <p className="pl-5 text-xs leading-relaxed text-black/45">
