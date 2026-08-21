@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { getCatalog, getEvents, getNews } from "@/lib/data";
+import { getBenchmarkBoards } from "@/lib/data/benchmarks";
+import { capabilityAdoption, priceBuckets } from "@/lib/data/stats";
 import { EventCard } from "@/components/event-card";
 import { fmtPerM, fmtTokens, fmtAgo } from "@/lib/format";
 import type { Event, NewsItem } from "@/lib/pipeline/types";
@@ -20,12 +22,22 @@ function SectionHead({ title, href, label = "View all" }: { title: string; href?
   );
 }
 
-function Stat({ value, label }: { value: string; label: string }) {
-  return (
-    <div className="card-flat px-4 py-3">
+function Stat({ value, label, href }: { value: string; label: string; href?: string }) {
+  const inner = (
+    <>
       <div className="text-2xl font-bold tabular-nums text-black">{value}</div>
       <div className="mono-label mt-0.5">{label}</div>
-    </div>
+    </>
+  );
+  return href ? (
+    <Link
+      href={href}
+      className="card-flat lift block px-4 py-3 transition-colors hover:border-blue-600"
+    >
+      {inner}
+    </Link>
+  ) : (
+    <div className="card-flat px-4 py-3">{inner}</div>
   );
 }
 
@@ -62,8 +74,17 @@ function NewsCard({ item, modelId, modelName }: { item: NewsItem; modelId?: stri
   );
 }
 
-function priceDrops(events: Event[]) {
-  const drops: { key: string; name: string; providerId: string; oldV: number; newV: number; date: string }[] = [];
+interface Drop {
+  key: string;
+  name: string;
+  providerId: string;
+  oldV: number;
+  newV: number;
+  date: string;
+}
+
+function priceDrops(events: Event[]): Drop[] {
+  const drops: Drop[] = [];
   for (const e of events) {
     if (e.type !== "repriced") continue;
     for (const c of e.changes) {
@@ -82,14 +103,68 @@ function priceDrops(events: Event[]) {
   return drops.sort((a, b) => a.newV / a.oldV - b.newV / b.oldV).slice(0, 5);
 }
 
+function weekDigest(events: Event[]) {
+  const cutoff = Date.now() - 7 * 86_400_000;
+  const recent = events.filter((e) => new Date(`${e.date}T00:00:00Z`).getTime() >= cutoff);
+  const count = (t: Event["type"]) => recent.filter((e) => e.type === t).length;
+  let biggest: { name: string; id: string | null; oldV: number; newV: number } | null = null;
+  for (const e of recent) {
+    if (e.type !== "repriced") continue;
+    for (const c of e.changes) {
+      if (c.field === "cost.input" && typeof c.old === "number" && typeof c.new === "number" && c.new < c.old) {
+        if (!biggest || c.old / c.new > biggest.oldV / biggest.newV) {
+          biggest = { name: e.modelName, id: e.canonicalId, oldV: c.old, newV: c.new };
+        }
+      }
+    }
+  }
+  return {
+    total: recent.length,
+    repriced: count("repriced"),
+    added: count("model_added"),
+    deprecated: count("deprecated"),
+    biggest,
+  };
+}
+
+function MiniBar({ pct, color = "bg-blue-600" }: { pct: number; color?: string }) {
+  return (
+    <div className="h-1.5 min-w-10 flex-1 overflow-hidden rounded-sm border border-black bg-white">
+      <div className={`h-full ${color}`} style={{ width: `${Math.max(2, Math.min(100, pct * 100))}%` }} />
+    </div>
+  );
+}
+
 export default async function HomePage() {
-  const [catalog, events, news] = await Promise.all([getCatalog(), getEvents(), getNews()]);
+  const [catalog, events, news, boards] = await Promise.all([
+    getCatalog(),
+    getEvents(),
+    getNews(),
+    getBenchmarkBoards(),
+  ]);
   const s = catalog.stats;
   const fresh = [...catalog.groups]
     .sort((a, b) => (b.canonical?.releaseDate ?? "").localeCompare(a.canonical?.releaseDate ?? ""))
     .slice(0, 6);
   const drops = priceDrops(events);
+  const digest = weekDigest(events);
   const modelNameOf = (id: string) => catalog.groupById.get(id)?.name;
+
+  const valueBoards = boards
+    .map((b) => ({
+      board: b,
+      leaders: [...b.entries]
+        .filter((e) => e.pointsPerDollar != null && Number.isFinite(e.pointsPerDollar))
+        .sort((a, b) => (b.pointsPerDollar ?? 0) - (a.pointsPerDollar ?? 0))
+        .slice(0, 5),
+    }))
+    .filter((x) => x.leaders.length >= 3)
+    .sort((a, b) => b.board.entries.length - a.board.entries.length)
+    .slice(0, 2);
+
+  const caps = capabilityAdoption(catalog.groups).slice(0, 6);
+  const buckets = priceBuckets(catalog.groups);
+  const bucketMax = Math.max(...buckets.map((b) => b.count), 1);
 
   return (
     <div className="space-y-16">
@@ -140,13 +215,55 @@ export default async function HomePage() {
         </div>
 
         <div className="mt-12 grid grid-cols-2 gap-3 border-y-2 border-black py-6 sm:grid-cols-3 lg:grid-cols-6">
-          <Stat value={String(s.models)} label="models" />
-          <Stat value={String(s.providers)} label="providers" />
+          <Stat value={String(s.models)} label="models" href="/browse" />
+          <Stat value={String(s.providers)} label="providers" href="/providers" />
           <Stat value={String(s.listings)} label="listings" />
-          <Stat value={String(s.labs)} label="labs" />
-          <Stat value={String(s.openWeights)} label="open weights" />
-          <Stat value={String(s.deprecated)} label="deprecated" />
+          <Stat value={String(s.labs)} label="labs" href="/trends" />
+          <Stat value={String(s.openWeights)} label="open weights" href="/trends" />
+          <Stat value={String(s.deprecated)} label="deprecated" href="/deprecations" />
         </div>
+      </section>
+
+      <section>
+        <SectionHead title="The last 7 days" href="/changelog" label="Full changelog" />
+        {digest.total === 0 ? (
+          <p className="card-dashed p-6 text-sm text-black/50">
+            No diffs recorded in the past week — the hourly sync will populate this as the landscape moves.
+          </p>
+        ) : (
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <Link href="/changelog" className="card-flat lift p-4 transition-colors hover:border-purple-600">
+              <div className="font-mono text-2xl font-bold tabular-nums text-purple-700">{digest.repriced}</div>
+              <div className="mono-label mt-0.5">repricings</div>
+            </Link>
+            <Link href="/changelog" className="card-flat lift p-4 transition-colors hover:border-emerald-600">
+              <div className="font-mono text-2xl font-bold tabular-nums text-emerald-700">{digest.added}</div>
+              <div className="mono-label mt-0.5">new models</div>
+            </Link>
+            <Link href="/deprecations" className="card-flat lift p-4 transition-colors hover:border-red-500">
+              <div className="font-mono text-2xl font-bold tabular-nums text-red-600">{digest.deprecated}</div>
+              <div className="mono-label mt-0.5">deprecations</div>
+            </Link>
+            {digest.biggest ? (
+              <Link
+                href={digest.biggest.id ? `/m/${digest.biggest.id}` : "/changelog"}
+                className="card-flat lift p-4 transition-colors hover:border-blue-600"
+              >
+                <div className="truncate font-mono text-lg font-bold text-blue-700">
+                  −{Math.round((1 - digest.biggest.newV / digest.biggest.oldV) * 100)}% input
+                </div>
+                <div className="mono-label mt-0.5 truncate">
+                  {digest.biggest.name} · ${digest.biggest.oldV}→${digest.biggest.newV}
+                </div>
+              </Link>
+            ) : (
+              <div className="card-flat p-4">
+                <div className="font-mono text-2xl font-bold text-black/25">—</div>
+                <div className="mono-label mt-0.5">no input-price cuts</div>
+              </div>
+            )}
+          </div>
+        )}
       </section>
 
       {news.length > 0 && (
@@ -213,6 +330,76 @@ export default async function HomePage() {
         </aside>
       </section>
 
+      {valueBoards.length > 0 && (
+        <section>
+          <SectionHead title="Best value right now" href="/benchmarks" label="All leaderboards" />
+          <p className="-mt-2 mb-5 max-w-2xl text-sm text-black/55">
+            Benchmark score per blended dollar (3×input + output)⁄4 — what each model actually buys you.
+          </p>
+          <div className="grid gap-4 md:grid-cols-2">
+            {valueBoards.map(({ board, leaders }) => (
+              <div key={board.slug} className="card p-4">
+                <div className="mb-3 flex items-baseline justify-between gap-2">
+                  <h3 className="font-hand text-2xl font-bold text-black">{board.name}</h3>
+                  <Link
+                    href={`/benchmarks/${board.slug}`}
+                    className="shrink-0 text-xs font-medium text-blue-600 underline decoration-wavy underline-offset-4 hover:text-blue-700"
+                  >
+                    board →
+                  </Link>
+                </div>
+                <ol className="divide-y divide-black/10 text-sm">
+                  {leaders.map((e, i) => (
+                    <li key={e.groupId} className="flex items-center gap-2 py-2">
+                      <span className="w-4 shrink-0 tabular-nums text-black/35">{i + 1}.</span>
+                      <Link href={`/m/${e.groupId}`} className="min-w-0 flex-1 truncate font-medium transition-colors hover:text-blue-600">
+                        {e.groupName}
+                      </Link>
+                      <span className="shrink-0 font-mono text-xs tabular-nums text-black/45">{e.score}</span>
+                      <span className="w-16 shrink-0 text-right font-mono text-xs font-semibold tabular-nums text-emerald-700">
+                        {Math.round(e.pointsPerDollar!).toLocaleString("en-US")} pts/$
+                      </span>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <section>
+        <SectionHead title="Market snapshot" href="/trends" label="Full trends" />
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="card p-4">
+            <div className="mono-label mb-3">capability adoption · {catalog.groups.length} models</div>
+            <ul className="space-y-2.5">
+              {caps.map((c) => (
+                <li key={c.label} className="flex items-center gap-3 text-sm">
+                  <span className="w-36 shrink-0 truncate text-black/60">{c.label}</span>
+                  <MiniBar pct={c.pct} />
+                  <span className="w-14 shrink-0 text-right font-mono text-xs tabular-nums text-black/70">
+                    {Math.round(c.pct * 100)}%
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="card p-4">
+            <div className="mono-label mb-3">blended price distribution</div>
+            <ul className="space-y-2.5">
+              {buckets.map((b) => (
+                <li key={b.label} className="flex items-center gap-3 text-sm">
+                  <span className="w-20 shrink-0 font-mono text-xs text-black/60">{b.label}</span>
+                  <MiniBar pct={b.count / bucketMax} color="bg-purple-500" />
+                  <span className="w-8 shrink-0 text-right font-mono text-xs tabular-nums text-black/70">{b.count}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </section>
+
       <section>
         <SectionHead title="Cheapest frontier context" href="/browse" label="Browse all" />
         <div className="card overflow-x-auto">
@@ -250,6 +437,37 @@ export default async function HomePage() {
                 })}
             </tbody>
           </table>
+        </div>
+      </section>
+
+      <section>
+        <SectionHead title="Built for machines too" href="/llms.txt" label="llms.txt" />
+        <div className="grid gap-4 md:grid-cols-3">
+          <div className="card-flat p-4">
+            <div className="mono-label mb-2">JSON APIs</div>
+            <ul className="space-y-1 font-mono text-xs text-black/60">
+              <li><a href="/api/models.json" className="underline decoration-black/20 underline-offset-2 hover:text-black">/api/models.json</a> — catalog + best prices</li>
+              <li><a href="/api/prices.json" className="underline decoration-black/20 underline-offset-2 hover:text-black">/api/prices.json</a> — every listing</li>
+              <li><a href="/api/events.json" className="underline decoration-black/20 underline-offset-2 hover:text-black">/api/events.json</a> — changelog feed</li>
+              <li><a href="/api/benchmarks.json" className="underline decoration-black/20 underline-offset-2 hover:text-black">/api/benchmarks.json</a> — scores + pts/$</li>
+            </ul>
+          </div>
+          <div className="card-flat p-4">
+            <div className="mono-label mb-2">Feeds</div>
+            <ul className="space-y-1 font-mono text-xs text-black/60">
+              <li><a href="/rss.xml" className="underline decoration-black/20 underline-offset-2 hover:text-black">/rss.xml</a> — all changes + news</li>
+              <li><a href="/feeds/openai/rss.xml" className="underline decoration-black/20 underline-offset-2 hover:text-black">/feeds/&lt;lab&gt;/rss.xml</a> — per lab</li>
+              <li><a href="/feed.json" className="underline decoration-black/20 underline-offset-2 hover:text-black">/feed.json</a> — JSON Feed 1.1</li>
+            </ul>
+          </div>
+          <div className="card-flat p-4">
+            <div className="mono-label mb-2">Agents & embeds</div>
+            <ul className="space-y-1 font-mono text-xs text-black/60">
+              <li><a href="/llms.txt" className="underline decoration-black/20 underline-offset-2 hover:text-black">/llms.txt</a> — index for AI agents</li>
+              <li><span>/badge/&lt;model&gt;.svg</span> — live price badge</li>
+              <li><span>MCP server</span> — see <a href="/about" className="underline decoration-black/20 underline-offset-2 hover:text-black">about</a></li>
+            </ul>
+          </div>
         </div>
       </section>
     </div>

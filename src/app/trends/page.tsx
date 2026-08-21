@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getCatalog, getEvents, blendPrice } from "@/lib/data";
+import { blendPrice, getCatalog, getEvents } from "@/lib/data";
+import { capabilityAdoption, priceBuckets } from "@/lib/data/stats";
 import type { Event } from "@/lib/pipeline/types";
 import { EventTypeBadge } from "@/components/event-card";
 
@@ -20,16 +21,6 @@ function Bar({ pct, color = "bg-blue-600" }: { pct: number; color?: string }) {
     </div>
   );
 }
-
-const PRICE_BUCKETS: { label: string; test: (blend: number) => boolean }[] = [
-  { label: "$0", test: (b) => b === 0 },
-  { label: "< $0.25", test: (b) => b > 0 && b < 0.25 },
-  { label: "$0.25 – $1", test: (b) => b >= 0.25 && b < 1 },
-  { label: "$1 – $3", test: (b) => b >= 1 && b < 3 },
-  { label: "$3 – $10", test: (b) => b >= 3 && b < 10 },
-  { label: "$10 – $30", test: (b) => b >= 10 && b < 30 },
-  { label: "≥ $30", test: (b) => b >= 30 },
-];
 
 const CTX_TICKS = [
   { v: 8_000, label: "8K" },
@@ -93,29 +84,10 @@ function Scatter({ points }: { points: { x: number; y: number; open: boolean; na
 export default async function TrendsPage() {
   const [catalog, events] = await Promise.all([getCatalog(), getEvents()]);
   const groups = catalog.groups;
-  const n = groups.length || 1;
 
-  const caps = [
-    { label: "reasoning", count: groups.filter((g) => g.canonical?.reasoning ?? g.listings.some((l) => l.reasoning)).length },
-    { label: "tool call", count: groups.filter((g) => g.canonical?.toolCall ?? g.listings.some((l) => l.toolCall)).length },
-    { label: "structured output", count: groups.filter((g) => g.canonical?.structuredOutput ?? g.listings.some((l) => l.structuredOutput === true)).length },
-    { label: "vision / attachments", count: groups.filter((g) => g.canonical?.attachment ?? g.listings.some((l) => l.attachment)).length },
-    {
-      label: "audio input",
-      count: groups.filter(
-        (g) =>
-          (g.canonical?.modalities?.input.includes("audio") ?? false) ||
-          g.listings.some((l) => l.modalities.input.includes("audio")),
-      ).length,
-    },
-    { label: "open weights", count: groups.filter((g) => g.canonical?.openWeights === true).length },
-  ];
+  const caps = capabilityAdoption(groups);
 
-  const priced = groups.filter((g) => g.best != null);
-  const buckets = PRICE_BUCKETS.map((b) => ({
-    label: b.label,
-    count: priced.filter((g) => b.test(blendPrice(g.best!.input, g.best!.output))).length,
-  }));
+  const buckets = priceBuckets(groups);
   const bucketMax = Math.max(...buckets.map((b) => b.count), 1);
 
   const labStats = catalog.labs
@@ -133,6 +105,7 @@ export default async function TrendsPage() {
     .slice(0, 8);
   const medMax = Math.max(...labStats.map((s) => Math.max(s.medIn ?? 0, s.medOut ?? 0)), 0.001);
 
+  const priced = groups.filter((g) => g.best != null);
   const scatter = priced
     .filter((g) => (g.canonical?.limit?.context ?? 0) > 0)
     .map((g) => ({
@@ -178,9 +151,9 @@ export default async function TrendsPage() {
             {caps.map((c) => (
               <li key={c.label} className="flex items-center gap-3 text-sm">
                 <span className="w-40 shrink-0 text-black/60">{c.label}</span>
-                <Bar pct={c.count / n} />
+                <Bar pct={c.pct} />
                 <span className="w-20 shrink-0 text-right font-mono tabular-nums text-black/70">
-                  {c.count} · {Math.round((c.count / n) * 100)}%
+                  {c.count} · {Math.round(c.pct * 100)}%
                 </span>
               </li>
             ))}
