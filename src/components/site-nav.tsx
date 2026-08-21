@@ -91,7 +91,7 @@ export function SiteNav() {
     }`;
 
   return (
-    <nav ref={ref} aria-label="Primary" className="flex flex-wrap items-center gap-x-3.5 gap-y-1 text-sm font-medium text-black/55 lg:gap-x-5">
+    <nav ref={ref} aria-label="Primary" className="ml-auto flex flex-wrap items-center justify-end gap-x-3.5 gap-y-1 text-sm font-medium text-black/55 lg:gap-x-5">
       {GROUPS.map((g) => {
         const active = g.children.some((c) => isActive(c.href));
         const isOpen = open === g.label;
@@ -108,7 +108,7 @@ export function SiteNav() {
               <Chevron open={isOpen} />
             </button>
             {isOpen && (
-              <div className="card-flat absolute right-0 top-full z-50 mt-2 w-64 p-1.5 shadow-[4px_4px_0_0_rgba(0,0,0,1)]">
+              <div className="card-flat absolute left-0 top-full z-50 mt-2 w-64 p-1.5 shadow-[4px_4px_0_0_rgba(0,0,0,1)]">
                 {g.children.map((c) => (
                   <Link
                     key={c.href}
