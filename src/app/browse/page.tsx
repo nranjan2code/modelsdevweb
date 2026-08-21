@@ -6,6 +6,12 @@ export const metadata: Metadata = { title: "Browse models" };
 
 export default async function BrowsePage() {
   const catalog = await getCatalog();
+  const sweScore = (g: (typeof catalog.groups)[number]): number | null => {
+    const b = g.canonical?.benchmarks ?? [];
+    const pro = b.find((x) => x.name === "SWE-Bench Pro");
+    const verified = b.find((x) => x.name === "SWE-Bench Verified");
+    return pro?.score ?? verified?.score ?? null;
+  };
   const rows: BrowseRow[] = catalog.groups.map((g) => ({
     id: g.id,
     name: g.name,
@@ -22,6 +28,7 @@ export default async function BrowsePage() {
     open: g.canonical?.openWeights ?? false,
     released: g.canonical?.releaseDate ?? null,
     providers: g.listings.length,
+    swe: sweScore(g),
   }));
 
   return (
@@ -30,7 +37,7 @@ export default async function BrowsePage() {
         <h1 className="text-2xl font-semibold tracking-tight text-zinc-50">Browse models</h1>
         <p className="text-sm text-zinc-500">
           Best listed price across all serving providers. R = reasoning, T = tool call, S = structured output,
-          V = vision/attachments.
+          V = vision/attachments. SWE-Bench = SWE-Bench Pro (fallback: Verified) score where published.
         </p>
       </header>
       <BrowseTable rows={rows} />

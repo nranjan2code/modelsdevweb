@@ -173,3 +173,25 @@ export async function getModel(id: string): Promise<ModelGroup | null> {
   const catalog = await getCatalog();
   return catalog.groupById.get(id) ?? null;
 }
+
+export interface ProviderRow {
+  listing: Listing;
+  groupId: string;
+  groupName: string;
+}
+
+export async function getProvider(
+  id: string,
+): Promise<{ provider: Provider; rows: ProviderRow[] } | null> {
+  const catalog = await getCatalog();
+  const provider = catalog.providers.find((p) => p.id === id);
+  if (!provider) return null;
+  const rows: ProviderRow[] = catalog.groups.flatMap((g) =>
+    g.listings.filter((l) => l.providerId === id).map((l) => ({ listing: l, groupId: g.id, groupName: g.name })),
+  );
+  rows.sort(
+    (a, b) =>
+      (a.listing.cost.input ?? Number.POSITIVE_INFINITY) - (b.listing.cost.input ?? Number.POSITIVE_INFINITY),
+  );
+  return { provider, rows };
+}

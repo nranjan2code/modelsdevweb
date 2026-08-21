@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Listing } from "@/lib/pipeline/types";
 import { fmtPerM, fmtTokens, fmtDate } from "@/lib/format";
 import { unlistedPrice } from "@/lib/pipeline/normalize";
@@ -60,7 +61,12 @@ export function PriceTable({ listings }: { listings: Listing[] }) {
             return (
               <tr key={l.key} className="border-b border-zinc-800/60 last:border-0 hover:bg-zinc-900/50">
                 <td className="px-4 py-3">
-                  <div className="font-medium text-zinc-100">{l.providerName}</div>
+                  <Link
+                    href={`/provider/${l.providerId}`}
+                    className="font-medium text-zinc-100 hover:text-emerald-400 transition-colors"
+                  >
+                    {l.providerName}
+                  </Link>
                   <div className="text-xs text-zinc-500">{l.modelId}</div>
                 </td>
                 <td className="px-4 py-3 text-right font-mono tabular-nums">

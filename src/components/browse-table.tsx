@@ -18,9 +18,10 @@ export interface BrowseRow {
   open: boolean;
   released: string | null;
   providers: number;
+  swe: number | null;
 }
 
-type SortKey = "input" | "output" | "newest" | "providers" | "context";
+type SortKey = "input" | "output" | "newest" | "providers" | "context" | "swe";
 
 const CTX_OPTIONS = [
   { label: "Any context", value: 0 },
@@ -68,6 +69,8 @@ export function BrowseTable({ rows }: { rows: BrowseRow[] }) {
           return b.providers - a.providers;
         case "context":
           return (b.ctx ?? 0) - (a.ctx ?? 0);
+        case "swe":
+          return (b.swe ?? -1) - (a.swe ?? -1);
       }
     });
     return out;
@@ -121,6 +124,7 @@ export function BrowseTable({ rows }: { rows: BrowseRow[] }) {
           <option value="newest">Sort: newest</option>
           <option value="context">Sort: largest context</option>
           <option value="providers">Sort: most providers</option>
+          <option value="swe">Sort: best SWE-Bench</option>
         </select>
         <div className="flex flex-wrap gap-1.5">
           {[
@@ -158,6 +162,7 @@ export function BrowseTable({ rows }: { rows: BrowseRow[] }) {
               <th className="px-4 py-3 font-medium text-right">Context</th>
               <th className="px-4 py-3 font-medium">Caps</th>
               <th className="px-4 py-3 font-medium">Weights</th>
+              <th className="px-4 py-3 font-medium text-right">SWE-Bench</th>
               <th className="px-4 py-3 font-medium text-right">Providers</th>
               <th className="px-4 py-3 font-medium">Released</th>
             </tr>
@@ -199,13 +204,16 @@ export function BrowseTable({ rows }: { rows: BrowseRow[] }) {
                 <td className="px-4 py-3 text-xs">
                   {r.open ? <span className="text-emerald-400">open</span> : <span className="text-zinc-500">closed</span>}
                 </td>
+                <td className="px-4 py-3 text-right font-mono tabular-nums">
+                  {r.swe != null ? <span className="text-zinc-100">{r.swe.toFixed(1)}</span> : <span className="text-zinc-600">—</span>}
+                </td>
                 <td className="px-4 py-3 text-right tabular-nums text-zinc-400">{r.providers}</td>
                 <td className="px-4 py-3 text-xs text-zinc-500 whitespace-nowrap">{fmtDate(r.released)}</td>
               </tr>
             ))}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={8} className="px-4 py-8 text-center text-zinc-500">
+                <td colSpan={9} className="px-4 py-8 text-center text-zinc-500">
                   No models match these filters.
                 </td>
               </tr>
