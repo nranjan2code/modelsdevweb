@@ -17,6 +17,7 @@ export async function GET() {
 - GET ${SITE_URL}/api/models.json — canonical model catalog: best prices, context limits, capabilities
 - GET ${SITE_URL}/api/prices.json — every provider listing with per-token pricing
 - GET ${SITE_URL}/api/events.json — changelog events (releases, repricings, deprecations)
+- GET ${SITE_URL}/api/benchmarks.json — benchmark leaderboards with scores and best prices
 - GET ${SITE_URL}/feed.json — JSON Feed 1.1 of recent changes
 - GET ${SITE_URL}/rss.xml — RSS 2.0 of recent changes
 
@@ -31,6 +32,7 @@ capability_changed, model_removed, provider_removed
 - /browse — filterable catalog of all canonical models
 - /m/{lab}/{model} — per-model provider price comparison (e.g. /m/openai/gpt-4o)
 - /lab/{lab} — all models from one lab
+- /benchmarks — index; /benchmarks/{slug} — leaderboard pairing scores with prices
 - /calculator — monthly cost estimator by token mix
 - /deprecations — listings no longer served
 - /changelog — full event history (${events.length} events)

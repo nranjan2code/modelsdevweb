@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getModel, getCatalog } from "@/lib/data";
 import { getPriceHistory } from "@/lib/data/history";
+import { slugify } from "@/lib/data/benchmarks";
 import { PriceTable } from "@/components/price-table";
 import { PriceHistory } from "@/components/price-history";
 import { fmtDate, fmtPerM, fmtTokens } from "@/lib/format";
@@ -100,10 +101,10 @@ export default async function ModelPage({ params }: { params: Promise<{ model: s
               <ul className="card divide-y divide-zinc-800/60 text-sm">
                 {c.benchmarks.map((b, i) => (
                   <li key={i} className="px-4 py-2.5 flex items-center justify-between gap-2">
-                    <span>
+                    <Link href={`/benchmarks/${slugify(b.name)}`} className="hover:text-emerald-400 transition-colors">
                       {b.name}
                       {b.metric ? <span className="ml-1 text-xs text-zinc-500">({b.metric})</span> : null}
-                    </span>
+                    </Link>
                     <span className="font-mono tabular-nums text-zinc-100">{b.score}</span>
                   </li>
                 ))}
