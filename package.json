@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "sync": "tsx scripts/sync.ts",
+    "news": "tsx scripts/news.ts",
     "notify": "tsx scripts/notify.ts",
     "mcp": "tsx mcp/server.ts",
     "test": "vitest run"

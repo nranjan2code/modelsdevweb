@@ -31,6 +31,11 @@ jobs:
 
       - run: pnpm sync
 
+      - name: Fetch daily model news
+        env:
+          TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
+        run: pnpm news
+
       - name: Notify watchers
         env:
           WATCHER_SECRET: ${{ secrets.WATCHER_SECRET }}
@@ -40,7 +45,7 @@ jobs:
         run: |
           git config user.name "llm-pulse-bot"
           git config user.email "actions@users.noreply.github.com"
-          git add snapshots events
+          git add snapshots events news
           if git diff --cached --quiet; then
             echo "No data changes detected"
           else

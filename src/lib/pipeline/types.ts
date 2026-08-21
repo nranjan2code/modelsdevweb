@@ -119,3 +119,16 @@ export interface Event {
   providerId: string | null;
   changes: Change[];
 }
+
+export interface NewsItem {
+  id: string;
+  title: string;
+  url: string;
+  source: string;
+  favicon: string | null;
+  publishedAt: string | null;
+  score: number;
+  snippet: string;
+  modelIds: string[];
+  labIds: string[];
+}

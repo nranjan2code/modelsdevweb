@@ -29,3 +29,15 @@ export function fmtDate(iso: string | null | undefined): string {
 export function pct(n: number): string {
   return `${(n * 100).toFixed(0)}%`;
 }
+
+export function fmtAgo(iso: string | null | undefined): string {
+  if (!iso) return "";
+  const ts = new Date(iso).getTime();
+  if (!Number.isFinite(ts)) return "";
+  const hours = Math.max(0, Math.round((Date.now() - ts) / 3_600_000));
+  if (hours < 1) return "just now";
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.round(hours / 24);
+  if (days < 30) return `${days}d ago`;
+  return fmtDate(iso);
+}

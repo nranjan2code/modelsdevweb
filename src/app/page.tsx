@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { getCatalog, getEvents } from "@/lib/data";
+import { getCatalog, getEvents, getNews } from "@/lib/data";
 import { EventCard } from "@/components/event-card";
-import { fmtPerM, fmtTokens } from "@/lib/format";
+import { fmtPerM, fmtTokens, fmtAgo } from "@/lib/format";
 import type { Event } from "@/lib/pipeline/types";
 
 function Stat({ value, label }: { value: string; label: string }) {
@@ -34,7 +34,7 @@ function priceDrops(events: Event[]) {
 }
 
 export default async function HomePage() {
-  const [catalog, events] = await Promise.all([getCatalog(), getEvents()]);
+  const [catalog, events, news] = await Promise.all([getCatalog(), getEvents(), getNews()]);
   const s = catalog.stats;
   const fresh = [...catalog.groups]
     .sort((a, b) => (b.canonical?.releaseDate ?? "").localeCompare(a.canonical?.releaseDate ?? ""))
@@ -98,6 +98,44 @@ export default async function HomePage() {
               ))}
             </ul>
           </div>
+          {news.length > 0 && (
+            <div className="space-y-3">
+              <h2 className="text-lg font-semibold text-zinc-100">In the news</h2>
+              <ul className="card divide-y divide-zinc-800/60 text-sm">
+                {news.slice(0, 6).map((n) => {
+                  const modelId = n.modelIds.find((id) => catalog.groupById.has(id));
+                  return (
+                    <li key={n.id} className="px-4 py-2.5 space-y-1">
+                      <a
+                        href={n.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="line-clamp-2 text-zinc-200 hover:text-emerald-400 transition-colors"
+                      >
+                        {n.title}
+                      </a>
+                      <div className="flex items-center gap-1.5 text-xs text-zinc-500">
+                        {n.favicon && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={n.favicon} alt="" width={12} height={12} className="h-3 w-3 rounded-sm" />
+                        )}
+                        <span className="truncate">{n.source}</span>
+                        {n.publishedAt && <span>· {fmtAgo(n.publishedAt)}</span>}
+                        {modelId && (
+                          <>
+                            <span>·</span>
+                            <Link href={`/m/${modelId}`} className="shrink-0 hover:text-emerald-400 transition-colors">
+                              {catalog.groupById.get(modelId)?.name ?? modelId}
+                            </Link>
+                          </>
+                        )}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
           {drops.length > 0 && (
             <div className="space-y-3">
               <h2 className="text-lg font-semibold text-zinc-100">Biggest price drops</h2>

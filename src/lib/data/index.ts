@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { normalizeApi, normalizeModels, unlistedPrice } from "../pipeline/normalize";
-import type { CanonicalModel, Event, Listing, Provider } from "../pipeline/types";
+import type { CanonicalModel, Event, Listing, NewsItem, Provider } from "../pipeline/types";
 import { rawApi, rawModels } from "../pipeline/schema";
 
 const LATEST = () => path.join(process.cwd(), "snapshots", "latest");
@@ -167,6 +167,19 @@ export async function getEvents(): Promise<Event[]> {
     eventsCache = [];
   }
   return eventsCache;
+}
+
+let newsCache: NewsItem[] | null = null;
+
+export async function getNews(): Promise<NewsItem[]> {
+  if (newsCache) return newsCache;
+  try {
+    const buf = await readFile(path.join(process.cwd(), "news", "index.json"), "utf8");
+    newsCache = (JSON.parse(buf) as { items?: NewsItem[] }).items ?? [];
+  } catch {
+    newsCache = [];
+  }
+  return newsCache;
 }
 
 export async function getModel(id: string): Promise<ModelGroup | null> {
