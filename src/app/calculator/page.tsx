@@ -2,7 +2,11 @@ import type { Metadata } from "next";
 import { getCatalog } from "@/lib/data";
 import { Calculator, type CalcRow } from "@/components/calculator";
 
-export const metadata: Metadata = { title: "Cost calculator" };
+export const metadata: Metadata = {
+  title: "Cost calculator",
+  description: "Estimate monthly AI API costs from your token mix, including cache-hit savings, across every model.",
+  alternates: { canonical: "/calculator" },
+};
 
 export default async function CalculatorPage() {
   const catalog = await getCatalog();

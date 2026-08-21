@@ -13,6 +13,7 @@ import { PriceHistory } from "@/components/price-history";
 import { EventTypeBadge, changeText } from "@/components/event-card";
 import { StatusBadge } from "@/components/price-table";
 import { CopyField } from "@/components/copy-field";
+import { JsonLd } from "@/components/jsonld";
 import { fmtDate, fmtPerM, fmtTokens, fmtAgo } from "@/lib/format";
 
 export async function generateStaticParams() {
@@ -26,8 +27,16 @@ export async function generateMetadata({ params }: { params: Promise<{ model: st
   if (!group) return { title: "Model not found" };
   const ogPath = `/og/m/${group.id}.png`;
   const hasOg = existsSync(path.join(process.cwd(), "public", ogPath));
+  const description =
+    `${group.name} pricing across ${group.listings.length} providers` +
+    (group.best
+      ? ` — from ${fmtPerM(group.best.input)} input / ${fmtPerM(group.best.output)} per 1M tokens at its cheapest listed provider.`
+      : ".") +
+    (group.canonical?.limit?.context ? ` ${Math.round(group.canonical.limit.context / 1000)}K token context window.` : "");
   return {
     title: `${group.name} — prices across ${group.listings.length} providers`,
+    description,
+    alternates: { canonical: `/m/${group.id}` },
     openGraph: {
       images: [`${SITE_URL}${hasOg ? ogPath : "/og/site.png"}`],
     },
@@ -49,8 +58,53 @@ export default async function ModelPage({ params }: { params: Promise<{ model: s
   const statuses = [...new Set(liveListings.map((l) => l.status).filter((s): s is "alpha" | "beta" => s != null))];
   const experimental = liveListings.some((l) => l.experimental);
 
+  const pricedOffers = liveListings
+    .filter((l) => l.cost.input != null)
+    .sort((a, b) => (a.cost.input ?? Infinity) - (b.cost.input ?? Infinity));
+  const jsonLd: object[] = [
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Browse", item: `${SITE_URL}/browse` },
+        { "@type": "ListItem", position: 2, name: group.labId, item: `${SITE_URL}/lab/${group.labId}` },
+        { "@type": "ListItem", position: 3, name: group.name, item: `${SITE_URL}/m/${group.id}` },
+      ],
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "Product",
+      name: group.name,
+      description:
+        c?.description ??
+        `AI model pricing comparison across ${group.listings.length} inference providers. Prices are USD per 1M tokens.`,
+      category: "AI language model",
+      ...(c?.releaseDate ? { releaseDate: c.releaseDate } : {}),
+      brand: { "@type": "Brand", name: group.labId },
+      offers: {
+        "@type": "AggregateOffer",
+        priceCurrency: "USD",
+        ...(group.best ? { lowPrice: group.best.input } : {}),
+        highPrice: pricedOffers[pricedOffers.length - 1]?.cost.input ?? undefined,
+        offerCount: pricedOffers.length,
+        offers: pricedOffers.slice(0, 12).map((l) => ({
+          "@type": "Offer",
+          name: `Input tokens via ${l.providerName}`,
+          price: l.cost.input,
+          priceCurrency: "USD",
+          availability: "https://schema.org/InStock",
+          url: `${SITE_URL}/provider/${l.providerId}`,
+          seller: { "@type": "Organization", name: l.providerName },
+        })),
+      },
+    },
+  ];
+
   return (
     <div className="space-y-8">
+      {jsonLd.map((data, i) => (
+        <JsonLd key={i} data={data} />
+      ))}
       <nav className="text-sm text-black/45">
         <Link href="/browse" className="transition-colors hover:text-blue-600">
           Browse
@@ -67,7 +121,11 @@ export default async function ModelPage({ params }: { params: Promise<{ model: s
         {c?.description && <p className="max-w-3xl leading-relaxed text-black/60">{c.description}</p>}
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-black/50">
           <span>{group.listings.length} providers</span>
-          {c?.releaseDate && <span>released {fmtDate(c.releaseDate)}</span>}
+          {c?.releaseDate && (
+            <span>
+              released <time dateTime={c.releaseDate}>{fmtDate(c.releaseDate)}</time>
+            </span>
+          )}
           {c?.knowledge && <span>knowledge cutoff {c.knowledge}</span>}
           {c?.openWeights != null && (
             <span

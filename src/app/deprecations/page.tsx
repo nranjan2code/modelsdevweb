@@ -3,7 +3,11 @@ import Link from "next/link";
 import { getCatalog } from "@/lib/data";
 import { fmtDate, fmtPerM } from "@/lib/format";
 
-export const metadata: Metadata = { title: "Deprecations" };
+export const metadata: Metadata = {
+  title: "Deprecations",
+  description: "Deprecated AI model listings — track sunset endpoints before your pinned provider removes them.",
+  alternates: { canonical: "/deprecations" },
+};
 
 export default async function DeprecationsPage() {
   const catalog = await getCatalog();

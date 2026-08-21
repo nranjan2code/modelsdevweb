@@ -2,7 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getBenchmarkBoards } from "@/lib/data/benchmarks";
 
-export const metadata: Metadata = { title: "Benchmarks" };
+export const metadata: Metadata = {
+  title: "Benchmarks",
+  description: "AI benchmark leaderboards paired with real prices — score per dollar across SWE-Bench, Terminal-Bench, ARC-AGI and more.",
+  alternates: { canonical: "/benchmarks" },
+};
 
 export default async function BenchmarksPage() {
   const boards = await getBenchmarkBoards();

@@ -2,7 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getCatalog } from "@/lib/data";
 
-export const metadata: Metadata = { title: "Providers" };
+export const metadata: Metadata = {
+  title: "Providers",
+  description: "Every inference provider serving AI models, with per-model input, output and cache pricing.",
+  alternates: { canonical: "/providers" },
+};
 
 export default async function ProvidersPage() {
   const catalog = await getCatalog();

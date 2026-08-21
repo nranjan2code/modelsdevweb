@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { getCatalog } from "@/lib/data";
+import { fmtDate } from "@/lib/format";
 import { SITE_NAME } from "@/lib/site";
 
 const COLUMNS: { title: string; links: { href: string; label: string; external?: boolean }[] }[] = [
@@ -37,7 +39,8 @@ const COLUMNS: { title: string; links: { href: string; label: string; external?:
   },
 ];
 
-export function SiteFooter() {
+export async function SiteFooter() {
+  const { stats } = await getCatalog();
   const year = new Date().getFullYear();
   return (
     <footer className="border-t border-black/5 bg-[#FDFBF7]">
@@ -97,7 +100,8 @@ export function SiteFooter() {
       <div className="border-t border-black/5">
         <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
           <p className="text-center font-mono text-xs text-black/40">
-            © {year} {SITE_NAME}. Open data, hourly diffed.{" "}
+            © {year} {SITE_NAME} · data updated{" "}
+            <time dateTime={stats.snapshotDate ?? undefined}>{fmtDate(stats.snapshotDate)}</time> ·{" "}
             <a
               href="https://vakyartha.com"
               target="_blank"

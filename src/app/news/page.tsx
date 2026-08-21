@@ -3,7 +3,11 @@ import Link from "next/link";
 import { getCatalog, getNews } from "@/lib/data";
 import { fmtAgo } from "@/lib/format";
 
-export const metadata: Metadata = { title: "Model news" };
+export const metadata: Metadata = {
+  title: "Model news",
+  description: "Daily news headlines about the most notable AI models, tagged and deep-linked to live price pages.",
+  alternates: { canonical: "/news" },
+};
 
 export default async function NewsPage() {
   const [news, catalog] = await Promise.all([getNews(), getCatalog()]);

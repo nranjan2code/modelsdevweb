@@ -2,7 +2,11 @@ import type { Metadata } from "next";
 import { getEvents } from "@/lib/data";
 import { ChangelogList } from "@/components/changelog-list";
 
-export const metadata: Metadata = { title: "Changelog" };
+export const metadata: Metadata = {
+  title: "Changelog",
+  description: "Hourly changelog of the AI model landscape: releases, repricings, deprecations, context and capability changes.",
+  alternates: { canonical: "/changelog" },
+};
 
 export default async function ChangelogPage() {
   const events = await getEvents();

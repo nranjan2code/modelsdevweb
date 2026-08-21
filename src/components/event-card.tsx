@@ -46,7 +46,8 @@ export function EventCard({ event }: { event: Event }) {
           <span className="font-medium text-black">{event.modelName}</span>
         )}
         <span className="text-xs text-black/45">
-          {event.providerId ? `via ${event.providerId}` : ""} · {fmtDate(event.date)}
+          {event.providerId ? `via ${event.providerId} · ` : ""}
+          <time dateTime={event.date}>{fmtDate(event.date)}</time>
         </span>
       </div>
       {event.changes.length > 0 && (

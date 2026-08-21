@@ -1,10 +1,49 @@
 import type { Metadata } from "next";
+import { JsonLd } from "@/components/jsonld";
 
-export const metadata: Metadata = { title: "About" };
+export const metadata: Metadata = {
+  title: "About",
+  description: "How LLM Pulse diffs models.dev hourly into a typed event stream; data sources, licenses and methodology.",
+  alternates: { canonical: "/about" },
+};
+
+const FAQ = [
+  {
+    q: "Where does the data come from?",
+    a: "All model specifications, prices and capabilities come from models.dev, an open-source, community-maintained database. An hourly job fetches and validates their API, then diffs it against the previous snapshot.",
+  },
+  {
+    q: "How often do prices update?",
+    a: "Every hour. When a provider changes a listed price, a repriced event appears in the changelog within the hour, and per-model price history is kept as daily snapshots.",
+  },
+  {
+    q: "What does a dash (—) mean in a price column?",
+    a: "It means the provider does not publicly list a price for that model — it is not necessarily free. Always verify with the provider before purchasing.",
+  },
+  {
+    q: "Can I use this data programmatically?",
+    a: "Yes — every view has a JSON twin (/api/models.json, /api/prices.json, /api/events.json, /api/benchmarks.json), plus RSS feeds, an llms.txt index and an MCP server. See /llms.txt.",
+  },
+  {
+    q: "Are you affiliated with the labs or benchmarks?",
+    a: "No. Benchmark names are trademarks of their maintainers and scores are facts as publicly reported by labs; every leaderboard links back to the official benchmark site and the original score reports.",
+  },
+];
 
 export default function AboutPage() {
   return (
     <div className="max-w-3xl space-y-10 text-sm leading-relaxed text-black/70">
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: FAQ.map((f) => ({
+            "@type": "Question",
+            name: f.q,
+            acceptedAnswer: { "@type": "Answer", text: f.a },
+          })),
+        }}
+      />
       <header className="space-y-2">
         <p className="mono-label">Methodology</p>
         <h1 className="text-3xl font-bold tracking-tight text-black sm:text-4xl">About &amp; methodology</h1>
@@ -64,6 +103,20 @@ export default function AboutPage() {
           </a>{" "}
           for the index. Agents are first-class consumers here.
         </p>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="font-hand text-2xl font-bold tracking-tight text-black">FAQ</h2>
+        <div className="divide-y divide-black/10 rounded-lg border-2 border-black bg-white">
+          {FAQ.map((f) => (
+            <details key={f.q} className="group px-4 py-3">
+              <summary className="cursor-pointer list-none font-medium text-black marker:hidden transition-colors hover:text-blue-600">
+                {f.q}
+              </summary>
+              <p className="mt-2 text-black/65">{f.a}</p>
+            </details>
+          ))}
+        </div>
       </section>
 
       <section className="space-y-3">

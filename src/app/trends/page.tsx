@@ -5,7 +5,11 @@ import { capabilityAdoption, priceBuckets } from "@/lib/data/stats";
 import type { Event } from "@/lib/pipeline/types";
 import { EventTypeBadge } from "@/components/event-card";
 
-export const metadata: Metadata = { title: "Market trends" };
+export const metadata: Metadata = {
+  title: "Market trends",
+  description: "Aggregate market view of AI models: capability adoption, price distributions, median prices by lab and recent repricings.",
+  alternates: { canonical: "/trends" },
+};
 
 function median(values: number[]): number | null {
   if (values.length === 0) return null;

@@ -3,7 +3,11 @@ import { getCatalog } from "@/lib/data";
 import type { Modality } from "@/lib/pipeline/types";
 import { CompareBoard, type CompareModel } from "@/components/compare-board";
 
-export const metadata: Metadata = { title: "Compare models" };
+export const metadata: Metadata = {
+  title: "Compare models",
+  description: "Compare two to four AI models side by side: prices, context windows, capabilities and benchmark scores.",
+  alternates: { canonical: "/compare" },
+};
 
 export default async function ComparePage() {
   const catalog = await getCatalog();

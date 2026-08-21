@@ -11,6 +11,7 @@ const jetbrains = JetBrains_Mono({ subsets: ["latin"], variable: "--font-jetbrai
 const caveat = Caveat({ subsets: ["latin"], variable: "--font-caveat" });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: {
     default: `${SITE_NAME} — ${SITE_TAGLINE}`,
     template: `%s · ${SITE_NAME}`,
@@ -30,6 +31,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${inter.variable} ${jetbrains.variable} ${caveat.variable}`}>
       <body className="min-h-screen flex flex-col font-sans">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebSite",
+              name: SITE_NAME,
+              url: SITE_URL,
+              description: SITE_TAGLINE,
+            }).replace(/</g, "\\u003c"),
+          }}
+        />
         <a
           href="#main"
           className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:border-2 focus:border-black focus:bg-white focus:px-3 focus:py-1.5 focus:text-sm focus:shadow-[2px_2px_0_0_rgba(0,0,0,1)]"

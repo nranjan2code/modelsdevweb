@@ -3,7 +3,11 @@ import { getCatalog } from "@/lib/data";
 import type { Modality } from "@/lib/pipeline/types";
 import { BrowseTable, type BrowseRow } from "@/components/browse-table";
 
-export const metadata: Metadata = { title: "Browse models" };
+export const metadata: Metadata = {
+  title: "Browse models",
+  description: "Filterable catalog of every AI model — best listed prices across all inference providers, context windows, capabilities and benchmark scores.",
+  alternates: { canonical: "/browse" },
+};
 
 export default async function BrowsePage() {
   const catalog = await getCatalog();
