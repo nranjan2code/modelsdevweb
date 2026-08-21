@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { diffListings } from "../src/lib/pipeline/diff";
 import { normalizeApi, normalizeModels } from "../src/lib/pipeline/normalize";
@@ -28,6 +28,21 @@ async function readJson(file: string): Promise<unknown | null> {
   }
 }
 
+const RETENTION_DAYS = 14;
+
+async function pruneOldSnapshots(): Promise<void> {
+  const cutoff = Date.now() - RETENTION_DAYS * 24 * 60 * 60 * 1000;
+  const entries = await readdir(SNAPSHOTS);
+  for (const name of entries) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(name)) continue;
+    const ts = new Date(`${name}T00:00:00Z`).getTime();
+    if (Number.isFinite(ts) && ts < cutoff) {
+      await rm(path.join(SNAPSHOTS, name), { recursive: true, force: true });
+      console.log(`[sync] pruned snapshot ${name}`);
+    }
+  }
+}
+
 async function main(): Promise<void> {
   const date = today();
   console.log(`[sync] ${date}: fetching models.dev`);
@@ -54,6 +69,11 @@ async function main(): Promise<void> {
     await writeFile(path.join(dir, "api.json"), JSON.stringify(apiRaw));
     await writeFile(path.join(dir, "models.json"), JSON.stringify(modelsRaw));
   }
+  await writeFile(
+    path.join(LATEST, "meta.json"),
+    JSON.stringify({ date, fetchedAt: new Date().toISOString() }),
+  );
+  await pruneOldSnapshots();
 
   const existing = ((await readJson(EVENTS_FILE)) as Event[] | null) ?? [];
   const seen = new Set(existing.map((e) => e.id));

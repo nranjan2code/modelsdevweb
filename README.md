@@ -50,6 +50,40 @@ pnpm build       # static export to out/
 - `/rss.xml` — RSS feed of changes
 - `/llms.txt` — index for AI agents
 
+### MCP server (for AI agents)
+
+Expose LLM Pulse as tools to any MCP client (Claude, opencode, Cursor, …):
+
+```bash
+pnpm mcp   # stdio transport; set LLM_PULSE_URL to your deployment
+```
+
+Tools: `search_models` (capability/price/context filters), `get_model_prices`
+(per-provider comparison), `get_changes` (recent landscape events).
+
+Client config example:
+
+```json
+{
+  "mcpServers": {
+    "llm-pulse": {
+      "command": "pnpm",
+      "args": ["mcp"],
+      "cwd": "/path/to/llm-pulse",
+      "env": { "LLM_PULSE_URL": "https://your-deployment.example.com" }
+    }
+  }
+}
+```
+
+## Deployment
+
+Static export (`out/`) — deploy anywhere:
+
+- **Vercel / Cloudflare Pages**: import the repo, build `pnpm build`, output `out`.
+  Add a deploy hook secret `DEPLOY_HOOK_URL` so the hourly sync triggers redeploys.
+- Set `NEXT_PUBLIC_SITE_URL` to the production URL for absolute links in feeds.
+
 ## Data & pricing caveats
 
 Prices are per 1M tokens (USD) as published by models.dev contributors. A dash (`—`) means the

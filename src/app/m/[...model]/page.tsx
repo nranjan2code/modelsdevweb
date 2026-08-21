@@ -2,7 +2,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getModel, getCatalog } from "@/lib/data";
+import { getPriceHistory } from "@/lib/data/history";
 import { PriceTable } from "@/components/price-table";
+import { PriceHistory } from "@/components/price-history";
 import { fmtDate, fmtPerM, fmtTokens } from "@/lib/format";
 
 export async function generateStaticParams() {
@@ -23,6 +25,7 @@ export default async function ModelPage({ params }: { params: Promise<{ model: s
   const group = await getModel(id);
   if (!group) notFound();
   const c = group.canonical;
+  const history = await getPriceHistory(id);
 
   return (
     <div className="space-y-8">
@@ -86,6 +89,8 @@ export default async function ModelPage({ params }: { params: Promise<{ model: s
         </h2>
         <PriceTable listings={group.listings} />
       </section>
+
+      <PriceHistory points={history} />
 
       {(c?.benchmarks.length || c?.weights.length) ? (
         <section className="grid gap-6 md:grid-cols-2">

@@ -40,6 +40,16 @@ capability_changed, model_removed, provider_removed
 - Prefer /api/*.json over scraping HTML.
 - Model IDs are stable path-style identifiers (lab/model).
 - A missing or null price means the provider does not publish one; verify before purchasing.
+
+## MCP server
+
+An MCP (Model Context Protocol) server ships in this repo for direct tool access:
+
+- search_models — filter by capability, context, price, free text
+- get_model_prices — per-provider price comparison for one model
+- get_changes — recent releases, repricings, deprecations
+
+Run with LLM_PULSE_URL=https://your-deployment pnpm mcp (stdio transport).
 `;
 
   return new Response(body, { headers: { "content-type": "text/plain; charset=utf-8" } });

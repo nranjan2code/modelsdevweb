@@ -106,11 +106,24 @@ function groupListings(listings: Listing[], canonicalById: Map<string, Canonical
 
 let catalogCache: Catalog | null = null;
 
+interface SnapshotMeta {
+  date?: string;
+}
+
+async function readMeta(): Promise<SnapshotMeta | null> {
+  try {
+    return JSON.parse(await readFile(path.join(LATEST(), "meta.json"), "utf8")) as SnapshotMeta;
+  } catch {
+    return null;
+  }
+}
+
 export async function getCatalog(): Promise<Catalog> {
   if (catalogCache) return catalogCache;
-  const [apiBuf, modelsBuf] = await Promise.all([
+  const [apiBuf, modelsBuf, meta] = await Promise.all([
     readFile(path.join(LATEST(), "api.json"), "utf8"),
     readFile(path.join(LATEST(), "models.json"), "utf8"),
+    readMeta(),
   ]);
   const parsedModels = rawModels.parse(JSON.parse(modelsBuf));
   const { models, index } = normalizeModels(parsedModels);
@@ -137,7 +150,7 @@ export async function getCatalog(): Promise<Catalog> {
       labs: labs.length,
       deprecated: listings.filter((l) => l.status === "deprecated").length,
       openWeights: groups.filter((g) => g.canonical?.openWeights === true).length,
-      snapshotDate: null,
+      snapshotDate: meta?.date ?? null,
     },
   };
   return catalogCache;
