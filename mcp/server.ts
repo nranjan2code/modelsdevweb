@@ -140,6 +140,42 @@ server.registerTool(
   },
 );
 
+server.registerTool(
+  "get_news",
+  {
+    title: "Recent AI model news",
+    description:
+      "Daily news headlines about the latest and most popular AI models, fetched from news sources. Filter by free-text query or model id. Items link to the original articles.",
+    inputSchema: {
+      query: z.string().optional().describe("Free-text match on headline, snippet, source or model id"),
+      model_id: z.string().optional().describe("Only items tagged with this canonical model id, e.g. openai/gpt-4o"),
+      limit: z.number().default(10).describe("Max items (1-24)"),
+    },
+  },
+  async (args) => {
+    interface NewsItem {
+      id: string;
+      title: string;
+      url: string;
+      source: string;
+      publishedAt: string | null;
+      snippet: string;
+      modelIds: string[];
+    }
+    const data = await api<{ count: number; items: NewsItem[] }>("/api/news.json");
+    const q = args.query?.trim().toLowerCase();
+    const out = data.items
+      .filter((n) => {
+        if (args.model_id && !n.modelIds.includes(args.model_id)) return false;
+        if (q && !`${n.title} ${n.snippet} ${n.source} ${n.modelIds.join(" ")}`.toLowerCase().includes(q))
+          return false;
+        return true;
+      })
+      .slice(0, Math.min(Math.max(args.limit, 1), 24));
+    return text({ count: out.length, fetched: data.count ? "today" : "no data", items: out });
+  },
+);
+
 async function main(): Promise<void> {
   const transport = new StdioServerTransport();
   await server.connect(transport);

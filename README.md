@@ -54,7 +54,8 @@ Local secrets live in `.env.local` (gitignored): `TAVILY_API_KEY` is read automa
 
 - `/api/events.json` — changelog feed
 - `/api/models.json` — canonical model catalog with best prices
-- `/rss.xml` — RSS feed of changes
+- `/api/news.json` — daily model news headlines tagged with model IDs
+- `/rss.xml` — RSS feed of changes and news
 - `/llms.txt` — index for AI agents
 
 ### MCP server (for AI agents)
@@ -66,7 +67,8 @@ pnpm mcp   # stdio transport; set LLM_PULSE_URL to your deployment
 ```
 
 Tools: `search_models` (capability/price/context filters), `get_model_prices`
-(per-provider comparison), `get_changes` (recent landscape events).
+(per-provider comparison), `get_changes` (recent landscape events), `get_news`
+(daily model headlines).
 
 ### Webhook watchdog
 

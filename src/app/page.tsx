@@ -100,7 +100,12 @@ export default async function HomePage() {
           </div>
           {news.length > 0 && (
             <div className="space-y-3">
-              <h2 className="text-lg font-semibold text-zinc-100">In the news</h2>
+              <div className="flex items-baseline justify-between">
+                <h2 className="text-lg font-semibold text-zinc-100">In the news</h2>
+                <Link href="/news" className="text-sm text-emerald-400 hover:text-emerald-300">
+                  View all →
+                </Link>
+              </div>
               <ul className="card divide-y divide-zinc-800/60 text-sm">
                 {news.slice(0, 6).map((n) => {
                   const modelId = n.modelIds.find((id) => catalog.groupById.has(id));
