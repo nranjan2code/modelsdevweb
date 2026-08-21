@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useRef, useState } from "react";
 import { fmtPerM, fmtTokens, fmtDate } from "@/lib/format";
+import { toggleCompare, useCompareSelection } from "@/lib/compare";
 
 export interface BrowseRow {
   id: string;
@@ -15,10 +16,14 @@ export interface BrowseRow {
   tools: boolean;
   structured: boolean;
   vision: boolean;
+  audio: boolean;
+  video: boolean;
+  pdf: boolean;
   open: boolean;
   released: string | null;
   providers: number;
   swe: number | null;
+  flags: string[];
 }
 
 type SortKey = "input" | "output" | "newest" | "providers" | "context" | "swe";
@@ -45,8 +50,17 @@ const CAPS = [
   ["tools", "tools"],
   ["structured", "structured"],
   ["vision", "vision"],
+  ["audio", "audio"],
+  ["video", "video"],
+  ["pdf", "pdf"],
   ["open", "open weights"],
 ] as const;
+
+const FLAG_CAPS = new Set(["beta", "alpha", "experimental"]);
+
+function hasCap(r: BrowseRow, cap: string): boolean {
+  return FLAG_CAPS.has(cap) ? r.flags.includes(cap) : (r[cap as keyof BrowseRow] === true);
+}
 
 export function BrowseTable({ rows }: { rows: BrowseRow[] }) {
   const [q, setQ] = useState("");
@@ -55,6 +69,7 @@ export function BrowseTable({ rows }: { rows: BrowseRow[] }) {
   const [caps, setCaps] = useState<Set<string>>(new Set());
   const [sort, setSort] = useState<SortKey>("input");
   const [page, setPage] = useState(1);
+  const inCompare = useCompareSelection();
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -64,7 +79,7 @@ export function BrowseTable({ rows }: { rows: BrowseRow[] }) {
       if (r.input != null && r.input > priceMax) return false;
       if (r.input == null && priceMax !== Number.POSITIVE_INFINITY) return false;
       for (const cap of caps) {
-        if (!r[cap as keyof BrowseRow]) return false;
+        if (!hasCap(r, cap)) return false;
       }
       return true;
     });
@@ -175,21 +190,35 @@ export function BrowseTable({ rows }: { rows: BrowseRow[] }) {
         </span>
       </div>
 
+      {inCompare.length >= 2 && (
+        <div className="sticky bottom-4 z-30 flex justify-center">
+          <Link
+            href="/compare"
+            className="rounded-full border-2 border-black bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-[3px_3px_0_0_rgba(0,0,0,1)] transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_rgba(0,0,0,1)]"
+          >
+            Compare {inCompare.length} models →
+          </Link>
+        </div>
+      )}
+
       <div className="card overflow-x-auto" ref={tableRef}>
-        <table className="table-base min-w-[820px]">
-          <thead>
-            <tr>
-              <th>Model</th>
-              <th className="text-right">Best in /M</th>
-              <th className="text-right">Best out /M</th>
-              <th className="text-right">Context</th>
-              <th>Caps</th>
-              <th>Weights</th>
-              <th className="text-right">SWE-Bench</th>
-              <th className="text-right">Providers</th>
-              <th>Released</th>
-            </tr>
-          </thead>
+          <table className="table-base min-w-[860px]">
+            <thead>
+              <tr>
+                <th>Model</th>
+                <th className="text-right">Best in /M</th>
+                <th className="text-right">Best out /M</th>
+                <th className="text-right">Context</th>
+                <th>Caps</th>
+                <th>Weights</th>
+                <th className="text-right">SWE-Bench</th>
+                <th className="text-right">Providers</th>
+                <th>Released</th>
+                <th>
+                  <span title="Add to comparison">Cmp</span>
+                </th>
+              </tr>
+            </thead>
           <tbody>
             {paged.map((r) => (
               <tr key={r.id}>
@@ -198,6 +227,24 @@ export function BrowseTable({ rows }: { rows: BrowseRow[] }) {
                     {r.name}
                   </Link>
                   <span className="ml-2 text-xs text-black/45">{r.lab}</span>
+                  {r.flags.length > 0 && (
+                    <span className="ml-2 inline-flex gap-1 align-middle">
+                      {r.flags.map((f) => (
+                        <span
+                          key={f}
+                          className={
+                            f === "beta"
+                              ? "rounded-full border border-amber-600/40 bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700"
+                              : f === "alpha"
+                                ? "rounded-full border border-blue-600/30 bg-blue-50 px-1.5 py-0.5 text-[10px] font-semibold text-blue-700"
+                                : "rounded-full border border-purple-600/30 bg-purple-50 px-1.5 py-0.5 text-[10px] font-semibold text-purple-700"
+                          }
+                        >
+                          {f}
+                        </span>
+                      ))}
+                    </span>
+                  )}
                 </td>
                 <td className="text-right font-mono tabular-nums">{fmtPerM(r.input)}</td>
                 <td className="text-right font-mono tabular-nums">{fmtPerM(r.output)}</td>
@@ -210,11 +257,14 @@ export function BrowseTable({ rows }: { rows: BrowseRow[] }) {
                         ["T", r.tools],
                         ["S", r.structured],
                         ["V", r.vision],
+                        ["A", r.audio],
                       ] as const
                     ).map(([ch, on]) => (
                       <span
                         key={ch}
-                        title={{ R: "reasoning", T: "tool call", S: "structured output", V: "vision/attachment" }[ch]}
+                        title={
+                          { R: "reasoning", T: "tool call", S: "structured output", V: "vision/attachment", A: "audio in/out" }[ch]
+                        }
                         className={`inline-flex size-5 items-center justify-center rounded border text-[11px] font-semibold ${
                           on
                             ? "border-emerald-600/30 bg-emerald-50 text-emerald-700"
@@ -242,11 +292,25 @@ export function BrowseTable({ rows }: { rows: BrowseRow[] }) {
                 </td>
                 <td className="text-right tabular-nums text-black/55">{r.providers}</td>
                 <td className="whitespace-nowrap text-xs text-black/45">{fmtDate(r.released)}</td>
+                <td>
+                  <button
+                    onClick={() => toggleCompare(r.id)}
+                    aria-pressed={inCompare.includes(r.id)}
+                    title={inCompare.includes(r.id) ? "Remove from comparison" : "Add to comparison"}
+                    className={`inline-flex size-6 items-center justify-center rounded border text-xs font-bold transition-all ${
+                      inCompare.includes(r.id)
+                        ? "border-blue-600 bg-blue-600 text-white"
+                        : "border-black/20 bg-white text-black/40 hover:border-black hover:text-black"
+                    }`}
+                  >
+                    {inCompare.includes(r.id) ? "✓" : "+"}
+                  </button>
+                </td>
               </tr>
             ))}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={9} className="py-10 text-center text-sm text-black/45">
+                <td colSpan={10} className="py-10 text-center text-sm text-black/45">
                   No models match these filters.
                 </td>
               </tr>

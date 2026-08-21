@@ -9,10 +9,11 @@ Production: https://modelsdevweb.vercel.app
 pnpm lint          # eslint
 npx tsc --noEmit   # typecheck (no dedicated script)
 pnpm test          # vitest
-pnpm build         # pnpm og + next build (static export) + pagefind index → out/
+pnpm build         # pnpm og + pnpm badges + next build (static export) + pagefind index → out/
 pnpm sync          # fetch models.dev, diff, write snapshots/ + events/
 pnpm news          # Tavily daily news → news/index.json (--force to refetch same day)
 pnpm og            # satori-render OG cards → public/og/ (site + top 300 models)
+pnpm badges        # shields-style SVG price badges → public/badge/ (all models)
 ```
 
 ## Architecture constraints
@@ -40,6 +41,18 @@ hourly GH Action (sync.yml)
 - `scripts/og.tsx` renders OG social cards (satori + resvg) into `public/og/` during
   `pnpm build`; gitignored, never committed. Model pages reference their card when present,
   others fall back to `/og/site.png`. Absolute URLs come from `NEXT_PUBLIC_SITE_URL`.
+- `scripts/badges.ts` renders shields-style SVG price badges into `public/badge/` during
+  `pnpm build`; gitignored. Model pages embed them; `/badge/<id>.svg` is public.
+
+## Pages & client state
+
+- Static pages: `/compare` (2–4 model diff), `/trends` (market aggregates), per-lab feeds at
+  `/feeds/[lab]/rss.xml`. All computed from the same snapshot data as every other page.
+- `/compare` selection lives in localStorage (`llm-pulse:compare`) via `src/lib/compare.ts`
+  (`useSyncExternalStore`). Never read it with useState+useEffect — the
+  `react-hooks/set-state-in-effect` lint rule rejects that pattern.
+- Benchmark boards expose `pointsPerDollar` (score ÷ blended price); see
+  `src/lib/data/benchmarks.ts`.
 
 ## Deployment (Vercel)
 

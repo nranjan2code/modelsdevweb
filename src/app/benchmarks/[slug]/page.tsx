@@ -22,6 +22,15 @@ export default async function BenchmarkPage({ params }: { params: Promise<{ slug
   if (!board) notFound();
   const maxScore = board.entries[0]?.score ?? 1;
   const priced = board.entries.filter((e) => e.bestInput != null);
+  const valueSorted = [...board.entries]
+    .filter((e) => e.pointsPerDollar != null)
+    .sort((a, b) => (b.pointsPerDollar ?? 0) - (a.pointsPerDollar ?? 0));
+  const valueLeaders = valueSorted.slice(0, 5);
+  const fmtPpd = (v: number | null): string => {
+    if (v == null) return "—";
+    if (!Number.isFinite(v)) return "free";
+    return v >= 100 ? Math.round(v).toLocaleString("en-US") : v.toFixed(1);
+  };
 
   return (
     <div className="space-y-6">
@@ -38,12 +47,34 @@ export default async function BenchmarkPage({ params }: { params: Promise<{ slug
         <h1 className="text-3xl font-bold tracking-tight text-black sm:text-4xl">{board.name}</h1>
         <p className="max-w-2xl text-sm leading-relaxed text-black/55">
           {board.entries.length} models scored{board.metric ? ` · metric: ${board.metric}` : ""}. Prices are the
-          cheapest listed across all serving providers.
+          cheapest listed across all serving providers. Pts/$ = score ÷ blended price (3×input + output) / 4 —
+          how much score each dollar buys.
         </p>
       </header>
 
+      {valueLeaders.length > 1 && (
+        <section className="card-flat p-4">
+          <div className="mono-label mb-3">Best value · top {valueLeaders.length} by pts per dollar</div>
+          <ol className="grid gap-x-6 gap-y-2 sm:grid-cols-2 lg:grid-cols-3">
+            {valueLeaders.map((e, i) => (
+              <li key={e.groupId} className="flex items-baseline justify-between gap-2 text-sm">
+                <span className="truncate">
+                  <span className="mr-1.5 tabular-nums text-black/35">{i + 1}.</span>
+                  <Link href={`/m/${e.groupId}`} className="font-medium transition-colors hover:text-blue-600">
+                    {e.groupName}
+                  </Link>
+                </span>
+                <span className="shrink-0 font-mono font-semibold tabular-nums text-emerald-700">
+                  {fmtPpd(e.pointsPerDollar)}
+                </span>
+              </li>
+            ))}
+          </ol>
+        </section>
+      )}
+
       <div className="card overflow-x-auto">
-        <table className="table-base min-w-[760px]">
+        <table className="table-base min-w-[880px]">
           <thead>
             <tr>
               <th>#</th>
@@ -51,6 +82,7 @@ export default async function BenchmarkPage({ params }: { params: Promise<{ slug
               <th>Score</th>
               <th className="text-right">Best in /M</th>
               <th className="text-right">Best out /M</th>
+              <th className="text-right">Pts / $</th>
               <th className="text-right">Context</th>
             </tr>
           </thead>
@@ -85,6 +117,9 @@ export default async function BenchmarkPage({ params }: { params: Promise<{ slug
                   </td>
                   <td className="text-right font-mono tabular-nums">
                     {e.bestOutput != null ? fmtPerM(e.bestOutput) : <span className="text-black/30">—</span>}
+                  </td>
+                  <td className="text-right font-mono font-semibold tabular-nums text-emerald-700">
+                    {fmtPpd(e.pointsPerDollar)}
                   </td>
                   <td className="text-right font-mono tabular-nums text-black/55">{fmtTokens(ctx)}</td>
                 </tr>

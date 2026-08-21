@@ -32,7 +32,7 @@ pnpm sync        # fetch models.dev, diff vs last snapshot, update snapshots/ + 
 pnpm news        # fetch daily model news via Tavily into news/index.json (--force to refetch)
 pnpm test        # pipeline unit tests (vitest)
 pnpm dev         # local dev server
-pnpm build       # static export to out/
+pnpm build       # static export to out/ (runs pnpm og + pnpm badges first)
 ```
 
 Local secrets live in `.env.local` (gitignored): `TAVILY_API_KEY` is read automatically by
@@ -45,6 +45,8 @@ Local secrets live in `.env.local` (gitignored): `TAVILY_API_KEY` is read automa
 | `src/lib/pipeline/` | schema validation (zod), normalization, diff engine |
 | `scripts/sync.ts` | hourly sync job: fetch → diff → commit |
 | `scripts/news.ts` | daily Tavily news job: top models → headlines → `news/index.json` |
+| `scripts/og.tsx` | OG social cards → `public/og/` (build-time, gitignored) |
+| `scripts/badges.ts` | SVG price badges → `public/badge/` (build-time, gitignored) |
 | `snapshots/latest/` | most recent raw models.dev data |
 | `events/index.json` | merged changelog events, newest first |
 | `news/index.json` | daily model news items (title, source, favicon, matched model IDs) |
@@ -55,7 +57,9 @@ Local secrets live in `.env.local` (gitignored): `TAVILY_API_KEY` is read automa
 - `/api/events.json` — changelog feed
 - `/api/models.json` — canonical model catalog with best prices
 - `/api/news.json` — daily model news headlines tagged with model IDs
-- `/rss.xml` — RSS feed of changes and news
+- `/api/benchmarks.json` — benchmark leaderboards with scores, best prices and points-per-dollar
+- `/rss.xml` — RSS feed of changes and news; `/feeds/<lab>/rss.xml` — per-lab feeds
+- `/badge/<model>.svg` — live SVG price badge for embedding in READMEs (regenerated each sync)
 - `/llms.txt` — index for AI agents
 
 ### MCP server (for AI agents)

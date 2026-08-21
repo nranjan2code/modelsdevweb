@@ -22,7 +22,7 @@ export function EventTypeBadge({ type }: { type: EventType }) {
   );
 }
 
-function changeText(c: Event["changes"][number]): string {
+export function changeText(c: Event["changes"][number]): string {
   const fmt = (v: unknown) => (typeof v === "number" ? `$${v}` : String(v ?? "—"));
   if (c.field.startsWith("cost.")) return `${c.field.replace("cost.", "")}: ${fmt(c.old)} → ${fmt(c.new)}`;
   if (c.field === "limit.context") {

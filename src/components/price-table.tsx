@@ -46,13 +46,14 @@ export function StatusBadge({ status }: { status: Listing["status"] }) {
 export function PriceTable({ listings }: { listings: Listing[] }) {
   return (
     <div className="card overflow-x-auto">
-      <table className="table-base min-w-[760px]">
+      <table className="table-base min-w-[880px]">
         <thead>
           <tr>
             <th>Provider</th>
             <th className="text-right">Input /M</th>
             <th className="text-right">Output /M</th>
             <th className="text-right">Cache read /M</th>
+            <th className="text-right">Cache write /M</th>
             <th className="text-right">Context</th>
             <th>Capabilities</th>
             <th>Status</th>
@@ -80,6 +81,7 @@ export function PriceTable({ listings }: { listings: Listing[] }) {
                   {unlisted ? <span className="text-black/30">—</span> : fmtPerM(l.cost.output)}
                 </td>
                 <td className="text-right font-mono tabular-nums">{fmtPerM(l.cost.cacheRead)}</td>
+                <td className="text-right font-mono tabular-nums">{fmtPerM(l.cost.cacheWrite)}</td>
                 <td className="text-right font-mono tabular-nums">{fmtTokens(l.limit.context)}</td>
                 <td>
                   <CapabilityBadges listing={l} />

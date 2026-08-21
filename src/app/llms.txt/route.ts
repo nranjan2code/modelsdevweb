@@ -18,9 +18,11 @@ export async function GET() {
 - GET ${SITE_URL}/api/prices.json — every provider listing with per-token pricing
 - GET ${SITE_URL}/api/events.json — changelog events (releases, repricings, deprecations)
 - GET ${SITE_URL}/api/news.json — daily news headlines about top models, tagged with model ids
-- GET ${SITE_URL}/api/benchmarks.json — benchmark leaderboards with scores and best prices
+- GET ${SITE_URL}/api/benchmarks.json — benchmark leaderboards with scores, best prices and points-per-dollar
 - GET ${SITE_URL}/feed.json — JSON Feed 1.1 of recent changes
 - GET ${SITE_URL}/rss.xml — RSS 2.0 of recent changes
+- GET ${SITE_URL}/feeds/{lab}/rss.xml — per-lab RSS (e.g. /feeds/openai/rss.xml)
+- GET ${SITE_URL}/badge/{lab}/{model}.svg — live SVG price badge for embedding (e.g. /badge/openai/gpt-4o.svg)
 
 ## Event types
 
@@ -31,6 +33,8 @@ capability_changed, model_removed, provider_removed
 
 - / — latest activity and stats
 - /browse — filterable catalog of all canonical models
+- /compare?models=lab/model,lab/model2 — side-by-side comparison of 2–4 models
+- /trends — aggregate market view: capability adoption, price distribution, lab medians
 - /m/{lab}/{model} — per-model provider price comparison (e.g. /m/openai/gpt-4o)
 - /lab/{lab} — all models from one lab
 - /benchmarks — index; /benchmarks/{slug} — leaderboard pairing scores with prices

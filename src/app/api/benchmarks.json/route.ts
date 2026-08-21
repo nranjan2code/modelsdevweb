@@ -16,6 +16,7 @@ export async function GET() {
         score: e.score,
         best_input_per_m: e.bestInput,
         best_output_per_m: e.bestOutput,
+        points_per_dollar: e.pointsPerDollar != null && Number.isFinite(e.pointsPerDollar) ? Math.round(e.pointsPerDollar * 100) / 100 : null,
       })),
     })),
   });

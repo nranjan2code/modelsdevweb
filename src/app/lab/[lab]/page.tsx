@@ -32,7 +32,15 @@ export default async function LabPage({ params }: { params: Promise<{ lab: strin
       <header className="space-y-2">
         <p className="mono-label">Lab</p>
         <h1 className="text-3xl font-bold tracking-tight text-black sm:text-4xl">{lab}</h1>
-        <p className="max-w-2xl text-sm leading-relaxed text-black/55">{groups.length} canonical models tracked</p>
+        <p className="max-w-2xl text-sm leading-relaxed text-black/55">
+          {groups.length} canonical models tracked ·{" "}
+          <a
+            href={`/feeds/${lab}/rss.xml`}
+            className="font-medium text-blue-600 underline decoration-wavy underline-offset-4 hover:text-blue-700"
+          >
+            RSS feed for this lab
+          </a>
+        </p>
       </header>
 
       <div className="card overflow-x-auto">

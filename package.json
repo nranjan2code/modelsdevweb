@@ -4,12 +4,13 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "pnpm og && next build && pagefind --site out",
+    "build": "pnpm og && pnpm badges && next build && pagefind --site out",
     "start": "next start",
     "lint": "eslint",
     "sync": "tsx scripts/sync.ts",
     "news": "tsx scripts/news.ts",
     "og": "tsx scripts/og.tsx",
+    "badges": "tsx scripts/badges.ts",
     "notify": "tsx scripts/notify.ts",
     "mcp": "tsx mcp/server.ts",
     "test": "vitest run"

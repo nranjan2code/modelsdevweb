@@ -57,18 +57,19 @@ export default async function ProviderPage({ params }: { params: Promise<{ id: s
       </header>
 
       <div className="card overflow-x-auto">
-        <table className="table-base min-w-[760px]">
-          <thead>
-            <tr>
-              <th>Model</th>
-              <th className="text-right">Input /M</th>
-              <th className="text-right">Output /M</th>
-              <th className="text-right">Cache read /M</th>
-              <th className="text-right">Context</th>
-              <th>Status</th>
-              <th>Updated</th>
-            </tr>
-          </thead>
+          <table className="table-base min-w-[880px]">
+            <thead>
+              <tr>
+                <th>Model</th>
+                <th className="text-right">Input /M</th>
+                <th className="text-right">Output /M</th>
+                <th className="text-right">Cache read /M</th>
+                <th className="text-right">Cache write /M</th>
+                <th className="text-right">Context</th>
+                <th>Status</th>
+                <th>Updated</th>
+              </tr>
+            </thead>
           <tbody>
             {rows.map(({ listing: l, groupId, groupName }) => (
               <tr key={l.key}>
@@ -81,6 +82,7 @@ export default async function ProviderPage({ params }: { params: Promise<{ id: s
                 <td className="text-right font-mono tabular-nums">{fmtPerM(l.cost.input)}</td>
                 <td className="text-right font-mono tabular-nums">{fmtPerM(l.cost.output)}</td>
                 <td className="text-right font-mono tabular-nums">{fmtPerM(l.cost.cacheRead)}</td>
+                <td className="text-right font-mono tabular-nums">{fmtPerM(l.cost.cacheWrite)}</td>
                 <td className="text-right font-mono tabular-nums">{fmtTokens(l.limit.context)}</td>
                 <td>
                   <StatusBadge status={l.status} />

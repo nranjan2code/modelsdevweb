@@ -3,13 +3,16 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { existsSync } from "node:fs";
 import path from "node:path";
-import { getModel, getCatalog } from "@/lib/data";
+import { getModel, getCatalog, getEvents, getNews } from "@/lib/data";
 import { SITE_URL } from "@/lib/site";
 import { getPriceHistory } from "@/lib/data/history";
 import { slugify } from "@/lib/data/benchmarks";
 import { PriceTable } from "@/components/price-table";
 import { PriceHistory } from "@/components/price-history";
-import { fmtDate, fmtPerM, fmtTokens } from "@/lib/format";
+import { EventTypeBadge, changeText } from "@/components/event-card";
+import { StatusBadge } from "@/components/price-table";
+import { CopyField } from "@/components/copy-field";
+import { fmtDate, fmtPerM, fmtTokens, fmtAgo } from "@/lib/format";
 
 export async function generateStaticParams() {
   const catalog = await getCatalog();
@@ -38,6 +41,12 @@ export default async function ModelPage({ params }: { params: Promise<{ model: s
   if (!group) notFound();
   const c = group.canonical;
   const history = await getPriceHistory(id);
+  const [events, news] = await Promise.all([getEvents(), getNews()]);
+  const modelEvents = events.filter((e) => e.canonicalId === id).slice(0, 6);
+  const modelNews = news.filter((n) => n.modelIds.includes(id)).slice(0, 4);
+  const liveListings = group.listings.filter((l) => l.status !== "deprecated");
+  const statuses = [...new Set(liveListings.map((l) => l.status).filter((s): s is "alpha" | "beta" => s != null))];
+  const experimental = liveListings.some((l) => l.experimental);
 
   return (
     <div className="space-y-8">
@@ -68,6 +77,14 @@ export default async function ModelPage({ params }: { params: Promise<{ model: s
               }
             >
               {c.openWeights ? "open weights" : "closed weights"}
+            </span>
+          )}
+          {statuses.map((s) => (
+            <StatusBadge key={s} status={s} />
+          ))}
+          {experimental && (
+            <span className="rounded-full border border-purple-600/30 bg-purple-50 px-2 py-0.5 font-medium text-purple-700">
+              experimental
             </span>
           )}
         </div>
@@ -109,6 +126,96 @@ export default async function ModelPage({ params }: { params: Promise<{ model: s
       </section>
 
       <PriceHistory points={history} />
+
+      {group.best && (
+        <section className="space-y-3">
+          <h2 className="font-hand text-3xl font-bold tracking-tight text-black">Price badge</h2>
+          <div className="card-flat space-y-3 p-4">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={`/badge/${group.id}.svg`} alt={`Current price badge for ${group.name}`} className="h-5 w-auto" />
+            <CopyField label="markdown" value={`![${group.name} price](${SITE_URL}/badge/${group.id}.svg)`} />
+            <CopyField label="url" value={`${SITE_URL}/badge/${group.id}.svg`} />
+            <p className="text-xs leading-relaxed text-black/45">
+              Live SVG, regenerated on every hourly sync — paste it into a README to always show the current
+              cheapest listed price. Updates when prices change; no build step needed on your side.
+            </p>
+          </div>
+        </section>
+      )}
+
+      {(modelEvents.length > 0 || modelNews.length > 0) && (
+        <section className="grid gap-6 md:grid-cols-2">
+          {modelEvents.length > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between gap-4">
+                <h2 className="font-hand text-3xl font-bold tracking-tight text-black">Recent changes</h2>
+                <Link
+                  href="/changelog"
+                  className="shrink-0 rounded-full border border-black/15 bg-white px-3 py-1 text-xs font-medium text-black/60 transition-colors hover:border-black hover:text-black"
+                >
+                  Changelog →
+                </Link>
+              </div>
+              <ul className="space-y-2">
+                {modelEvents.map((e) => (
+                  <li key={e.id} className="card-flat flex flex-col gap-1 p-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <EventTypeBadge type={e.type} />
+                      <span className="text-xs text-black/45">
+                        {e.providerId ? `via ${e.providerId} · ` : ""}
+                        {fmtDate(e.date)}
+                      </span>
+                    </div>
+                    {e.changes.length > 0 && (
+                      <ul className="space-y-0.5 font-mono text-xs text-black/60">
+                        {e.changes.slice(0, 4).map((ch, i) => (
+                          <li key={i}>{changeText(ch)}</li>
+                        ))}
+                        {e.changes.length > 4 && <li>+{e.changes.length - 4} more</li>}
+                      </ul>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {modelNews.length > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between gap-4">
+                <h2 className="font-hand text-3xl font-bold tracking-tight text-black">In the news</h2>
+                <Link
+                  href="/news"
+                  className="shrink-0 rounded-full border border-black/15 bg-white px-3 py-1 text-xs font-medium text-black/60 transition-colors hover:border-black hover:text-black"
+                >
+                  All news →
+                </Link>
+              </div>
+              <ul className="card divide-y divide-black/10">
+                {modelNews.map((n) => (
+                  <li key={n.id} className="px-4 py-2.5">
+                    <a
+                      href={n.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm font-medium leading-snug text-black transition-colors hover:text-blue-600"
+                    >
+                      {n.title}
+                    </a>
+                    <div className="mt-0.5 flex items-center gap-1.5 text-xs text-black/45">
+                      {n.favicon && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={n.favicon} alt="" width={12} height={12} className="h-3 w-3 rounded-sm" />
+                      )}
+                      <span className="truncate">{n.source}</span>
+                      {n.publishedAt && <span className="shrink-0">· {fmtAgo(n.publishedAt)}</span>}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </section>
+      )}
 
       {(c?.benchmarks.length || c?.weights.length) ? (
         <section className="grid gap-6 md:grid-cols-2">

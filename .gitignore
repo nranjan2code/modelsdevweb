@@ -42,3 +42,6 @@ next-env.d.ts
 
 # generated OG images (built by pnpm og)
 /public/og
+
+# generated price badges (built by pnpm badges)
+/public/badge

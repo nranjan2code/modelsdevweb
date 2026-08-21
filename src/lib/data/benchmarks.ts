@@ -1,4 +1,4 @@
-import { getCatalog } from "./index";
+import { blendPrice, getCatalog } from "./index";
 import type { Benchmark } from "../pipeline/types";
 
 export interface BenchmarkEntry {
@@ -10,6 +10,7 @@ export interface BenchmarkEntry {
   source: string | null;
   bestInput: number | null;
   bestOutput: number | null;
+  pointsPerDollar: number | null;
 }
 
 export interface BenchmarkBoard {
@@ -39,6 +40,11 @@ export async function getBenchmarkBoards(): Promise<BenchmarkBoard[]> {
     const best = g.best;
     for (const b of c.benchmarks as Benchmark[]) {
       const arr = byName.get(b.name);
+      let pointsPerDollar: number | null = null;
+      if (best && best.input != null) {
+        const blend = blendPrice(best.input, best.output);
+        pointsPerDollar = blend <= 0 ? Number.POSITIVE_INFINITY : b.score / blend;
+      }
       const entry: BenchmarkEntry = {
         groupId: g.id,
         groupName: g.name,
@@ -48,6 +54,7 @@ export async function getBenchmarkBoards(): Promise<BenchmarkBoard[]> {
         source: b.source,
         bestInput: best?.input ?? null,
         bestOutput: best?.output ?? null,
+        pointsPerDollar,
       };
       if (arr) arr.push(entry);
       else byName.set(b.name, [entry]);

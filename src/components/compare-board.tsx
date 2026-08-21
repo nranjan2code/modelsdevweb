@@ -1,0 +1,227 @@
+"use client";
+
+import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
+import { COMPARE_MAX, compareUrl, peekCompare, readModelsParam, setCompare, toggleCompare, useCompareSelection } from "@/lib/compare";
+import { fmtPerM, fmtTokens, fmtDate } from "@/lib/format";
+
+export interface CompareModel {
+  id: string;
+  name: string;
+  lab: string;
+  input: number | null;
+  output: number | null;
+  cacheRead: number | null;
+  ctx: number | null;
+  maxOut: number | null;
+  reasoning: boolean;
+  tools: boolean;
+  structured: boolean;
+  vision: boolean;
+  audioIn: boolean;
+  open: boolean | null;
+  released: string | null;
+  knowledge: string | null;
+  providers: number;
+  deprecated: number;
+  benchmarks: Record<string, number>;
+}
+
+function BoolCell({ v }: { v: boolean }) {
+  return v ? (
+    <span className="font-semibold text-emerald-600">✓</span>
+  ) : (
+    <span className="text-black/20">✗</span>
+  );
+}
+
+function Price({ v, best }: { v: number | null; best?: boolean }) {
+  if (v == null) return <span className="text-black/30">—</span>;
+  return (
+    <span className={best ? "font-mono font-bold tabular-nums text-emerald-700" : "font-mono tabular-nums"}>
+      {fmtPerM(v)}
+    </span>
+  );
+}
+
+export function CompareBoard({ models }: { models: CompareModel[] }) {
+  const byId = useMemo(() => new Map(models.map((m) => [m.id, m])), [models]);
+  const selected = useCompareSelection();
+  const [q, setQ] = useState("");
+
+  useEffect(() => {
+    const fromUrl = readModelsParam().filter((id) => byId.has(id));
+    if (fromUrl.length > 0 && JSON.stringify(fromUrl) !== JSON.stringify(peekCompare())) {
+      setCompare(fromUrl);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function remove(id: string) {
+    toggleCompare(id);
+    const next = peekCompare();
+    if (typeof window !== "undefined") {
+      window.history.replaceState(null, "", compareUrl(next) ?? window.location.pathname);
+    }
+  }
+
+  function add(id: string) {
+    toggleCompare(id);
+    if (typeof window !== "undefined") {
+      window.history.replaceState(null, "", compareUrl(peekCompare()) ?? window.location.pathname);
+    }
+  }
+
+  const chosen = selected.map((id) => byId.get(id)).filter((m): m is CompareModel => m != null);
+  const needle = q.trim().toLowerCase();
+  const suggestions = models
+    .filter((m) => !selected.includes(m.id))
+    .filter((m) => !needle || `${m.name} ${m.id} ${m.lab}`.toLowerCase().includes(needle))
+    .sort((a, b) => b.providers - a.providers)
+    .slice(0, 8);
+
+  const minInput = Math.min(...chosen.map((m) => m.input ?? Number.POSITIVE_INFINITY));
+  const minOutput = Math.min(...chosen.map((m) => m.output ?? Number.POSITIVE_INFINITY));
+  const maxCtx = Math.max(...chosen.map((m) => m.ctx ?? 0));
+  const benchNames = [...new Set(chosen.flatMap((m) => Object.keys(m.benchmarks)))].sort();
+
+  const rows: { label: string; render: (m: CompareModel) => React.ReactNode }[] = [
+    {
+      label: "Best input /M",
+      render: (m) => <Price v={m.input} best={chosen.length > 1 && m.input != null && m.input === minInput} />,
+    },
+    {
+      label: "Best output /M",
+      render: (m) => <Price v={m.output} best={chosen.length > 1 && m.output != null && m.output === minOutput} />,
+    },
+    { label: "Cache read /M", render: (m) => <Price v={m.cacheRead} /> },
+    {
+      label: "Context window",
+      render: (m) => (
+        <span className={`font-mono tabular-nums ${chosen.length > 1 && (m.ctx ?? 0) === maxCtx && maxCtx > 0 ? "font-bold text-emerald-700" : ""}`}>
+          {fmtTokens(m.ctx)}
+        </span>
+      ),
+    },
+    { label: "Max output", render: (m) => <span className="font-mono tabular-nums">{fmtTokens(m.maxOut)}</span> },
+    {
+      label: "Providers",
+      render: (m) => (
+        <span className="tabular-nums text-black/70">
+          {m.providers}
+          {m.deprecated > 0 && <span className="text-xs text-red-500"> · {m.deprecated} dep</span>}
+        </span>
+      ),
+    },
+    { label: "Released", render: (m) => <span className="whitespace-nowrap text-black/60">{fmtDate(m.released)}</span> },
+    { label: "Knowledge cutoff", render: (m) => <span className="whitespace-nowrap text-black/60">{m.knowledge ?? "—"}</span> },
+    {
+      label: "Weights",
+      render: (m) =>
+        m.open ? (
+          <span className="rounded-full border border-emerald-600/30 bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
+            open
+          </span>
+        ) : (
+          <span className="rounded-full border border-black/10 bg-black/[0.03] px-2 py-0.5 text-[11px] text-black/40">
+            closed
+          </span>
+        ),
+    },
+    { label: "Reasoning", render: (m) => <BoolCell v={m.reasoning} /> },
+    { label: "Tool call", render: (m) => <BoolCell v={m.tools} /> },
+    { label: "Structured output", render: (m) => <BoolCell v={m.structured} /> },
+    { label: "Vision / attachments", render: (m) => <BoolCell v={m.vision} /> },
+    { label: "Audio input", render: (m) => <BoolCell v={m.audioIn} /> },
+    ...benchNames.map((name) => ({
+      label: name,
+      render: (m: CompareModel) =>
+        m.benchmarks[name] != null ? (
+          <span className="font-mono font-semibold tabular-nums">{m.benchmarks[name]}</span>
+        ) : (
+          <span className="text-black/25">—</span>
+        ),
+    })),
+  ];
+
+  return (
+    <div className="space-y-4">
+      <div className="card p-4">
+        <div className="mono-label mb-2">
+          Add models <span className="normal-case tracking-normal">(up to {COMPARE_MAX}, stored in your browser)</span>
+        </div>
+        <input
+          className="input w-full sm:w-72"
+          placeholder="Search models to compare…"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+        />
+        {suggestions.length > 0 && (
+          <ul className="mt-3 flex flex-wrap gap-2">
+            {suggestions.map((m) => (
+              <li key={m.id}>
+                <button
+                  onClick={() => add(m.id)}
+                  disabled={selected.length >= COMPARE_MAX}
+                  className="rounded-full border border-black/15 bg-white px-3 py-1 text-xs font-medium text-black/70 transition-all enabled:hover:border-black enabled:hover:text-black disabled:opacity-40"
+                >
+                  + {m.name} <span className="text-black/35">{m.lab}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+        {suggestions.length === 0 && (
+          <p className="mt-3 text-sm text-black/45">{needle ? "No models match." : "All models selected."}</p>
+        )}
+      </div>
+
+      {chosen.length === 0 ? (
+        <p className="card-dashed p-6 text-sm text-black/50">
+          Pick models above — or hit “+ compare” on any row in{" "}
+          <Link href="/browse" className="font-medium underline decoration-wavy underline-offset-4 hover:text-blue-600">
+            Browse
+          </Link>
+          . Deep-link with <code className="font-mono text-xs">/compare?models=lab/model,lab/model2</code>.
+        </p>
+      ) : (
+        <div className="card overflow-x-auto">
+          <table className="table-base w-full min-w-[720px]">
+            <thead>
+              <tr>
+                <th className="w-44">Attribute</th>
+                {chosen.map((m) => (
+                  <th key={m.id}>
+                    <div className="flex items-center gap-1.5 whitespace-normal">
+                      <Link href={`/m/${m.id}`} className="text-sm normal-case tracking-normal text-black hover:text-blue-600">
+                        {m.name}
+                      </Link>
+                      <span className="shrink-0 text-[10px] text-black/35">{m.lab}</span>
+                      <button
+                        onClick={() => remove(m.id)}
+                        aria-label={`Remove ${m.name}`}
+                        className="ml-auto shrink-0 rounded border border-black/15 px-1 text-[11px] leading-4 text-black/45 transition-colors hover:border-red-500 hover:text-red-600"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr key={row.label}>
+                  <td className="text-xs font-medium text-black/45">{row.label}</td>
+                  {chosen.map((m) => (
+                    <td key={m.id}>{row.render(m)}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
