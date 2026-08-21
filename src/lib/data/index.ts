@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { normalizeApi, normalizeModels, unlistedPrice } from "../pipeline/normalize";
+import type { GroupFacts } from "../pipeline/quality";
 import type { CanonicalModel, Event, Listing, NewsItem, Provider } from "../pipeline/types";
 import { rawApi, rawModels } from "../pipeline/schema";
 
@@ -18,10 +19,14 @@ export interface BestPrice {
 export interface ModelGroup {
   id: string;
   labId: string;
+  /** labId comes from the canonical dataset, not a provider-id fallback. */
+  labKnown: boolean;
   name: string;
   canonical: CanonicalModel | null;
   listings: Listing[];
   best: BestPrice | null;
+  /** Has at least one active listing priced at $0/$0 (genuinely free tier). */
+  free: boolean;
   deprecatedCount: number;
 }
 
@@ -72,10 +77,25 @@ function bestOf(listings: Listing[]): BestPrice | null {
   return best;
 }
 
-function groupListings(listings: Listing[], canonicalById: Map<string, CanonicalModel>): ModelGroup[] {
+export function groupListings(
+  listings: Listing[],
+  canonicalById: Map<string, CanonicalModel>,
+  canonicalLabs: Set<string>,
+): ModelGroup[] {
   const map = new Map<string, Listing[]>();
+  // Case-insensitive canonical lookup: providers spell the same upstream model
+  // id differently ("MiniMax-M2" vs "minimax-m2") — they must land in one group.
+  const canonicalByLower = new Map<string, CanonicalModel>();
+  for (const m of canonicalById.values()) canonicalByLower.set(m.id.toLowerCase(), m);
   for (const l of listings) {
-    const gid = l.canonicalId ?? l.key;
+    let gid: string;
+    if (l.canonicalId) {
+      gid = l.canonicalId;
+    } else {
+      // No canonical entry — merge listings that share the same model id across
+      // providers so one real-world model doesn't fragment into N catalog rows.
+      gid = canonicalByLower.get(l.modelId.toLowerCase())?.id ?? l.modelId.toLowerCase();
+    }
     const arr = map.get(gid);
     if (arr) arr.push(l);
     else map.set(gid, [l]);
@@ -91,17 +111,67 @@ function groupListings(listings: Listing[], canonicalById: Map<string, Canonical
       const ib = b.cost.input ?? Number.POSITIVE_INFINITY;
       return ia - ib;
     });
+    const slashLab = gid.includes("/") ? gid.split("/")[0] : null;
+    const labId =
+      canonical?.labId ??
+      (slashLab && canonicalLabs.has(slashLab)
+        ? slashLab
+        : (sorted.find((l) => l.status !== "deprecated") ?? sorted[0])?.providerId ??
+          slashLab ??
+          gid);
     groups.push({
       id: gid,
-      labId: canonical?.labId ?? gid.split("/")[0],
+      labId,
+      labKnown: canonical != null || (slashLab != null && canonicalLabs.has(slashLab)),
       name: canonical?.name ?? sorted[0]?.name ?? gid,
       canonical,
       listings: sorted,
       best: bestOf(sorted),
+      free: sorted.some(
+        (l) => l.status !== "deprecated" && l.cost.input === 0 && l.cost.output === 0,
+      ),
       deprecatedCount: sorted.filter((l) => l.status === "deprecated").length,
     });
   }
   return groups.sort((a, b) => a.id.localeCompare(b.id));
+}
+
+/** Best-known release date: canonical first, then the freshest listing date. */
+export function groupReleaseDate(g: ModelGroup): string | null {
+  if (g.canonical?.releaseDate) return g.canonical.releaseDate;
+  let latest: string | null = null;
+  for (const l of g.listings) {
+    const d = l.releaseDate ?? l.lastUpdated;
+    if (d && (!latest || d > latest)) latest = d;
+  }
+  return latest;
+}
+
+/** Largest known context window across canonical data and listings. */
+export function groupContext(g: ModelGroup): number | null {
+  let max = g.canonical?.limit?.context ?? null;
+  for (const l of g.listings) {
+    if (l.limit.context != null && (max == null || l.limit.context > max)) max = l.limit.context;
+  }
+  return max;
+}
+
+/** Structural view of a group consumed by the data-quality gates. */
+export function groupToFacts(g: ModelGroup): GroupFacts {
+  return {
+    id: g.id,
+    labId: g.labId,
+    labKnown: g.labKnown,
+    free: g.free,
+    best: g.best ? { input: g.best.input, output: g.best.output } : null,
+    releaseDate: groupReleaseDate(g),
+    listings: g.listings.map((l) => ({
+      key: l.key,
+      canonicalId: l.canonicalId,
+      active: l.status !== "deprecated",
+      zeroPriced: l.cost.input === 0 && l.cost.output === 0,
+    })),
+  };
 }
 
 let catalogCache: Catalog | null = null;
@@ -128,12 +198,16 @@ export async function getCatalog(): Promise<Catalog> {
   const parsedModels = rawModels.parse(JSON.parse(modelsBuf));
   const { models, index } = normalizeModels(parsedModels);
   const canonicalById = new Map(models.map((m) => [m.id, m]));
+  const canonicalLabs = new Set(models.map((m) => m.labId));
   const parsedApi = rawApi.parse(JSON.parse(apiBuf));
   const { providers, listings } = normalizeApi(parsedApi, index);
 
-  const groups = groupListings(listings, canonicalById);
+  const groups = groupListings(listings, canonicalById, canonicalLabs);
   const labMap = new Map<string, number>();
-  for (const g of groups) labMap.set(g.labId, (labMap.get(g.labId) ?? 0) + 1);
+  for (const g of groups) {
+    if (!g.labKnown) continue;
+    labMap.set(g.labId, (labMap.get(g.labId) ?? 0) + 1);
+  }
   const labs: Lab[] = [...labMap.entries()]
     .map(([id, modelCount]) => ({ id, modelCount }))
     .sort((a, b) => b.modelCount - a.modelCount);

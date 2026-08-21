@@ -11,6 +11,7 @@ export interface BrowseRow {
   lab: string;
   input: number | null;
   output: number | null;
+  free: boolean;
   ctx: number | null;
   reasoning: boolean;
   tools: boolean;
@@ -76,19 +77,22 @@ export function BrowseTable({ rows }: { rows: BrowseRow[] }) {
     let out = rows.filter((r) => {
       if (needle && !`${r.name} ${r.id} ${r.lab}`.toLowerCase().includes(needle)) return false;
       if ((r.ctx ?? 0) < ctxMin) return false;
-      if (r.input != null && r.input > priceMax) return false;
-      if (r.input == null && priceMax !== Number.POSITIVE_INFINITY) return false;
+      const effInput = r.input ?? (r.free ? 0 : null);
+      if (effInput != null && effInput > priceMax) return false;
+      if (effInput == null && priceMax !== Number.POSITIVE_INFINITY) return false;
       for (const cap of caps) {
         if (!hasCap(r, cap)) return false;
       }
       return true;
     });
     out = [...out].sort((a, b) => {
+      const ia = a.input ?? (a.free ? 0 : Number.POSITIVE_INFINITY);
+      const ib = b.input ?? (b.free ? 0 : Number.POSITIVE_INFINITY);
       switch (sort) {
         case "input":
-          return (a.input ?? Number.POSITIVE_INFINITY) - (b.input ?? Number.POSITIVE_INFINITY);
+          return ia - ib;
         case "output":
-          return (a.output ?? Number.POSITIVE_INFINITY) - (b.output ?? Number.POSITIVE_INFINITY);
+          return (a.output ?? (a.free ? 0 : Number.POSITIVE_INFINITY)) - (b.output ?? (b.free ? 0 : Number.POSITIVE_INFINITY));
         case "newest":
           return (b.released ?? "").localeCompare(a.released ?? "");
         case "providers":
@@ -246,8 +250,12 @@ export function BrowseTable({ rows }: { rows: BrowseRow[] }) {
                     </span>
                   )}
                 </td>
-                <td className="text-right font-mono tabular-nums">{fmtPerM(r.input)}</td>
-                <td className="text-right font-mono tabular-nums">{fmtPerM(r.output)}</td>
+                <td className="text-right font-mono tabular-nums">
+                  {r.input != null ? fmtPerM(r.input) : r.free ? <span className="font-semibold text-emerald-700">Free</span> : "—"}
+                </td>
+                <td className="text-right font-mono tabular-nums">
+                  {r.output != null ? fmtPerM(r.output) : r.free ? <span className="font-semibold text-emerald-700">Free</span> : "—"}
+                </td>
                 <td className="text-right font-mono tabular-nums">{fmtTokens(r.ctx)}</td>
                 <td>
                   <span className="inline-flex gap-1">

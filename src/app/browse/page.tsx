@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getCatalog } from "@/lib/data";
+import { getCatalog, groupContext, groupReleaseDate } from "@/lib/data";
 import type { Modality } from "@/lib/pipeline/types";
 import { BrowseTable, type BrowseRow } from "@/components/browse-table";
 
@@ -33,9 +33,8 @@ export default async function BrowsePage() {
       lab: g.labId,
       input: g.best?.input ?? null,
       output: g.best?.output ?? null,
-      ctx:
-        g.canonical?.limit?.context ??
-        g.listings.reduce<number | null>((acc, l) => (l.limit.context != null && (acc == null || l.limit.context > acc) ? l.limit.context : acc), null),
+      free: g.free,
+      ctx: groupContext(g),
       reasoning: g.canonical?.reasoning ?? g.listings.some((l) => l.reasoning),
       tools: g.canonical?.toolCall ?? g.listings.some((l) => l.toolCall),
       structured: g.canonical?.structuredOutput ?? g.listings.some((l) => l.structuredOutput === true),
@@ -44,7 +43,7 @@ export default async function BrowsePage() {
       video: hasMod("input", "video"),
       pdf: hasMod("input", "pdf"),
       open: g.canonical?.openWeights ?? false,
-      released: g.canonical?.releaseDate ?? null,
+      released: groupReleaseDate(g),
       providers: g.listings.length,
       swe: sweScore(g),
       flags,

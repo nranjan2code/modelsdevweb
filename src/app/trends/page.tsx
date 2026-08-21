@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { blendPrice, getCatalog, getEvents } from "@/lib/data";
+import { blendPrice, getCatalog, getEvents, groupContext } from "@/lib/data";
 import { capabilityAdoption, priceBuckets } from "@/lib/data/stats";
 import type { Event } from "@/lib/pipeline/types";
 import { EventTypeBadge } from "@/components/event-card";
@@ -37,7 +37,7 @@ const PRICE_TICKS = [
   { v: 30, label: "$30" },
 ];
 
-function Scatter({ points }: { points: { x: number; y: number; open: boolean; name: string }[] }) {
+function Scatter({ points }: { points: { key: string; x: number; y: number; open: boolean; name: string }[] }) {
   const W = 760;
   const H = 380;
   const ML = 56;
@@ -77,7 +77,7 @@ function Scatter({ points }: { points: { x: number; y: number; open: boolean; na
         context window (log)
       </text>
       {points.map((p) => (
-        <circle key={p.name} cx={sx(p.x)} cy={sy(p.y)} r={4} fill={p.open ? "#10b981" : "#2563eb"} opacity={0.55}>
+        <circle key={p.key} cx={sx(p.x)} cy={sy(p.y)} r={4} fill={p.open ? "#10b981" : "#2563eb"} opacity={0.55}>
           <title>{`${p.name} — $${p.x.toFixed(2)}/M blended`}</title>
         </circle>
       ))}
@@ -111,10 +111,11 @@ export default async function TrendsPage() {
 
   const priced = groups.filter((g) => g.best != null);
   const scatter = priced
-    .filter((g) => (g.canonical?.limit?.context ?? 0) > 0)
+    .filter((g) => (groupContext(g) ?? 0) > 0)
     .map((g) => ({
+      key: g.id,
       x: blendPrice(g.best!.input, g.best!.output),
-      y: g.canonical?.limit?.context ?? 0,
+      y: groupContext(g) ?? 0,
       open: g.canonical?.openWeights === true,
       name: g.name,
     }));

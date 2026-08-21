@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "sync": "tsx scripts/sync.ts",
+    "gate": "tsx scripts/gate.ts",
     "news": "tsx scripts/news.ts",
     "og": "tsx scripts/og.tsx",
     "badges": "tsx scripts/badges.ts",

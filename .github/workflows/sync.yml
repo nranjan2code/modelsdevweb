@@ -31,6 +31,9 @@ jobs:
 
       - run: pnpm sync
 
+      - name: Data quality gates
+        run: pnpm gate
+
       - name: Fetch daily model news
         env:
           TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}

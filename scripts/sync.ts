@@ -2,8 +2,10 @@ import { mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { diffListings } from "../src/lib/pipeline/diff";
 import { normalizeApi, normalizeModels } from "../src/lib/pipeline/normalize";
+import { runQuality } from "../src/lib/pipeline/quality";
 import type { Event } from "../src/lib/pipeline/types";
 import { rawApi, rawModels } from "../src/lib/pipeline/schema";
+import { groupListings, groupToFacts } from "../src/lib/data";
 
 const ROOT = path.dirname(import.meta.dirname);
 const SNAPSHOTS = path.join(ROOT, "snapshots");
@@ -54,6 +56,7 @@ async function main(): Promise<void> {
   const { models, index } = normalizeModels(parsedModels);
   const parsedApi = rawApi.parse(apiRaw);
   const next = normalizeApi(parsedApi, index);
+  const fetchedAt = new Date().toISOString();
 
   let newEvents: Event[] = [];
   const prevRaw = await readJson(path.join(LATEST, "api.json"));
@@ -64,6 +67,38 @@ async function main(): Promise<void> {
     newEvents = diffListings(prev.listings, next.listings, date);
   }
 
+  // Quality gates run on the freshly computed dataset BEFORE anything is written:
+  // a red gate leaves the previous snapshot in place and fails the workflow.
+  const canonicalById = new Map(models.map((m) => [m.id, m]));
+  const canonicalLabs = new Set(models.map((m) => m.labId));
+  const candidateGroups = groupListings(next.listings, canonicalById, canonicalLabs);
+  const quality = runQuality({
+    now: new Date(fetchedAt),
+    snapshotDate: date,
+    fetchedAt,
+    apiRaw: parsedApi as Record<string, { models?: unknown }>,
+    groups: candidateGroups.map(groupToFacts),
+    stats: {
+      providers: next.providers.length,
+      listings: next.listings.length,
+      models: candidateGroups.length,
+      labs: new Set(candidateGroups.filter((g) => g.labKnown).map((g) => g.labId)).size,
+    },
+    labIds: [...new Set(candidateGroups.filter((g) => g.labKnown).map((g) => g.labId))],
+    canonicalLabs,
+    canonicalIds: index,
+    events: [],
+    news: [],
+    liveApiRaw: parsedApi as Record<string, { models?: unknown }>,
+  });
+  for (const issue of quality.warnings) console.log(`[sync] gate WARN [${issue.check}] ${issue.message}`);
+  if (!quality.ok) {
+    for (const issue of quality.errors) console.error(`[sync] gate FAIL [${issue.check}] ${issue.message}`);
+    console.error(`[sync] ${quality.errors.length} quality gate(s) failed — snapshot not written`);
+    process.exit(1);
+  }
+  console.log(`[sync] quality gates passed (${quality.warnings.length} warning(s))`);
+
   for (const dir of [LATEST, path.join(SNAPSHOTS, date)]) {
     await mkdir(dir, { recursive: true });
     await writeFile(path.join(dir, "api.json"), JSON.stringify(apiRaw));
@@ -71,7 +106,7 @@ async function main(): Promise<void> {
   }
   await writeFile(
     path.join(LATEST, "meta.json"),
-    JSON.stringify({ date, fetchedAt: new Date().toISOString() }),
+    JSON.stringify({ date, fetchedAt }),
   );
   await pruneOldSnapshots();
 

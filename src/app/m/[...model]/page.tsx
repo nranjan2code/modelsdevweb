@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { existsSync } from "node:fs";
 import path from "node:path";
-import { getModel, getCatalog, getEvents, getNews } from "@/lib/data";
+import { getModel, getCatalog, getEvents, getNews, groupContext, groupReleaseDate } from "@/lib/data";
 import { SITE_URL } from "@/lib/site";
 import { getPriceHistory } from "@/lib/data/history";
 import { slugify } from "@/lib/data/benchmarks";
@@ -27,12 +27,15 @@ export async function generateMetadata({ params }: { params: Promise<{ model: st
   if (!group) return { title: "Model not found" };
   const ogPath = `/og/m/${group.id}.png`;
   const hasOg = existsSync(path.join(process.cwd(), "public", ogPath));
+  const metaCtx = groupContext(group);
   const description =
     `${group.name} pricing across ${group.listings.length} providers` +
     (group.best
       ? ` — from ${fmtPerM(group.best.input)} input / ${fmtPerM(group.best.output)} per 1M tokens at its cheapest listed provider.`
-      : ".") +
-    (group.canonical?.limit?.context ? ` ${Math.round(group.canonical.limit.context / 1000)}K token context window.` : "");
+      : group.free
+        ? " — available for free at its cheapest listed provider."
+        : ".") +
+    (metaCtx ? ` ${Math.round(metaCtx / 1000)}K token context window.` : "");
   return {
     title: `${group.name} — prices across ${group.listings.length} providers`,
     description,
@@ -52,7 +55,10 @@ export default async function ModelPage({ params }: { params: Promise<{ model: s
   const c = group.canonical;
   const history = await getPriceHistory(id);
   const [events, news] = await Promise.all([getEvents(), getNews()]);
-  const modelEvents = events.filter((e) => e.canonicalId === id).slice(0, 6);
+  const listingKeys = new Set(group.listings.map((l) => l.key));
+  const modelEvents = events
+    .filter((e) => e.canonicalId === id || listingKeys.has(e.modelKey))
+    .slice(0, 6);
   const modelNews = news.filter((n) => n.modelIds.includes(id)).slice(0, 4);
   const liveListings = group.listings.filter((l) => l.status !== "deprecated");
   const statuses = [...new Set(liveListings.map((l) => l.status).filter((s): s is "alpha" | "beta" => s != null))];
@@ -61,6 +67,15 @@ export default async function ModelPage({ params }: { params: Promise<{ model: s
   const pricedOffers = liveListings
     .filter((l) => l.cost.input != null)
     .sort((a, b) => (a.cost.input ?? Infinity) - (b.cost.input ?? Infinity));
+  const ctx = groupContext(group);
+  const maxOut = (() => {
+    let m = c?.limit?.output ?? null;
+    for (const l of group.listings) {
+      if (l.limit.output != null && (m == null || l.limit.output > m)) m = l.limit.output;
+    }
+    return m;
+  })();
+  const releaseDate = groupReleaseDate(group);
   const jsonLd: object[] = [
     {
       "@context": "https://schema.org",
@@ -79,7 +94,7 @@ export default async function ModelPage({ params }: { params: Promise<{ model: s
         c?.description ??
         `AI model pricing comparison across ${group.listings.length} inference providers. Prices are USD per 1M tokens.`,
       category: "AI language model",
-      ...(c?.releaseDate ? { releaseDate: c.releaseDate } : {}),
+      ...(releaseDate ? { releaseDate } : {}),
       brand: { "@type": "Brand", name: group.labId },
       offers: {
         "@type": "AggregateOffer",
@@ -121,9 +136,9 @@ export default async function ModelPage({ params }: { params: Promise<{ model: s
         {c?.description && <p className="max-w-3xl leading-relaxed text-black/60">{c.description}</p>}
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-black/50">
           <span>{group.listings.length} providers</span>
-          {c?.releaseDate && (
+          {releaseDate && (
             <span>
-              released <time dateTime={c.releaseDate}>{fmtDate(c.releaseDate)}</time>
+              released <time dateTime={releaseDate}>{fmtDate(releaseDate)}</time>
             </span>
           )}
           {c?.knowledge && <span>knowledge cutoff {c.knowledge}</span>}
@@ -149,26 +164,31 @@ export default async function ModelPage({ params }: { params: Promise<{ model: s
         </div>
       </header>
 
-      {group.best && (
+      {(group.best || group.free || ctx) && (
         <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <div className="card px-4 py-3">
-            <div className="font-mono text-lg font-bold tabular-nums text-blue-700">{fmtPerM(group.best.input)}</div>
-            <div className="mono-label mt-0.5">best input /M · {group.best.providerName}</div>
-          </div>
-          <div className="card px-4 py-3">
-            <div className="font-mono text-lg font-bold tabular-nums text-blue-700">{fmtPerM(group.best.output)}</div>
-            <div className="mono-label mt-0.5">best output /M</div>
-          </div>
-          <div className="card-flat px-4 py-3">
-            <div className="font-mono text-lg font-bold tabular-nums text-black">
-              {fmtTokens(c?.limit?.context ?? Math.max(...group.listings.map((l) => l.limit.context ?? 0)))}
+          {group.best ? (
+            <>
+              <div className="card px-4 py-3">
+                <div className="font-mono text-lg font-bold tabular-nums text-blue-700">{fmtPerM(group.best.input)}</div>
+                <div className="mono-label mt-0.5">best input /M · {group.best.providerName}</div>
+              </div>
+              <div className="card px-4 py-3">
+                <div className="font-mono text-lg font-bold tabular-nums text-blue-700">{fmtPerM(group.best.output)}</div>
+                <div className="mono-label mt-0.5">best output /M</div>
+              </div>
+            </>
+          ) : (
+            <div className="card px-4 py-3">
+              <div className="font-mono text-lg font-bold tabular-nums text-emerald-700">{group.free ? "Free" : "—"}</div>
+              <div className="mono-label mt-0.5">{group.free ? "cheapest listed tier" : "no listed price"}</div>
             </div>
+          )}
+          <div className="card-flat px-4 py-3">
+            <div className="font-mono text-lg font-bold tabular-nums text-black">{fmtTokens(ctx)}</div>
             <div className="mono-label mt-0.5">context window</div>
           </div>
           <div className="card-flat px-4 py-3">
-            <div className="font-mono text-lg font-bold tabular-nums text-black">
-              {fmtTokens(c?.limit?.output ?? Math.max(...group.listings.map((l) => l.limit.output ?? 0)))}
-            </div>
+            <div className="font-mono text-lg font-bold tabular-nums text-black">{fmtTokens(maxOut)}</div>
             <div className="mono-label mt-0.5">max output</div>
           </div>
         </section>

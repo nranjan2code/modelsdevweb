@@ -10,11 +10,24 @@ pnpm lint          # eslint
 npx tsc --noEmit   # typecheck (no dedicated script)
 pnpm test          # vitest
 pnpm build         # pnpm og + pnpm badges + next build (static export) → out/
-pnpm sync          # fetch models.dev, diff, write snapshots/ + events/
+pnpm sync          # fetch models.dev, run quality gates, diff, write snapshots/ + events/ (gates fail → nothing written, exit 1)
+pnpm gate          # standalone data-quality gates over committed snapshots (add --offline to skip live upstream compare)
 pnpm news          # Tavily daily news → news/index.json (--force to refetch same day)
 pnpm og            # satori-render OG cards → public/og/ (site + top 300 models)
 pnpm badges        # shields-style SVG price badges → public/badge/ (all models)
 ```
+
+## Data-quality gates
+
+`src/lib/pipeline/quality.ts` defines invariant checks; `scripts/gate.ts` runs them against
+committed state and `scripts/sync.ts` runs them pre-write so a red gate never lands.
+CI (`sync.yml`) runs both. Hard-fail checks: snapshot freshness (<26h), upstream completeness
+(vs live fetch, with a small drift budget), new-release visibility (a release dated ≤3 days must
+surface via `groupReleaseDate` — the "0x/Ox Alpha missing from home" regression), group
+fragmentation (case-insensitive merge invariants), lab hygiene (only canonical labs, no
+provider fallbacks like `kilo`/`nano-gpt`), stats integrity, free-model ($0/$0) classification,
+and event referential integrity. Soft warnings: upstream drift within budget, stale/dead-linked
+news.
 
 ## Architecture constraints
 

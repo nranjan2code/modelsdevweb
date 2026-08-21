@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { getBenchmarkBoards, getBenchmarkBoard } from "@/lib/data/benchmarks";
 import { benchmarkHome } from "@/lib/data/benchmark-links";
 import { fmtPerM, fmtTokens } from "@/lib/format";
-import { getCatalog } from "@/lib/data";
+import { getCatalog, groupContext } from "@/lib/data";
 
 export async function generateStaticParams() {
   const boards = await getBenchmarkBoards();
@@ -116,10 +116,9 @@ export default async function BenchmarkPage({ params }: { params: Promise<{ slug
           </thead>
           <tbody>
             {board.entries.map((e, i) => {
-              const ctx =
-                catalog.groupById.get(e.groupId)?.canonical?.limit?.context ??
-                catalog.groupById.get(e.groupId)?.listings[0]?.limit.context ??
-                null;
+              const ctx = catalog.groupById.get(e.groupId)
+                ? groupContext(catalog.groupById.get(e.groupId)!)
+                : null;
               return (
                 <tr key={e.groupId}>
                   <td className="tabular-nums text-black/40">{i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : i + 1}</td>

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getCatalog, getEvents, getNews } from "@/lib/data";
+import { getCatalog, getEvents, getNews, groupContext, groupReleaseDate } from "@/lib/data";
 import { getBenchmarkBoards } from "@/lib/data/benchmarks";
 import { benchmarkHome } from "@/lib/data/benchmark-links";
 import { capabilityAdoption, priceBuckets } from "@/lib/data/stats";
@@ -154,7 +154,7 @@ export default async function HomePage() {
   ]);
   const s = catalog.stats;
   const fresh = [...catalog.groups]
-    .sort((a, b) => (b.canonical?.releaseDate ?? "").localeCompare(a.canonical?.releaseDate ?? ""))
+    .sort((a, b) => (groupReleaseDate(b) ?? "").localeCompare(groupReleaseDate(a) ?? ""))
     .slice(0, 6);
   const drops = priceDrops(events);
   const digest = weekDigest(events);
@@ -332,7 +332,11 @@ export default async function HomePage() {
                     {g.name}
                   </Link>
                   <span className="shrink-0 font-mono text-xs tabular-nums text-black/50">
-                    {g.best ? `${fmtPerM(g.best.input)}/${fmtPerM(g.best.output)}` : "—"}
+                    {g.best
+                      ? `${fmtPerM(g.best.input)}/${fmtPerM(g.best.output)}`
+                      : g.free
+                        ? "Free"
+                        : "—"}
                   </span>
                 </li>
               ))}
@@ -457,11 +461,11 @@ export default async function HomePage() {
             </thead>
             <tbody>
               {[...catalog.groups]
-                .filter((g) => g.best && (g.canonical?.limit?.context ?? g.listings[0]?.limit.context ?? 0) >= 200_000)
+                .filter((g) => g.best && (groupContext(g) ?? 0) >= 200_000)
                 .sort((a, b) => a.best!.input - b.best!.input)
                 .slice(0, 8)
                 .map((g) => {
-                  const ctx = g.canonical?.limit?.context ?? Math.max(...g.listings.map((l) => l.limit.context ?? 0));
+                  const ctx = groupContext(g);
                   return (
                     <tr key={g.id}>
                       <td>

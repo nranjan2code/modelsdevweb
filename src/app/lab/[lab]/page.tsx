@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getCatalog } from "@/lib/data";
+import { getCatalog, groupContext, groupReleaseDate } from "@/lib/data";
 import { fmtPerM, fmtTokens, fmtDate } from "@/lib/format";
 
 export async function generateStaticParams() {
   const catalog = await getCatalog();
-  return catalog.labs.map((l) => ({ lab: l.id }));
+  const labIds = new Set(catalog.groups.map((g) => g.labId));
+  return [...labIds].map((lab) => ({ lab }));
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ lab: string }> }): Promise<Metadata> {
@@ -57,7 +58,7 @@ export default async function LabPage({ params }: { params: Promise<{ lab: strin
           </thead>
           <tbody>
             {groups
-              .sort((a, b) => (b.canonical?.releaseDate ?? "").localeCompare(a.canonical?.releaseDate ?? ""))
+              .sort((a, b) => (groupReleaseDate(b) ?? "").localeCompare(groupReleaseDate(a) ?? ""))
               .map((g) => (
                 <tr key={g.id}>
                   <td>
@@ -67,9 +68,9 @@ export default async function LabPage({ params }: { params: Promise<{ lab: strin
                   </td>
                   <td className="text-right font-mono tabular-nums">{fmtPerM(g.best?.input ?? null)}</td>
                   <td className="text-right font-mono tabular-nums">{fmtPerM(g.best?.output ?? null)}</td>
-                  <td className="text-right font-mono tabular-nums">{fmtTokens(g.canonical?.limit?.context ?? null)}</td>
+                  <td className="text-right font-mono tabular-nums">{fmtTokens(groupContext(g))}</td>
                   <td className="text-right tabular-nums text-black/55">{g.listings.length}</td>
-                  <td className="whitespace-nowrap text-xs text-black/45">{fmtDate(g.canonical?.releaseDate)}</td>
+                  <td className="whitespace-nowrap text-xs text-black/45">{fmtDate(groupReleaseDate(g))}</td>
                 </tr>
               ))}
           </tbody>
