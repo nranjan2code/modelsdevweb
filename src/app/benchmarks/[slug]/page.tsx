@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getBenchmarkBoards, getBenchmarkBoard } from "@/lib/data/benchmarks";
+import { benchmarkHome } from "@/lib/data/benchmark-links";
 import { fmtPerM, fmtTokens } from "@/lib/format";
 import { getCatalog } from "@/lib/data";
 
@@ -22,6 +23,15 @@ export default async function BenchmarkPage({ params }: { params: Promise<{ slug
   if (!board) notFound();
   const maxScore = board.entries[0]?.score ?? 1;
   const priced = board.entries.filter((e) => e.bestInput != null);
+  const home = benchmarkHome(board.name);
+  const reportSources = [...new Set(board.entries.map((e) => e.source).filter((s): s is string => s != null))].slice(0, 6);
+  const host = (u: string): string => {
+    try {
+      return new URL(u).hostname.replace(/^www\./, "");
+    } catch {
+      return u;
+    }
+  };
   const valueSorted = [...board.entries]
     .filter((e) => e.pointsPerDollar != null)
     .sort((a, b) => (b.pointsPerDollar ?? 0) - (a.pointsPerDollar ?? 0));
@@ -44,11 +54,29 @@ export default async function BenchmarkPage({ params }: { params: Promise<{ slug
 
       <header className="space-y-2">
         <p className="mono-label">Leaderboard</p>
-        <h1 className="text-3xl font-bold tracking-tight text-black sm:text-4xl">{board.name}</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-black sm:text-4xl">
+          {board.name}
+          {home && (
+            <a
+              href={home}
+              target="_blank"
+              rel="noreferrer"
+              title={`Official ${board.name} benchmark`}
+              className="ml-3 align-middle font-sans text-sm font-semibold text-blue-600 hover:text-blue-700"
+            >
+              official site ↗
+            </a>
+          )}
+        </h1>
         <p className="max-w-2xl text-sm leading-relaxed text-black/55">
           {board.entries.length} models scored{board.metric ? ` · metric: ${board.metric}` : ""}. Prices are the
           cheapest listed across all serving providers. Pts/$ = score ÷ blended price (3×input + output) / 4 —
           how much score each dollar buys.
+        </p>
+        <p className="max-w-2xl text-xs leading-relaxed text-black/45">
+          Scores are facts as publicly reported by labs (see report links below and on each model page) and
+          aggregated via models.dev. {board.name} is maintained by its own project — LLM Pulse is not
+          affiliated with or endorsed by it.
         </p>
       </header>
 
@@ -128,6 +156,26 @@ export default async function BenchmarkPage({ params }: { params: Promise<{ slug
           </tbody>
         </table>
       </div>
+
+      {reportSources.length > 0 && (
+        <p className="text-xs leading-relaxed text-black/45">
+          Score reports:{" "}
+          {reportSources.map((src, i) => (
+            <span key={src}>
+              {i > 0 && " · "}
+              <a
+                href={src}
+                target="_blank"
+                rel="noreferrer"
+                className="font-medium text-blue-600 underline decoration-wavy underline-offset-4 hover:text-blue-700"
+              >
+                {host(src)}
+              </a>
+            </span>
+          ))}
+          {" "}— full source URLs are linked on each model page.
+        </p>
+      )}
 
       {priced.length > 0 && (
         <p className="text-xs leading-relaxed text-black/45">

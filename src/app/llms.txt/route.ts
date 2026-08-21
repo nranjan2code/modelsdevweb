@@ -48,6 +48,9 @@ capability_changed, model_removed, provider_removed
 - Prefer /api/*.json over scraping HTML.
 - Model IDs are stable path-style identifiers (lab/model).
 - A missing or null price means the provider does not publish one; verify before purchasing.
+- Data licensing: model data from models.dev (MIT); benchmark scores are facts as reported
+  by labs, with benchmark names trademarked by their maintainers (linked on leaderboards);
+  news headlines copyright their publishers. Full credits at ${SITE_URL}/about.
 
 ## MCP server
 

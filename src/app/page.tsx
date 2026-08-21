@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getCatalog, getEvents, getNews } from "@/lib/data";
 import { getBenchmarkBoards } from "@/lib/data/benchmarks";
+import { benchmarkHome } from "@/lib/data/benchmark-links";
 import { capabilityAdoption, priceBuckets } from "@/lib/data/stats";
 import { EventCard } from "@/components/event-card";
 import { fmtPerM, fmtTokens, fmtAgo } from "@/lib/format";
@@ -370,7 +371,21 @@ export default async function HomePage() {
             {valueBoards.map(({ board, leaders }) => (
               <div key={board.slug} className="card p-4">
                 <div className="mb-3 flex items-baseline justify-between gap-2">
-                  <h3 className="font-hand text-2xl font-bold text-black">{board.name}</h3>
+                  <h3 className="font-hand text-2xl font-bold text-black">
+                    {benchmarkHome(board.name) ? (
+                      <a
+                        href={benchmarkHome(board.name)!}
+                        target="_blank"
+                        rel="noreferrer"
+                        title={`Official ${board.name} benchmark`}
+                        className="underline decoration-wavy decoration-black/25 underline-offset-4 transition-colors hover:text-blue-600 hover:decoration-blue-600"
+                      >
+                        {board.name} ↗
+                      </a>
+                    ) : (
+                      board.name
+                    )}
+                  </h3>
                   <Link
                     href={`/benchmarks/${board.slug}`}
                     className="shrink-0 text-xs font-medium text-blue-600 underline decoration-wavy underline-offset-4 hover:text-blue-700"

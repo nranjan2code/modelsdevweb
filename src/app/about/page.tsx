@@ -65,6 +65,80 @@ export default function AboutPage() {
           for the index. Agents are first-class consumers here.
         </p>
       </section>
+
+      <section className="space-y-3">
+        <h2 className="font-hand text-2xl font-bold tracking-tight text-black">Sources &amp; licenses</h2>
+        <ul className="list-disc space-y-2 pl-5">
+          <li>
+            <b className="text-black">Model data</b> — specifications, prices and capabilities come from{" "}
+            <a
+              href="https://models.dev"
+              target="_blank"
+              rel="noreferrer"
+              className="font-medium text-blue-600 underline decoration-wavy underline-offset-4 hover:text-blue-700"
+            >
+              models.dev
+            </a>{" "}
+            (
+            <a
+              href="https://github.com/anomalyco/models.dev"
+              target="_blank"
+              rel="noreferrer"
+              className="font-medium text-blue-600 underline decoration-wavy underline-offset-4 hover:text-blue-700"
+            >
+              MIT-licensed open source
+            </a>
+            ), a community-maintained database. Prices are published claims by providers, not our measurements.
+          </li>
+          <li>
+            <b className="text-black">Benchmark scores</b> — scores are factual results as publicly reported by
+            labs; each model page and leaderboard links to the original report, and well-known benchmarks link
+            to their official sites (e.g.{" "}
+            <a href="https://www.swebench.com" target="_blank" rel="noreferrer" className="font-medium text-blue-600 hover:text-blue-700">
+              SWE-Bench
+            </a>
+            ,{" "}
+            <a href="https://github.com/laude-institute/terminal-bench" target="_blank" rel="noreferrer" className="font-medium text-blue-600 hover:text-blue-700">
+              Terminal-Bench
+            </a>
+            ,{" "}
+            <a href="https://arcprize.org" target="_blank" rel="noreferrer" className="font-medium text-blue-600 hover:text-blue-700">
+              ARC Prize
+            </a>
+            ,{" "}
+            <a href="https://artificialanalysis.ai" target="_blank" rel="noreferrer" className="font-medium text-blue-600 hover:text-blue-700">
+              Artificial Analysis
+            </a>
+            ). Benchmark names are trademarks of their respective maintainers; LLM Pulse is not affiliated
+            with or endorsed by them.
+          </li>
+          <li>
+            <b className="text-black">News headlines</b> — titles, short excerpts and links fetched via the
+            Tavily search API; copyright remains with the original publishers, and every item links back to
+            its source.
+          </li>
+          <li>
+            <b className="text-black">Fonts</b> — Inter, JetBrains Mono and Caveat, used under the SIL Open
+            Font License via Google Fonts.
+          </li>
+          <li>
+            <b className="text-black">This site</b> — code is{" "}
+            <a
+              href="https://github.com/nranjan2code/modelsdevweb/blob/main/LICENSE"
+              target="_blank"
+              rel="noreferrer"
+              className="font-medium text-blue-600 underline decoration-wavy underline-offset-4 hover:text-blue-700"
+            >
+              MIT licensed
+            </a>
+            . Reuse the data or badges freely with attribution to LLM Pulse and models.dev.
+          </li>
+        </ul>
+        <p className="pl-5 text-xs leading-relaxed text-black/45">
+          All published content here derives from public sources; nothing confidential is republished.
+          Provider names and model brands remain the property of their owners.
+        </p>
+      </section>
     </div>
   );
 }

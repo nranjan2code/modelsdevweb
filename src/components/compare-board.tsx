@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { COMPARE_MAX, compareUrl, peekCompare, readModelsParam, setCompare, toggleCompare, useCompareSelection } from "@/lib/compare";
+import { benchmarkHome } from "@/lib/data/benchmark-links";
 import { fmtPerM, fmtTokens, fmtDate } from "@/lib/format";
 
 export interface CompareModel {
@@ -85,17 +86,20 @@ export function CompareBoard({ models }: { models: CompareModel[] }) {
   const maxCtx = Math.max(...chosen.map((m) => m.ctx ?? 0));
   const benchNames = [...new Set(chosen.flatMap((m) => Object.keys(m.benchmarks)))].sort();
 
-  const rows: { label: string; render: (m: CompareModel) => React.ReactNode }[] = [
+  const rows: { key: string; label: React.ReactNode; render: (m: CompareModel) => React.ReactNode }[] = [
     {
+      key: "input",
       label: "Best input /M",
       render: (m) => <Price v={m.input} best={chosen.length > 1 && m.input != null && m.input === minInput} />,
     },
     {
+      key: "output",
       label: "Best output /M",
       render: (m) => <Price v={m.output} best={chosen.length > 1 && m.output != null && m.output === minOutput} />,
     },
-    { label: "Cache read /M", render: (m) => <Price v={m.cacheRead} /> },
+    { key: "cacheread", label: "Cache read /M", render: (m) => <Price v={m.cacheRead} /> },
     {
+      key: "ctx",
       label: "Context window",
       render: (m) => (
         <span className={`font-mono tabular-nums ${chosen.length > 1 && (m.ctx ?? 0) === maxCtx && maxCtx > 0 ? "font-bold text-emerald-700" : ""}`}>
@@ -103,8 +107,9 @@ export function CompareBoard({ models }: { models: CompareModel[] }) {
         </span>
       ),
     },
-    { label: "Max output", render: (m) => <span className="font-mono tabular-nums">{fmtTokens(m.maxOut)}</span> },
+    { key: "maxout", label: "Max output", render: (m) => <span className="font-mono tabular-nums">{fmtTokens(m.maxOut)}</span> },
     {
+      key: "providers",
       label: "Providers",
       render: (m) => (
         <span className="tabular-nums text-black/70">
@@ -113,9 +118,10 @@ export function CompareBoard({ models }: { models: CompareModel[] }) {
         </span>
       ),
     },
-    { label: "Released", render: (m) => <span className="whitespace-nowrap text-black/60">{fmtDate(m.released)}</span> },
-    { label: "Knowledge cutoff", render: (m) => <span className="whitespace-nowrap text-black/60">{m.knowledge ?? "—"}</span> },
+    { key: "released", label: "Released", render: (m) => <span className="whitespace-nowrap text-black/60">{fmtDate(m.released)}</span> },
+    { key: "knowledge", label: "Knowledge cutoff", render: (m) => <span className="whitespace-nowrap text-black/60">{m.knowledge ?? "—"}</span> },
     {
+      key: "weights",
       label: "Weights",
       render: (m) =>
         m.open ? (
@@ -128,13 +134,29 @@ export function CompareBoard({ models }: { models: CompareModel[] }) {
           </span>
         ),
     },
-    { label: "Reasoning", render: (m) => <BoolCell v={m.reasoning} /> },
-    { label: "Tool call", render: (m) => <BoolCell v={m.tools} /> },
-    { label: "Structured output", render: (m) => <BoolCell v={m.structured} /> },
-    { label: "Vision / attachments", render: (m) => <BoolCell v={m.vision} /> },
-    { label: "Audio input", render: (m) => <BoolCell v={m.audioIn} /> },
+    { key: "reasoning", label: "Reasoning", render: (m) => <BoolCell v={m.reasoning} /> },
+    { key: "tools", label: "Tool call", render: (m) => <BoolCell v={m.tools} /> },
+    { key: "structured", label: "Structured output", render: (m) => <BoolCell v={m.structured} /> },
+    { key: "vision", label: "Vision / attachments", render: (m) => <BoolCell v={m.vision} /> },
+    { key: "audioin", label: "Audio input", render: (m) => <BoolCell v={m.audioIn} /> },
     ...benchNames.map((name) => ({
-      label: name,
+      key: name,
+      label: (
+        <span className="inline-flex items-center gap-1">
+          {name}
+          {benchmarkHome(name) && (
+            <a
+              href={benchmarkHome(name)!}
+              target="_blank"
+              rel="noreferrer"
+              title={`Official ${name} benchmark`}
+              className="text-[10px] text-blue-600 hover:text-blue-700"
+            >
+              ↗
+            </a>
+          )}
+        </span>
+      ),
       render: (m: CompareModel) =>
         m.benchmarks[name] != null ? (
           <span className="font-mono font-semibold tabular-nums">{m.benchmarks[name]}</span>
@@ -211,7 +233,7 @@ export function CompareBoard({ models }: { models: CompareModel[] }) {
             </thead>
             <tbody>
               {rows.map((row) => (
-                <tr key={row.label}>
+                <tr key={row.key}>
                   <td className="text-xs font-medium text-black/45">{row.label}</td>
                   {chosen.map((m) => (
                     <td key={m.id}>{row.render(m)}</td>

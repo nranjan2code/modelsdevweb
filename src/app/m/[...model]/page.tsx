@@ -7,6 +7,7 @@ import { getModel, getCatalog, getEvents, getNews } from "@/lib/data";
 import { SITE_URL } from "@/lib/site";
 import { getPriceHistory } from "@/lib/data/history";
 import { slugify } from "@/lib/data/benchmarks";
+import { benchmarkHome } from "@/lib/data/benchmark-links";
 import { PriceTable } from "@/components/price-table";
 import { PriceHistory } from "@/components/price-history";
 import { EventTypeBadge, changeText } from "@/components/event-card";
@@ -223,15 +224,43 @@ export default async function ModelPage({ params }: { params: Promise<{ model: s
             <div className="space-y-4">
               <h2 className="font-hand text-3xl font-bold tracking-tight text-black">Benchmarks</h2>
               <ul className="card divide-y divide-black/10 text-sm">
-                {c.benchmarks.map((b, i) => (
-                  <li key={i} className="flex items-center justify-between gap-2 px-4 py-2.5">
-                    <Link href={`/benchmarks/${slugify(b.name)}`} className="transition-colors hover:text-blue-600">
-                      {b.name}
-                      {b.metric ? <span className="ml-1 text-xs text-black/45">({b.metric})</span> : null}
-                    </Link>
-                    <span className="font-mono font-semibold tabular-nums text-black">{b.score}</span>
-                  </li>
-                ))}
+                {c.benchmarks.map((b, i) => {
+                  const home = benchmarkHome(b.name);
+                  return (
+                    <li key={i} className="flex items-center justify-between gap-2 px-4 py-2.5">
+                      <span className="min-w-0">
+                        {home ? (
+                          <a
+                            href={home}
+                            target="_blank"
+                            rel="noreferrer"
+                            title={`Official ${b.name} benchmark`}
+                            className="font-medium underline decoration-wavy decoration-black/25 underline-offset-4 transition-colors hover:text-blue-600 hover:decoration-blue-600"
+                          >
+                            {b.name} ↗
+                          </a>
+                        ) : (
+                          <Link href={`/benchmarks/${slugify(b.name)}`} className="transition-colors hover:text-blue-600">
+                            {b.name}
+                          </Link>
+                        )}
+                        {b.metric ? <span className="ml-1 text-xs text-black/45">({b.metric})</span> : null}
+                        {b.source && (
+                          <a
+                            href={b.source}
+                            target="_blank"
+                            rel="noreferrer"
+                            title="Score as reported here"
+                            className="ml-1.5 whitespace-nowrap text-[11px] font-medium text-blue-600 hover:text-blue-700"
+                          >
+                            report ↗
+                          </a>
+                        )}
+                      </span>
+                      <span className="shrink-0 font-mono font-semibold tabular-nums text-black">{b.score}</span>
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           )}
