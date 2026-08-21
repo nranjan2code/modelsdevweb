@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Inter, JetBrains_Mono, Caveat } from "next/font/google";
 import { SITE_NAME, SITE_TAGLINE, SITE_URL } from "@/lib/site";
 import { SiteNav } from "@/components/site-nav";
+import { SiteFooter } from "@/components/site-footer";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
@@ -58,31 +59,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <main id="main" className="mx-auto w-full max-w-6xl flex-1 px-4 py-10 sm:px-6">
           {children}
         </main>
-        <footer className="mt-12 border-t border-black/10 py-8">
-          <div className="mx-auto flex max-w-6xl flex-wrap items-start justify-between gap-4 px-4 sm:px-6">
-            <p className="max-w-xl text-xs leading-relaxed text-black/50">
-              <span className="mono-label block">Data</span>
-              From{" "}
-              <a
-                href="https://models.dev"
-                className="font-medium underline decoration-wavy decoration-from-font underline-offset-4 hover:text-black"
-              >
-                models.dev
-              </a>{" "}
-              · Snapshots diffed hourly · Machine-readable at{" "}
-              <a
-                href="/llms.txt"
-                className="font-medium underline decoration-wavy decoration-from-font underline-offset-4 hover:text-black"
-              >
-                /llms.txt
-              </a>
-            </p>
-            <p className="max-w-sm text-xs leading-relaxed text-black/50">
-              <span className="mono-label block">Disclaimer</span>
-              Prices are per 1M tokens in USD and may be unlisted (—) when providers do not publish them.
-            </p>
-          </div>
-        </footer>
+        <div className="mt-12">
+          <SiteFooter />
+        </div>
       </body>
     </html>
   );

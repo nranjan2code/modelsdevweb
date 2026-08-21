@@ -108,7 +108,7 @@ export function SiteNav() {
               <Chevron open={isOpen} />
             </button>
             {isOpen && (
-              <div className="card-flat absolute left-0 top-full z-50 mt-2 w-64 p-1.5 shadow-[4px_4px_0_0_rgba(0,0,0,1)]">
+              <div className="card-flat absolute right-0 top-full z-50 mt-2 w-64 p-1.5 shadow-[4px_4px_0_0_rgba(0,0,0,1)]">
                 {g.children.map((c) => (
                   <Link
                     key={c.href}
