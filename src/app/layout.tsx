@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Inter, JetBrains_Mono, Caveat } from "next/font/google";
 import { SITE_NAME, SITE_TAGLINE, SITE_URL } from "@/lib/site";
+import { SiteNav } from "@/components/site-nav";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
@@ -24,20 +25,6 @@ export const metadata: Metadata = {
   },
 };
 
-const NAV = [
-  { href: "/browse", label: "Browse" },
-  { href: "/compare", label: "Compare" },
-  { href: "/providers", label: "Providers" },
-  { href: "/benchmarks", label: "Benchmarks" },
-  { href: "/trends", label: "Trends" },
-  { href: "/calculator", label: "Calculator" },
-  { href: "/changelog", label: "Changelog" },
-  { href: "/news", label: "News" },
-  { href: "/deprecations", label: "Deprecations" },
-  { href: "/search", label: "Search" },
-  { href: "/about", label: "About" },
-];
-
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${inter.variable} ${jetbrains.variable} ${caveat.variable}`}>
@@ -49,7 +36,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           Skip to content
         </a>
         <header className="sticky top-0 z-40 border-b border-black/10 bg-white/90 backdrop-blur">
-          <div className="mx-auto flex h-16 max-w-6xl items-center gap-6 px-4 sm:px-6">
+          <div className="mx-auto flex min-h-16 max-w-6xl items-center gap-x-6 gap-y-1 px-4 py-2 sm:px-6">
             <Link href="/" className="group flex shrink-0 items-center gap-2.5">
               <span className="relative flex h-8 w-8 items-center justify-center rounded-lg border-2 border-black bg-white shadow-[2px_2px_0_0_rgba(0,0,0,1)] transition-transform group-hover:scale-105">
                 <span className="relative flex h-2.5 w-2.5">
@@ -59,20 +46,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </span>
               <span className="text-xl font-bold tracking-tight text-black">{SITE_NAME}</span>
             </Link>
-            <nav
-              aria-label="Primary"
-              className="no-scrollbar flex items-center gap-5 overflow-x-auto text-sm font-medium text-black/55 lg:gap-6"
-            >
-              {NAV.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="whitespace-nowrap transition-colors hover:text-black"
-                >
-                  {item.label}
-                </Link>
-              ))}
-            </nav>
+            <SiteNav />
             <a
               href="/rss.xml"
               className="ml-auto hidden shrink-0 rounded-md border-2 border-black bg-white px-2.5 py-1 font-mono text-xs font-bold uppercase tracking-wide shadow-[2px_2px_0_0_rgba(0,0,0,1)] transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0_0_rgba(0,0,0,1)] sm:block"
