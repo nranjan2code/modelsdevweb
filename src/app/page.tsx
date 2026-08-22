@@ -645,10 +645,10 @@ export default async function HomePage() {
               tone="border-black bg-black text-white hover:bg-black/85"
             />
             {digest.repriced > 0 && (
-              <MoveChip n={digest.repriced} label="repricings" href="/changelog?type=repriced&days=30" tone="border-purple-600/40 bg-purple-50 text-purple-700" />
+              <MoveChip n={digest.repriced} label="repricings" href="/changelog?type=repriced&days=14" tone="border-purple-600/40 bg-purple-50 text-purple-700" />
             )}
             {digest.added > 0 && (
-              <MoveChip n={digest.added} label="launches" href="/changelog?type=model_added&days=30" tone="border-emerald-600/40 bg-emerald-50 text-emerald-700" />
+              <MoveChip n={digest.added} label="launches" href="/changelog?type=model_added&days=14" tone="border-emerald-600/40 bg-emerald-50 text-emerald-700" />
             )}
             {digest.deprecated > 0 && (
               <MoveChip n={digest.deprecated} label="sunsets" href="/deprecations" tone="border-red-500/40 bg-red-50 text-red-600" />

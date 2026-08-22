@@ -73,9 +73,15 @@ async function main(): Promise<void> {
   // freshly diffed candidates, checked against the candidate catalog.
   const existing = ((await readJson(EVENTS_FILE)) as Event[] | null) ?? [];
   const seen = new Set(existing.map((e) => e.id));
-  const merged = [...newEvents.filter((e) => !seen.has(e.id)), ...existing].sort((a, b) =>
+  const mergedUnpruned = [...newEvents.filter((e) => !seen.has(e.id)), ...existing].sort((a, b) =>
     a.date === b.date ? a.id.localeCompare(b.id) : a.date < b.date ? 1 : -1,
   );
+  // Model pages surface per-model history, so retain generously — but bound
+  // file growth: nothing on the site reads events older than 90 days.
+  const pruneCutoff = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  const prunedCount = mergedUnpruned.filter((e) => e.date < pruneCutoff).length;
+  if (prunedCount > 0) console.log(`[sync] pruning ${prunedCount} event(s) older than ${pruneCutoff}`);
+  const merged = mergedUnpruned.filter((e) => e.date >= pruneCutoff);
 
   // Quality gates run on the freshly computed dataset BEFORE anything is written:
   // a red gate leaves the previous snapshot in place and fails the workflow.

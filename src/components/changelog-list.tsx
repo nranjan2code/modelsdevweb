@@ -17,6 +17,7 @@ const TYPES: { value: EventType | "all"; label: string }[] = [
 const WINDOWS: { value: number; label: string }[] = [
   { value: 0, label: "Any time" },
   { value: 7, label: "Last 7 days" },
+  { value: 14, label: "Last 14 days" },
   { value: 30, label: "Last 30 days" },
 ];
 
@@ -43,7 +44,7 @@ function readFilters(): Filters {
     const rawDays = Number(p.get("days"));
     const type =
       rawType && KNOWN_TYPES.has(rawType as EventType | "all") ? (rawType as EventType | "all") : "all";
-    const days = rawDays === 7 || rawDays === 30 ? rawDays : 0;
+    const days = rawDays === 7 || rawDays === 14 || rawDays === 30 ? rawDays : 0;
     return makeFilters(type, days);
   } catch {
     return DEFAULT_FILTERS;
