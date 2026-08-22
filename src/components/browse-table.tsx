@@ -68,7 +68,7 @@ export function BrowseTable({ rows }: { rows: BrowseRow[] }) {
   const [ctxMin, setCtxMin] = useState(0);
   const [priceMax, setPriceMax] = useState(Number.POSITIVE_INFINITY);
   const [caps, setCaps] = useState<Set<string>>(new Set());
-  const [sort, setSort] = useState<SortKey>("input");
+  const [sort, setSort] = useState<SortKey>("newest");
   const [page, setPage] = useState(1);
   const inCompare = useCompareSelection();
 

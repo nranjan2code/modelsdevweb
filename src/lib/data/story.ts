@@ -111,7 +111,7 @@ export function leadStory(
                     : ""
                 }`
               : `Input climbs ${fmtPerM(c.old)} → ${fmtPerM(c.new)} per 1M tokens${where}. Worth checking cheaper routes on the model page.`,
-            href: e.canonicalId ? `/m/${e.canonicalId}` : "/changelog",
+href: e.canonicalId && groupsById.has(e.canonicalId) ? `/m/${e.canonicalId}` : "/changelog",
             ctaLabel: cut ? "See all its prices" : "Check the routes",
             meta: [
               `${fmtPerM(c.old)} → ${fmtPerM(c.new)} /M`,
@@ -140,7 +140,7 @@ export function leadStory(
               ctx != null ? `, with a ${fmtTokens(ctx)}-token context window` : ""
             }. Now tracked across all providers carrying it.`
           : `Listed${where}${ctx != null ? ` with ${fmtTokens(ctx)}-token context` : ""}; pricing not published yet.`,
-        href: e.canonicalId ? `/m/${e.canonicalId}` : "/changelog",
+        href: e.canonicalId && groupsById.has(e.canonicalId) ? `/m/${e.canonicalId}` : "/changelog",
         ctaLabel: "Open the model page",
         meta: [
           ...(priced ? [`${fmtPerM(priced.input)} / ${fmtPerM(priced.output)} per M`] : ["price TBD"]),
@@ -161,7 +161,7 @@ export function leadStory(
           eyebrow: "Context race",
           headline: `${e.modelName} stretches its context to ${fmtTokens(c.new)} tokens`,
           dek: `Up from ${fmtTokens(c.old)}${where}. Bigger windows usually mean repricing follows — watching.`,
-          href: e.canonicalId ? `/m/${e.canonicalId}` : "/changelog",
+href: e.canonicalId && groupsById.has(e.canonicalId) ? `/m/${e.canonicalId}` : "/changelog",
           ctaLabel: "See the model",
           meta: [`${fmtTokens(c.old)} → ${fmtTokens(c.new)}`, ...(pricedMeta(group))],
         });

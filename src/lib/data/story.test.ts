@@ -60,7 +60,8 @@ describe("leadStory", () => {
       ev({ id: "a", date: "2026-08-21", modelName: "Small Cut", canonicalId: "x/small", changes: [{ field: "cost.input", old: 2, new: 1.9 }] }),
       ev({ id: "b", date: "2026-08-21", modelName: "Big Cut", canonicalId: "x/big", changes: [{ field: "cost.input", old: 4, new: 2 }] }),
     ];
-    const s = leadStory(events, new Map(), NOW);
+    const groupsById = new Map([["x/small", g({id: "x/small"})], ["x/big", g({id: "x/big"})]]);
+    const s = leadStory(events, groupsById, NOW);
     expect(s.kind).toBe("cut");
     expect(s.headline).toContain("Big Cut");
     expect(s.headline).toContain("50%");
@@ -70,15 +71,17 @@ describe("leadStory", () => {
 
   it("flags the steepest cut of the week in the eyebrow", () => {
     const events = [
-      ev({ date: "2026-08-21", changes: [{ field: "cost.input", old: 10, new: 5 }] }),
+      ev({ date: "2026-08-21", canonicalId: "x/big", changes: [{ field: "cost.input", old: 10, new: 5 }] }),
     ];
-    const s = leadStory(events, new Map(), NOW);
+    const groupsById = new Map([["x/big", g({id: "x/big"})]]);
+    const s = leadStory(events, groupsById, NOW);
     expect(s.eyebrow).toContain("steepest cut of the week");
   });
 
   it("reports price hikes as a distinct kind", () => {
-    const events = [ev({ changes: [{ field: "cost.input", old: 1, new: 2 }] })];
-    const s = leadStory(events, new Map(), NOW);
+    const events = [ev({ canonicalId: "x/big", changes: [{ field: "cost.input", old: 1, new: 2 }] })];
+    const groupsById = new Map([["x/big", g({id: "x/big"})]]);
+    const s = leadStory(events, groupsById, NOW);
     expect(s.kind).toBe("hike");
     expect(s.headline).toContain("raises");
   });
