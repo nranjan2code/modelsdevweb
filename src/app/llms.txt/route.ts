@@ -39,6 +39,7 @@ capability_changed, model_removed, provider_removed
 - /lab/{lab} — all models from one lab
 - /benchmarks — index; /benchmarks/{slug} — leaderboard pairing scores with prices
 - /calculator — monthly cost estimator by token mix
+- /self-host — GPU rent vs API bill for open-weight models, with licence constraints
 - /deprecations — listings no longer served
 - /changelog — full event history (${events.length} events)
 - /digest — auto-written weekly recap of releases, repricings and sunsets

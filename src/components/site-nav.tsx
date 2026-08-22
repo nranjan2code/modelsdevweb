@@ -22,6 +22,7 @@ const GROUPS: NavGroup[] = [
       { href: "/browse", label: "Browse catalog", desc: "Every model, filterable" },
       { href: "/compare", label: "Compare models", desc: "Side-by-side diff, up to 4" },
       { href: "/calculator", label: "Cost calculator", desc: "Monthly spend by token mix" },
+      { href: "/self-host", label: "Self-host or buy", desc: "GPU rent vs your API bill" },
     ],
   },
   {

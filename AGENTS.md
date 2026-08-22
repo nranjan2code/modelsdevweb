@@ -202,6 +202,12 @@ hourly GH Action (sync.yml)
   the wire → same model different price → what a dollar buys → self-host or buy → news →
   stats/APIs. Everything else already has a page; adding a module needs a question no existing
   module answers. The previous 13-module version rendered the price index twice verbatim.
+- **`/self-host` is the decision tool; the homepage module is its headline.** The module states
+  the threshold in *dollars of API spend* rather than tokens, because the rent already is the
+  break-even and a bill is a unit readers can act on — "2.5B tokens/mo" was arithmetic they had
+  to finish themselves. The page (`src/app/self-host/page.tsx` +
+  `src/components/self-host-table.tsx`) takes a monthly volume and gives a per-model verdict.
+- **The verdict is "worth pricing out", never "self-host this"** — see the assumptions below.
 - **`self-host or buy` states a floor, never a recommendation** (`src/lib/data/selfhost.ts`).
   Throughput depends on hardware, batch size, quantisation and sequence length, so it is not
   modelled. What is modelled is the rent: the smallest configuration the weights fit on at

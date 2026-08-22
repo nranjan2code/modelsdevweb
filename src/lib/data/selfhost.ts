@@ -172,6 +172,30 @@ export function apiOnlyCases(
     .slice(0, limit);
 }
 
+/**
+ * The verdict at a given monthly token volume.
+ *
+ * Expressed against the reader's API bill rather than a token threshold: the
+ * rent *is* the break-even in dollars, which needs no arithmetic to interpret.
+ */
+export interface VolumeVerdict {
+  apiMonthlyUsd: number;
+  /** Positive when renting the GPU is cheaper at this volume. */
+  savingsUsd: number;
+  /** Renting only wins if you can also keep the GPU busy — stated, not assumed. */
+  hostingCouldWin: boolean;
+}
+
+export function verdictAt(c: HostingCase, monthlyTokens: number): VolumeVerdict | null {
+  if (c.floor == null || c.apiBlendedPerM == null) return null;
+  const apiMonthlyUsd = (monthlyTokens / 1e6) * c.apiBlendedPerM;
+  return {
+    apiMonthlyUsd,
+    savingsUsd: apiMonthlyUsd - c.floor.usdPerMonth,
+    hostingCouldWin: apiMonthlyUsd > c.floor.usdPerMonth,
+  };
+}
+
 /** Compact token count: 210M, 7.2B, 1.4T. */
 export function fmtTokenCount(n: number | null): string | null {
   if (n == null || !Number.isFinite(n) || n <= 0) return null;

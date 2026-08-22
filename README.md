@@ -76,6 +76,7 @@ Local secrets live in `.env.local` (gitignored): `TAVILY_API_KEY` is read automa
 | `src/lib/data/provenance.ts` | benchmark score provenance (independent / self-reported) |
 | `src/lib/data/weights.ts` | open-weight licence + gating classification (what you may ship) |
 | `src/lib/data/selfhost.ts` | self-host vs API economics — GPU rent floor and break-even |
+| `src/app/self-host/page.tsx` | interactive decision tool: your volume vs GPU rent, per model |
 | `scripts/sync-weights.ts` | daily Hugging Face licence/gating/params refresh |
 | `scripts/sync.ts` | hourly sync job: fetch → gate → archive → diff → commit |
 | `scripts/news.ts` | daily Tavily news job: top models → headlines → `news/index.json` |

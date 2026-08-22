@@ -20,6 +20,7 @@ export async function GET() {
     "/benchmarks",
     "/trends",
     "/calculator",
+    "/self-host",
     "/changelog",
     "/digest",
     "/news",

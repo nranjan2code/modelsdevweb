@@ -333,7 +333,7 @@ function ValueBoardCard({
  */
 function HostingRow({ c }: { c: HostingCase }) {
   return (
-    <li className="flex flex-col gap-1.5 py-3 sm:flex-row sm:items-center sm:gap-4">
+    <li className="flex flex-col gap-1.5 py-3 sm:flex-row sm:items-baseline sm:gap-4">
       <div className="min-w-0 flex-1">
         <Link
           href={`/m/${c.groupId}`}
@@ -342,15 +342,16 @@ function HostingRow({ c }: { c: HostingCase }) {
           {c.name}
         </Link>
         <span className="mono-label">
-          {c.floor!.gpus}× {c.floor!.tier.name} · {fmtMonthlyUsd(c.floor!.usdPerMonth)}/mo ·
-          API {fmtPerM(c.apiBlendedPerM!)}/M
+          {c.floor!.gpus}× {c.floor!.tier.name} · API {fmtPerM(c.apiBlendedPerM!)}/M ·{" "}
+          {fmtTokenCount(c.breakEvenTokens)} tokens
         </span>
       </div>
-      <span className="shrink-0 text-right">
-        <span className="font-mono text-sm font-bold tabular-nums text-black">
-          {fmtTokenCount(c.breakEvenTokens)}
+      <span className="shrink-0 sm:text-right">
+        <span className="mono-label">keep buying below </span>
+        <span className="font-mono text-base font-bold tabular-nums text-black">
+          {fmtMonthlyUsd(c.floor!.usdPerMonth)}
         </span>
-        <span className="mono-label"> tokens/mo to break even</span>
+        <span className="mono-label">/mo of API</span>
       </span>
     </li>
   );
@@ -621,15 +622,15 @@ export default async function HomePage() {
             title="Self-host or buy?"
             eyebrow="The other half of the price question"
             eyebrowTone="special"
-            href="/browse"
-            label="Browse all"
+            href="/self-host"
+            label="Work it out"
           />
           <p className="-mt-2 mb-5 max-w-2xl text-sm leading-relaxed text-black/60">
             {freelyUsable} of the models here are permissively licensed and download without
             asking, so paying per token is a choice rather than the only option. A rented GPU
             costs the same whether you serve one token or a billion — so self-hosting cannot
-            beat the API until your monthly spend clears the rent. Here is where that bar sits,
-            lowest first.
+            beat the API until your bill clears the rent. So the threshold is just the rent —
+            spend less than this on a model and buying wins outright.
           </p>
 
           <div className="card p-5">
@@ -642,7 +643,10 @@ export default async function HomePage() {
               smallest configuration that holds the weights at bf16 · representative on-demand
               rates as of {GPU_PRICES_AS_OF}, and reserved capacity runs cheaper · break-even
               assumes a permanently saturated GPU, which is the best case for self-hosting —
-              below these figures the API wins outright
+              below these figures the API wins outright ·{" "}
+              <Link href="/self-host" className="text-accent hover:text-accent-strong">
+                set your own volume →
+              </Link>
             </p>
           </div>
 
