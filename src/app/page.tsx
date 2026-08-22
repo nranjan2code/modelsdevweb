@@ -27,7 +27,7 @@ import {
 import { getBenchmarkBoards } from "@/lib/data/benchmarks";
 import { benchmarkHome } from "@/lib/data/benchmark-links";
 import { capabilityAdoption, priceBuckets } from "@/lib/data/stats";
-import { EventCard } from "@/components/event-card";
+import { EventCard, eventTarget } from "@/components/event-card";
 import { Sparkline } from "@/components/price-history";
 import { fmtPerM, fmtTokens, fmtAgo, fmtDate } from "@/lib/format";
 import type { Event, NewsItem } from "@/lib/pipeline/types";
@@ -198,7 +198,7 @@ function PulseCard({ series }: { series: ReturnType<typeof pulseSeries> }) {
   const deltaPct = (last.median - first.median) / first.median;
   const down = deltaPct <= 0;
   return (
-    <div className="card p-4">
+    <Link href="/trends" className="card lift block p-4 transition-colors hover:border-blue-600">
       <p className="mono-label">Frontier price index</p>
       <div className="mt-2 flex items-end justify-between gap-2">
         <div className="font-mono text-2xl font-bold tabular-nums text-black">
@@ -219,7 +219,7 @@ function PulseCard({ series }: { series: ReturnType<typeof pulseSeries> }) {
       <p className="mt-2 text-xs leading-snug text-black/45">
         Median blended price across {last.models} frontier models · since {fmtDate(first.date)}.
       </p>
-    </div>
+    </Link>
   );
 }
 
@@ -484,7 +484,10 @@ export default async function HomePage() {
   const modelNameOf = (id: string) => catalog.groupById.get(id)?.name;
 
   const lead = leadStory(events, catalog.groupById);
-  const movers = moversLosers(events, 7);
+  const rawMovers = moversLosers(events, 7);
+  const demote = (ms: Mover[]): Mover[] =>
+    ms.map((m) => (m.id == null || catalog.groupById.has(m.id) ? m : { ...m, id: null }));
+  const movers = { fallers: demote(rawMovers.fallers), risers: demote(rawMovers.risers) };
   const recs = records(catalog);
   const labCards = labScorecards(catalog, events).slice(0, 8);
   const spot = modelOfWeek(catalog.groups);
@@ -585,9 +588,11 @@ export default async function HomePage() {
               </p>
             ) : (
               <div className="grid gap-4 sm:grid-cols-2">
-                {events.slice(0, 6).map((e) => (
-                  <EventCard key={e.id} event={e} />
-                ))}
+                {events.slice(0, 6).map((e) => {
+                  const target = eventTarget(e);
+                  const safe = target?.startsWith("/m/") && !catalog.groupById.has(target.slice(3)) ? "/changelog" : target;
+                  return <EventCard key={e.id} event={e} href={safe} />;
+                })}
               </div>
             )}
           </div>

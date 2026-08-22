@@ -35,16 +35,29 @@ export function changeText(c: Event["changes"][number]): string {
   return `${c.field}: ${f(c.old)} → ${f(c.new)}`;
 }
 
-export function EventCard({ event }: { event: Event }) {
-  const href = event.canonicalId ? `/m/${event.canonicalId}` : null;
-  return (
-    <div className="card lift flex flex-col gap-1.5 p-4">
+/**
+ * Safe deep-link target for an event. Removals never link — their
+ * model/provider pages may no longer exist. Provider additions link to the
+ * provider page; everything else links to the model page when resolvable.
+ */
+export function eventTarget(event: Event): string | null {
+  if (event.type === "model_removed" || event.type === "provider_removed") return null;
+  if ((event.type === "provider_added" || event.type === "capability_changed") && event.providerId && !event.canonicalId) {
+    return `/provider/${event.providerId}`;
+  }
+  return event.canonicalId ? `/m/${event.canonicalId}` : null;
+}
+
+export function EventCard({ event, href }: { event: Event; href?: string | null }) {
+  const target = href !== undefined ? href : eventTarget(event);
+  const body = (
+    <>
       <div className="flex items-center gap-2 flex-wrap">
         <EventTypeBadge type={event.type} />
-        {href ? (
-          <Link href={href} className="font-medium text-black hover:text-blue-600 transition-colors">
+        {target ? (
+          <span className="font-medium text-black group-hover:text-blue-600 transition-colors">
             {event.modelName}
-          </Link>
+          </span>
         ) : (
           <span className="font-medium text-black">{event.modelName}</span>
         )}
@@ -61,6 +74,14 @@ export function EventCard({ event }: { event: Event }) {
           {event.changes.length > 4 && <li>+{event.changes.length - 4} more</li>}
         </ul>
       )}
-    </div>
+    </>
+  );
+  const cls = "card lift group flex flex-col gap-1.5 p-4";
+  return target ? (
+    <Link href={target} className={`${cls} transition-colors hover:border-blue-600`}>
+      {body}
+    </Link>
+  ) : (
+    <div className={cls}>{body}</div>
   );
 }
