@@ -526,15 +526,6 @@ export default async function HomePage() {
             </Link>
           </div>
         </div>
-
-        <div className="mt-8 grid grid-cols-3 gap-2 border-y-2 border-black py-4 sm:grid-cols-3 lg:grid-cols-6">
-          <Stat value={String(s.models)} label="models" href="/browse" />
-          <Stat value={String(s.providers)} label="providers" href="/providers" />
-          <Stat value={String(s.listings)} label="listings" />
-          <Stat value={String(s.labs)} label="labs" href="/trends" />
-          <Stat value={String(s.openWeights)} label="open weights" href="/trends" />
-          <Stat value={String(s.deprecated)} label="deprecated" href="/deprecations" />
-        </div>
       </section>
 
       <section aria-label="Top story">
@@ -902,6 +893,17 @@ export default async function HomePage() {
               <li><span>MCP server</span> — see <a href="/about" className="underline decoration-black/20 underline-offset-2 hover:text-black">about</a></li>
             </ul>
           </div>
+        </div>
+      </section>
+
+      <section className="border-t border-black py-8">
+        <div className="grid grid-cols-3 gap-2 border-y-2 border-black py-4 sm:grid-cols-3 lg:grid-cols-6">
+          <Stat value={String(s.models)} label="models" href="/browse" />
+          <Stat value={String(s.providers)} label="providers" href="/providers" />
+          <Stat value={String(s.listings)} label="listings" />
+          <Stat value={String(s.labs)} label="labs" href="/trends" />
+          <Stat value={String(s.openWeights)} label="open weights" href="/trends" />
+          <Stat value={String(s.deprecated)} label="deprecated" href="/deprecations" />
         </div>
       </section>
     </div>
