@@ -1,5 +1,13 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { CopyField } from "@/components/copy-field";
 import { JsonLd } from "@/components/jsonld";
+import { SITE_URL } from "@/lib/site";
+
+const BADGE_MODEL = {
+  id: "openai/gpt-4o",
+  name: "GPT-4o",
+};
 
 export const metadata: Metadata = {
   title: "About",
@@ -112,6 +120,42 @@ export default function AboutPage() {
           </a>{" "}
           for the index. Agents are first-class consumers here.
         </p>
+      </section>
+
+      <section className="space-y-3">
+        <div className="space-y-2">
+          <h2 className="font-hand text-2xl font-bold tracking-tight text-black">Price badges</h2>
+          <p>
+            Put a model&apos;s current cheapest listed price in a README or documentation page. Each SVG is
+            rebuilt from the same catalog as the site; the linked Markdown below sends readers to the full
+            provider comparison.
+          </p>
+        </div>
+        <div className="card-flat space-y-4 p-4 sm:p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            {/* SVG badges carry their own intrinsic width and are served unmodified for embedding. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={`/badge/${BADGE_MODEL.id}.svg`}
+              alt={`Current price badge for ${BADGE_MODEL.name}`}
+              className="h-5 w-auto max-w-full"
+            />
+            <Link
+              href={`/m/${BADGE_MODEL.id}`}
+              className="text-xs font-semibold text-accent transition-colors hover:text-accent-strong"
+            >
+              View {BADGE_MODEL.name} prices →
+            </Link>
+          </div>
+          <CopyField
+            label="markdown"
+            value={`[![${BADGE_MODEL.name} price](${SITE_URL}/badge/${BADGE_MODEL.id}.svg)](${SITE_URL}/m/${BADGE_MODEL.id})`}
+          />
+          <p className="text-xs leading-relaxed text-black/45">
+            Use the model&apos;s stable path-style ID after <span className="font-mono">/badge/</span>. The
+            image updates when the catalog rebuilds; the destination remains the model&apos;s comparison page.
+          </p>
+        </div>
       </section>
 
       <section className="space-y-3">

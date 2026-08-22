@@ -266,10 +266,10 @@ body {
     box-shadow: 0 0 0 3px rgb(79 70 229 / 0.12);
   }
   .search-shell-hero {
-    min-height: 3.5rem;
+    min-height: 3.25rem;
     border-color: rgb(16 24 40 / 0.2);
-    padding-inline: 1rem;
-    box-shadow: 0 16px 48px rgb(16 24 40 / 0.12);
+    padding-inline: 0.875rem;
+    box-shadow: var(--shadow-hard-sm);
   }
   .kbd-hint {
     border: 1px solid rgb(16 24 40 / 0.12);
@@ -319,12 +319,12 @@ body {
     isolation: isolate;
     overflow: hidden;
     border: 1px solid rgb(16 24 40 / 0.1);
-    border-radius: 1.75rem;
+    border-radius: var(--radius-xl);
     background:
-      radial-gradient(circle at 20% 0%, rgb(79 70 229 / 0.16), transparent 24rem),
-      radial-gradient(circle at 85% 25%, rgb(147 51 234 / 0.11), transparent 22rem),
+      radial-gradient(circle at 12% 0%, rgb(79 70 229 / 0.12), transparent 22rem),
+      radial-gradient(circle at 92% 20%, rgb(147 51 234 / 0.08), transparent 20rem),
       var(--color-surface);
-    padding: 3rem 1.5rem;
+    padding: 2rem 1.5rem;
     box-shadow: var(--shadow-hard);
   }
   .hero-grid {
@@ -455,7 +455,7 @@ body {
 
 @media (min-width: 640px) {
   .hero-shell {
-    padding: 4rem 3rem;
+    padding: 2.75rem 2.5rem;
   }
 }
 

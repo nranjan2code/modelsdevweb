@@ -2,6 +2,8 @@
 
 **Every AI model. Every provider. Every change.**
 
+[![Current GPT-4o price on Model Pulse](https://www.vaanalytics.in/badge/openai/gpt-4o.svg)](https://www.vaanalytics.in/m/openai/gpt-4o)
+
 Model Pulse is a price-comparison and changelog site for AI models. The canonical catalog,
 provider listings and prices come from the open [models.dev](https://models.dev) dataset;
 Hugging Face supplies licence/access facts and popularity metadata, GitHub supplies repository
