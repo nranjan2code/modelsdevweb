@@ -4,6 +4,7 @@ import { diffListings } from "../src/lib/pipeline/diff";
 import { normalizeApi, normalizeModels } from "../src/lib/pipeline/normalize";
 import { runQuality } from "../src/lib/pipeline/quality";
 import type { Event } from "../src/lib/pipeline/types";
+import type { ExternalSignalsSnapshot } from "../src/lib/pipeline/external-types";
 import { rawApi, rawModels } from "../src/lib/pipeline/schema";
 import { groupListings, groupToFacts } from "../src/lib/data";
 
@@ -11,6 +12,7 @@ const ROOT = path.dirname(import.meta.dirname);
 const SNAPSHOTS = path.join(ROOT, "snapshots");
 const LATEST = path.join(SNAPSHOTS, "latest");
 const EVENTS_FILE = path.join(ROOT, "events", "index.json");
+const EXTERNAL_SIGNALS_FILE = path.join(LATEST, "external-signals.json");
 
 async function fetchJson(url: string): Promise<unknown> {
   const res = await fetch(url);
@@ -80,6 +82,16 @@ async function main(): Promise<void> {
   const canonicalById = new Map(models.map((m) => [m.id, m]));
   const canonicalLabs = new Set(models.map((m) => m.labId));
   const candidateGroups = groupListings(next.listings, canonicalById, canonicalLabs);
+
+  let externalSignals: ExternalSignalsSnapshot["signals"] = [];
+  try {
+    const extBuf = await readFile(EXTERNAL_SIGNALS_FILE, "utf8");
+    const extData = JSON.parse(extBuf) as Partial<ExternalSignalsSnapshot>;
+    externalSignals = extData.signals ?? [];
+  } catch {
+    // No external signals file yet — that's OK for first run
+  }
+
   const quality = runQuality({
     now: new Date(fetchedAt),
     snapshotDate: date,
@@ -97,6 +109,7 @@ async function main(): Promise<void> {
     canonicalIds: index,
     events: merged,
     news: [],
+    externalSignals,
     liveApiRaw: parsedApi as Record<string, { models?: unknown }>,
   });
   for (const issue of quality.warnings) console.log(`[sync] gate WARN [${issue.check}] ${issue.message}`);

@@ -3,6 +3,7 @@ import path from "node:path";
 import { getCatalog, groupToFacts } from "../src/lib/data";
 import { runQuality, type QualityInput, type QualityIssue } from "../src/lib/pipeline/quality";
 import type { Event } from "../src/lib/pipeline/types";
+import type { ExternalSignalsSnapshot } from "../src/lib/pipeline/external-types";
 
 const ROOT = path.dirname(import.meta.dirname);
 const LATEST = path.join(ROOT, "snapshots", "latest");
@@ -70,6 +71,8 @@ async function main(): Promise<void> {
     console.log("[gate] warn: live upstream fetch failed — upstream-completeness check skipped");
   }
 
+  const external = await readJson<ExternalSignalsSnapshot>(path.join(LATEST, "external-signals.json"));
+
   const labIds = [...new Set(catalog.groups.filter((g) => g.labKnown).map((g) => g.labId))];
   const input: QualityInput = {
     now: new Date(),
@@ -88,6 +91,7 @@ async function main(): Promise<void> {
     canonicalIds,
     events,
     news: newsJson?.items ?? [],
+    externalSignals: external?.signals ?? [],
     liveApiRaw,
   };
 

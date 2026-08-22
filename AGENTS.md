@@ -11,6 +11,7 @@ npx tsc --noEmit   # typecheck (no dedicated script)
 pnpm test          # vitest
 pnpm build         # pnpm og + pnpm badges + next build (static export) → out/
 pnpm sync          # fetch models.dev, run quality gates, diff, write snapshots/ + events/ (gates fail → nothing written, exit 1)
+pnpm sync-external # fetch HF/GitHub popularity signals → snapshots/latest/external-signals.json (uses GITHUB_TOKEN if set)
 pnpm gate          # standalone data-quality gates over committed snapshots (add --offline to skip live upstream compare)
 pnpm news          # Tavily daily news → news/index.json (--force to refetch same day)
 pnpm og            # satori-render OG cards → public/og/ (site + top 300 models)
@@ -44,9 +45,16 @@ news.
 hourly GH Action (sync.yml)
   ├─ pnpm sync   → snapshots/{latest,date}/ + events/index.json
   ├─ pnpm news   → news/index.json (Tavily; runs once/day, skips rest of day)
+  ├─ pnpm sync-external → snapshots/latest/external-signals.json (HF downloads/likes/trending/papers + GitHub stars/forks)
   └─ git commit + push → Vercel git integration rebuilds production
 ```
 
+- External signals resolve to canonical group ids via `src/lib/pipeline/external-resolver.ts`
+  (manual overrides > exact > fuzzy ≥0.75, one group per external item); `src/lib/scoring/composite.ts`
+  ranks them with per-source normalization curves and half-life decay. Every signal carries
+  `license` + `attributionUrl`; the quality gates reject orphans, missing attribution, bad values,
+  and >30d-stale entries. Papers with Code (shut down mid-2025) and LMArena (no public API) were
+  evaluated and deliberately excluded. Home "Momentum index" + `/api/signals.json` consume this.
 - `scripts/news.ts` picks the 6 freshest + 4 most-listed models, queries Tavily topic=news,
   dedupes URLs, tags items with canonical model IDs for deep-linking to `/m/<id>`.
 - If all Tavily queries fail, the previous `news/index.json` is kept (stale over empty).

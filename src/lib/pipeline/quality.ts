@@ -1,4 +1,5 @@
 import type { Event, EventType } from "./types";
+import type { ExternalSignal } from "./external-types";
 
 export interface QualityIssue {
   check: string;
@@ -25,6 +26,8 @@ export interface QualityInput {
   canonicalIds: Set<string>;
   events: Event[];
   news: NewsFacts[];
+  /** External signals from HF, GitHub, PWC, LMSYS. */
+  externalSignals?: ExternalSignal[];
   /** Fresh upstream fetch; when omitted the upstream-completeness check is skipped. */
   liveApiRaw?: Record<string, { models?: unknown }> | null;
 }
@@ -295,6 +298,48 @@ function checkNews(i: QualityInput): QualityIssue[] {
   return out;
 }
 
+/** External signals must reference valid groups, have licenses, and not be stale. */
+const EXTERNAL_SOURCES = new Set(["hf", "github"]);
+const EXTERNAL_TYPES = new Set(["downloads", "likes", "trending", "stars", "forks", "paper"]);
+
+function checkExternalSignals(i: QualityInput): QualityIssue[] {
+  const out: QualityIssue[] = [];
+  const signals = i.externalSignals ?? [];
+  if (signals.length === 0) return out;
+  const groupIds = new Set(i.groups.map((g) => g.id));
+  const maxAge = 30 * 24 * 3600 * 1000;
+
+  for (const s of signals) {
+    if (!groupIds.has(s.modelId)) {
+      out.push({ check: "external-signal-orphan", message: `${s.source}:${s.signalType} references unknown model ${s.modelId}` });
+    }
+    if (!s.license) {
+      out.push({ check: "external-signal-license", message: `${s.source}:${s.signalType} for ${s.modelId} missing license field` });
+    }
+    if (!EXTERNAL_SOURCES.has(s.source)) {
+      out.push({ check: "external-signal-source", message: `${s.source} is not an allowed external source` });
+    }
+    if (!EXTERNAL_TYPES.has(s.signalType)) {
+      out.push({ check: "external-signal-type", message: `${s.signalType} is not an allowed signal type` });
+    }
+    if (!Number.isFinite(s.value) || s.value < 0) {
+      out.push({ check: "external-signal-value", message: `${s.source}:${s.signalType} for ${s.modelId} has invalid value ${s.value}` });
+    }
+    if (typeof s.fetchedAt !== "string" || !/^\d{4}-\d{2}-\d{2}T/.test(s.fetchedAt)) {
+      out.push({ check: "external-signal-date", message: `${s.source}:${s.signalType} for ${s.modelId} has invalid fetchedAt` });
+    } else {
+      const age = i.now.getTime() - new Date(s.fetchedAt).getTime();
+      if (age > maxAge) {
+        out.push({ check: "external-signal-stale", message: `${s.source}:${s.signalType} for ${s.modelId} is ${Math.round(age / 3_600_000)}h old (max ${Math.round(maxAge / 3_600_000)}h)` });
+      }
+    }
+    if (!s.attributionUrl) {
+      out.push({ check: "external-signal-attribution", message: `${s.source}:${s.signalType} for ${s.modelId} missing attributionUrl` });
+    }
+  }
+  return out;
+}
+
 export function runQuality(input: QualityInput): QualityResult {
   const errors: QualityIssue[] = [];
   const warnings: QualityIssue[] = [];
@@ -308,10 +353,11 @@ export function runQuality(input: QualityInput): QualityResult {
     ...checkFreeIntegrity(input),
     ...checkEvents(input),
     ...checkNews(input),
+    ...checkExternalSignals(input),
   ];
   // News staleness/dead links degrade UX and upstream drift self-heals next sync;
   // everything else is hard-fail.
-  const soft = new Set(["news-integrity", "upstream-drift"]);
+  const soft = new Set(["news-integrity", "upstream-drift", "external-signal-stale"]);
   for (const issue of all) {
     if (soft.has(issue.check)) warnings.push(issue);
     else errors.push(issue);

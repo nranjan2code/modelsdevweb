@@ -39,12 +39,20 @@ jobs:
           TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
         run: pnpm news
 
+      - name: Sync external signals (HF, GitHub, PWC, LMSYS)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: pnpm sync-external
+
+      - name: Data quality gates (with external signals)
+        run: pnpm gate
+
       - name: Notify watchers
         env:
           WATCHER_SECRET: ${{ secrets.WATCHER_SECRET }}
         run: pnpm notify
 
-      - name: Commit snapshots and events
+      - name: Commit snapshots, events, and external signals
         run: |
           git config user.name "model-pulse-bot"
           git config user.email "actions@users.noreply.github.com"

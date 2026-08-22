@@ -6,6 +6,7 @@ import {
   getSnapshotMeta,
   groupContext,
   groupReleaseDate,
+  getTrendingExternalModels,
 } from "@/lib/data";
 import { getAllPriceHistory } from "@/lib/data/history";
 import {
@@ -30,6 +31,7 @@ import { EventCard } from "@/components/event-card";
 import { Sparkline } from "@/components/price-history";
 import { fmtPerM, fmtTokens, fmtAgo, fmtDate } from "@/lib/format";
 import type { Event, NewsItem } from "@/lib/pipeline/types";
+import type { CompositeScore } from "@/lib/pipeline/external-types";
 
 function SectionHead({
   title,
@@ -434,14 +436,35 @@ const fmtShort = (iso: string | null): string =>
     ? new Date(`${iso.slice(0, 10)}T00:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" })
     : "—";
 
+function TrendingRow({ score, name, priceLabel }: { score: CompositeScore; name: string; priceLabel: string }) {
+  const sources = Object.keys(score.breakdown)
+    .map((k) => k.split(":")[0])
+    .filter((v, i, a) => a.indexOf(v) === i);
+  return (
+    <li className="flex items-center gap-2 py-2.5">
+      <span className="w-4 shrink-0 tabular-nums text-black/35">{score.score.toFixed(2)}</span>
+      <div className="min-w-0 flex-1">
+        <Link href={`/m/${score.groupId}`} className="block truncate font-medium transition-colors hover:text-blue-600">
+          {name}
+        </Link>
+        <span className="mono-label">{priceLabel}</span>
+      </div>
+      <span className="shrink-0 rounded-full border border-black/15 bg-white px-1.5 py-0.5 font-mono text-[10px] uppercase text-black/50">
+        {sources.join("+")}
+      </span>
+    </li>
+  );
+}
+
 export default async function HomePage() {
-  const [catalog, events, news, boards, history, meta] = await Promise.all([
+  const [catalog, events, news, boards, history, meta, trendingExternal] = await Promise.all([
     getCatalog(),
     getEvents(),
     getNews(),
     getBenchmarkBoards(),
     getAllPriceHistory(),
     getSnapshotMeta(),
+    getTrendingExternalModels(7, 8),
   ]);
   const s = catalog.stats;
   const syncedAgo = fmtAgo(meta.fetchedAt);
@@ -491,6 +514,15 @@ export default async function HomePage() {
   const buckets = priceBuckets(catalog.groups);
   const bucketMax = Math.max(...buckets.map((b) => b.count), 1);
   const seenFrontier = new Set<string>();
+
+  const trending = trendingExternal
+    .map((t) => {
+      const group = catalog.groupById.get(t.groupId);
+      if (!group) return null;
+      return { t, group, priceLabel: group.best ? `${fmtPerM(group.best.input)}/${fmtPerM(group.best.output)} /M` : group.free ? "Free" : "—" };
+    })
+    .filter((x): x is NonNullable<typeof x> => x != null)
+    .slice(0, 5);
 
   return (
     <div className="space-y-12">
@@ -661,6 +693,26 @@ export default async function HomePage() {
           ))}
         </div>
       </section>
+
+      {trending.length > 0 && (
+        <section>
+          <SectionHead title="Momentum index" eyebrow="Community & research signals · last 7 days" tone="!text-emerald-600" />
+          <p className="-mt-2 mb-5 max-w-2xl text-sm text-black/55">
+            Weighted blend of Hugging&nbsp;Face downloads, likes, trending score, GitHub stars/forks and
+            recent paper mentions — normalized, freshness-decayed, then ranked.
+          </p>
+          <div className="card p-4">
+            <ul className="divide-y divide-black/10 text-sm">
+              {trending.map(({ t, group, priceLabel }) => (
+                <TrendingRow key={t.groupId} score={t} name={group.name} priceLabel={priceLabel} />
+              ))}
+            </ul>
+            <p className="mt-3 font-mono text-[10px] uppercase tracking-wider text-black/35">
+              sources: huggingface.co hub api · api.github.com — per-signal attribution in /api/signals.json
+            </p>
+          </div>
+        </section>
+      )}
 
       {(spot || h2hs.length > 0) && (
         <section className="grid gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
