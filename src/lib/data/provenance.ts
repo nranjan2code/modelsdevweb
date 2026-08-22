@@ -8,7 +8,7 @@
  * fastest way to lose an eval-literate reader.
  */
 
-export type Provenance = "independent" | "vendor" | "aggregator" | "unknown";
+export type Provenance = "independent" | "vendor" | "aggregator" | "unclassified" | "unknown";
 
 /**
  * Third parties that run the evaluation themselves. A score sourced here was
@@ -42,11 +42,9 @@ function hostOf(url: string): string | null {
 }
 
 /**
- * Anything that is not a known independent evaluator or marketplace is treated
- * as vendor-reported: in practice a benchmark source is either an evaluator, a
- * marketplace, or the lab's own launch post / model card, and defaulting the
- * unknown case to "vendor" errs toward under-claiming rather than over-claiming
- * independence.
+ * Hosts not in an allow-list stay unclassified. They remain excluded from
+ * rankings, but we do not call them self-reported without evidence that the
+ * model's own lab produced the score.
  */
 export function provenanceOf(source: string | null | undefined): Provenance {
   if (!source) return "unknown";
@@ -57,13 +55,14 @@ export function provenanceOf(source: string | null | undefined): Provenance {
   // Subdomains of an independent evaluator count too (labs.scale.com already
   // listed explicitly, but this catches future ones).
   for (const h of INDEPENDENT_HOSTS) if (host.endsWith(`.${h}`)) return "independent";
-  return "vendor";
+  return "unclassified";
 }
 
 export const PROVENANCE_LABEL: Record<Provenance, string> = {
   independent: "Independent",
   vendor: "Self-reported",
   aggregator: "Marketplace",
+  unclassified: "Unclassified source",
   unknown: "Unsourced",
 };
 
@@ -71,6 +70,7 @@ export const PROVENANCE_NOTE: Record<Provenance, string> = {
   independent: "Measured by a third-party evaluator with no stake in the result.",
   vendor: "Published by the model's own lab. Treat as a claim, not a measurement.",
   aggregator: "Republished by a marketplace from the lab's own figures.",
+  unclassified: "A source URL is present, but its relationship to the model has not been classified.",
   unknown: "No source URL published upstream.",
 };
 

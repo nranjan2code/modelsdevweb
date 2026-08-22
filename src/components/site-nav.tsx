@@ -4,139 +4,103 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
-interface NavChild {
-  href: string;
-  label: string;
-  desc: string;
-}
-
-interface NavGroup {
-  label: string;
-  children: NavChild[];
-}
-
-const GROUPS: NavGroup[] = [
-  {
-    label: "Models",
-    children: [
-      { href: "/browse", label: "Browse catalog", desc: "Every model, filterable" },
-      { href: "/compare", label: "Compare models", desc: "Side-by-side diff, up to 4" },
-      { href: "/calculator", label: "Cost calculator", desc: "Monthly spend by token mix" },
-      { href: "/self-host", label: "Self-host or buy", desc: "GPU rent vs your API bill" },
-    ],
-  },
-  {
-    label: "Market",
-    children: [
-      { href: "/benchmarks", label: "Benchmarks", desc: "Leaderboards with pts per dollar" },
-      { href: "/trends", label: "Trends", desc: "Aggregates, distributions, scatter" },
-      { href: "/providers", label: "Providers", desc: "Prices per inference provider" },
-    ],
-  },
-  {
-    label: "Track",
-    children: [
-      { href: "/changelog", label: "Changelog", desc: "Hourly diffs of everything" },
-      { href: "/digest", label: "Weekly digest", desc: "This week in AI pricing" },
-      { href: "/news", label: "Model news", desc: "Daily headlines" },
-      { href: "/deprecations", label: "Deprecations", desc: "Sunset watch" },
-    ],
-  },
+const PRIMARY = [
+  { href: "/browse", label: "Find a model" },
+  { href: "/compare", label: "Compare" },
+  { href: "/changelog", label: "Changes" },
+  { href: "/trends", label: "Market" },
 ];
 
-const DIRECT = [{ href: "/about", label: "About" }];
-
-function Chevron({ open }: { open: boolean }) {
-  return (
-    <svg
-      aria-hidden="true"
-      viewBox="0 0 12 12"
-      className={`ml-1 inline-block size-3 shrink-0 transition-transform ${open ? "rotate-180" : ""}`}
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.75"
-    >
-      <path d="M2.5 4.5 6 8l3.5-3.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
+const MORE = [
+  { href: "/benchmarks", label: "Benchmarks", desc: "Independent evidence and value" },
+  { href: "/providers", label: "Providers", desc: "Every serving organisation" },
+  { href: "/self-host", label: "Self-host or buy", desc: "API bill versus GPU rent" },
+  { href: "/calculator", label: "Cost calculator", desc: "Price your workload" },
+  { href: "/deprecations", label: "Retirement watch", desc: "Models leaving the market" },
+  { href: "/news", label: "Model news", desc: "Relevant stories, clustered" },
+  { href: "/about", label: "Data & methodology", desc: "Sources, APIs and trust rules" },
+];
 
 export function SiteNav() {
   const pathname = usePathname();
-  const [open, setOpen] = useState<string | null>(null);
-  const ref = useRef<HTMLElement>(null);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const root = useRef<HTMLElement>(null);
+  const active = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
 
   useEffect(() => {
-    if (!open) return;
-    function onDown(e: PointerEvent) {
-      if (!ref.current?.contains(e.target as Node)) setOpen(null);
+    function close(event: PointerEvent) {
+      if (!root.current?.contains(event.target as Node)) {
+        setMoreOpen(false);
+        setMobileOpen(false);
+      }
     }
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") setOpen(null);
+    function escape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setMoreOpen(false);
+        setMobileOpen(false);
+      }
     }
-    document.addEventListener("pointerdown", onDown);
-    document.addEventListener("keydown", onKey);
+    document.addEventListener("pointerdown", close);
+    document.addEventListener("keydown", escape);
     return () => {
-      document.removeEventListener("pointerdown", onDown);
-      document.removeEventListener("keydown", onKey);
+      document.removeEventListener("pointerdown", close);
+      document.removeEventListener("keydown", escape);
     };
-  }, [open]);
+  }, []);
 
-  const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
-
-  const triggerCls = (active: boolean, isOpen: boolean) =>
-    `flex items-center whitespace-nowrap rounded-md px-1.5 py-1 transition-colors ${
-      active || isOpen ? "font-semibold text-black" : "hover:text-black"
-    }`;
+  const linkClass = (href: string) => `nav-link ${active(href) ? "nav-link-active" : ""}`;
 
   return (
-    <nav ref={ref} aria-label="Primary" className="ml-auto flex flex-wrap items-center justify-end gap-x-3.5 gap-y-1 text-sm font-medium text-black/60 lg:gap-x-5">
-      {GROUPS.map((g) => {
-        const active = g.children.some((c) => isActive(c.href));
-        const isOpen = open === g.label;
-        return (
-          <div key={g.label} className="relative">
-            <button
-              type="button"
-              aria-expanded={isOpen}
-              aria-haspopup="true"
-              onClick={() => setOpen(isOpen ? null : g.label)}
-              className={triggerCls(active, isOpen)}
-            >
-              {g.label}
-              <Chevron open={isOpen} />
-            </button>
-            {isOpen && (
-              <div className="card-flat absolute left-0 top-full z-50 mt-2 w-64 p-1.5 shadow-hard">
-                {g.children.map((c) => (
-                  <Link
-                    key={c.href}
-                    href={c.href}
-                    onClick={() => setOpen(null)}
-                    aria-current={isActive(c.href) ? "page" : undefined}
-                    className={`block rounded-md px-3 py-2 transition-colors hover:bg-accent-soft ${
-                      isActive(c.href) ? "bg-accent-soft" : ""
-                    }`}
-                  >
-                    <span className="block font-medium text-black">{c.label}</span>
-                    <span className="block text-xs text-black/45">{c.desc}</span>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
-        );
-      })}
-      {DIRECT.map((d) => (
-        <Link
-          key={d.href}
-          href={d.href}
-          aria-current={isActive(d.href) ? "page" : undefined}
-          className={triggerCls(isActive(d.href), false)}
-        >
-          {d.label}
-        </Link>
-      ))}
+    <nav ref={root} aria-label="Primary" className="relative md:contents">
+      <button
+        type="button"
+        className="nav-menu-button md:hidden"
+        aria-expanded={mobileOpen}
+        aria-controls="mobile-navigation"
+        onClick={() => setMobileOpen((value) => !value)}
+      >
+        {mobileOpen ? "Close" : "Menu"}
+      </button>
+
+      <div className="hidden items-center gap-1 md:flex">
+        {PRIMARY.map((item) => (
+          <Link key={item.href} href={item.href} className={linkClass(item.href)} onClick={() => setMoreOpen(false)}>
+            {item.label}
+          </Link>
+        ))}
+        <div className="relative">
+          <button
+            type="button"
+            className={`nav-link ${MORE.some((item) => active(item.href)) || moreOpen ? "nav-link-active" : ""}`}
+            aria-expanded={moreOpen}
+            aria-haspopup="true"
+            onClick={() => setMoreOpen((value) => !value)}
+          >
+            More <span aria-hidden="true">⌄</span>
+          </button>
+          {moreOpen && (
+            <div className="nav-popover">
+              {MORE.map((item) => (
+                <Link key={item.href} href={item.href} className="nav-popover-link" onClick={() => setMoreOpen(false)}>
+                  <span className="font-medium text-black">{item.label}</span>
+                  <span className="text-xs text-black/45">{item.desc}</span>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {mobileOpen && (
+        <div id="mobile-navigation" className="nav-mobile md:hidden">
+          {[...PRIMARY, ...MORE].map((item) => (
+            <Link key={item.href} href={item.href} className={linkClass(item.href)} onClick={() => setMobileOpen(false)}>
+              {item.label}
+            </Link>
+          ))}
+        </div>
+      )}
     </nav>
   );
 }

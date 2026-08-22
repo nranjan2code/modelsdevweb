@@ -3,7 +3,7 @@
  * Fails on any violation of the brand token contract:
  *   - raw hex colors in TSX/TS under src/
  *   - Tailwind palette classes (colors must be semantic tokens or ink alphas)
- *   - soft shadows (only shadow-hard / shadow-hard-sm / shadow-hard-lg allowed)
+ *   - ad-hoc Tailwind shadows (only the named brand elevation tokens are allowed)
  *   - `!important` color overrides (!text-, !bg-, !border-)
  *   - arbitrary font sizes outside the allowlist
  *

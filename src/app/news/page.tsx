@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getCatalog, getNews } from "@/lib/data";
 import { fmtAgo } from "@/lib/format";
 import { Badge, EmptyState } from "@/components/ui";
+import { toStories } from "@/lib/data/stories";
 
 export const metadata: Metadata = {
   title: "Model news",
@@ -12,6 +13,12 @@ export const metadata: Metadata = {
 
 export default async function NewsPage() {
   const [news, catalog] = await Promise.all([getNews(), getCatalog()]);
+  const stories = toStories(news)
+    .map((story) => ({
+      story,
+      modelId: story.lead.modelIds.find((id) => catalog.groupById.has(id)),
+    }))
+    .filter((item) => item.modelId != null);
   return (
     <div className="space-y-6">
       <header className="space-y-2">
@@ -30,12 +37,12 @@ export default async function NewsPage() {
           .
         </p>
       </header>
-      {news.length === 0 ? (
-        <EmptyState>No news fetched yet — the daily Tavily job will populate this after its next run.</EmptyState>
+      {stories.length === 0 ? (
+        <EmptyState>No model-linked stories passed today&rsquo;s relevance checks — the feed will try again on the next daily run.</EmptyState>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
-          {news.map((n) => {
-            const modelId = n.modelIds.find((id) => catalog.groupById.has(id));
+          {stories.map(({ story, modelId }) => {
+            const n = story.lead;
             return (
               <article key={n.id} className="card lift flex flex-col gap-1.5 p-4">
                 <a
@@ -61,6 +68,11 @@ export default async function NewsPage() {
                         <Badge tone="accent">{catalog.groupById.get(modelId)?.name ?? modelId}</Badge>
                       </Link>
                     </>
+                  )}
+                  {story.alsoCovered.length > 0 && (
+                    <span className="micro-label ml-auto">
+                      +{story.alsoCovered.length} outlet{story.alsoCovered.length === 1 ? "" : "s"}
+                    </span>
                   )}
                 </div>
               </article>

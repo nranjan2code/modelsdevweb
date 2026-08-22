@@ -98,6 +98,13 @@ const GENERIC_IDS = new Set([
   "unknown", "none", "test", "any", "best",
 ]);
 
+/**
+ * Exact upstream ids known to name a distinct model variant even when a
+ * gateway publishes the base model's display name. Keeping this exact and
+ * reviewable is safer than inventing a suffix heuristic.
+ */
+const DISTINCT_VARIANT_IDS = new Set(["openai/gpt-5.6-sol-pro"]);
+
 export function isGenericModelId(name: string, modelId: string): boolean {
   const tail = (modelId.split("/").pop() ?? modelId).toLowerCase();
   return GENERIC_IDS.has(tail) || GENERIC_IDS.has(reduce(name));
@@ -173,6 +180,11 @@ export function buildIdentityIndex<T>(
     lookup,
     size: map.size,
     resolve(name: string, modelId: string) {
+      const exactId = modelId.replace(/^~/, "");
+      if (DISTINCT_VARIANT_IDS.has(exactId)) {
+        const tail = exactId.split("/").pop() ?? exactId;
+        return { target: null, slug: reduce(tail) };
+      }
       const candidates = identityCandidates(name, modelId);
       for (const slug of candidates) {
         const hit = lookup(slug);

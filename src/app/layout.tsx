@@ -1,15 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Inter, JetBrains_Mono, Caveat } from "next/font/google";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import { SITE_NAME, SITE_TAGLINE, SITE_URL } from "@/lib/site";
 import { SiteNav } from "@/components/site-nav";
+import { ModelSearch } from "@/components/model-search";
 import { SiteFooter } from "@/components/site-footer";
 import { BrandMark } from "@/components/brand-mark";
+import { getCatalog } from "@/lib/data";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const jetbrains = JetBrains_Mono({ subsets: ["latin"], variable: "--font-jetbrains" });
-const caveat = Caveat({ subsets: ["latin"], variable: "--font-caveat" });
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -33,9 +34,15 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const catalog = await getCatalog();
+  const searchModels = catalog.tracked.map((group) => ({
+    id: group.id,
+    name: group.name,
+    lab: group.labId,
+  }));
   return (
-    <html lang="en" className={`${inter.variable} ${jetbrains.variable} ${caveat.variable}`}>
+    <html lang="en" className={`${inter.variable} ${jetbrains.variable}`}>
       <body className="min-h-screen flex flex-col font-sans">
         <script
           type="application/ld+json"
@@ -55,16 +62,22 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         >
           Skip to content
         </a>
-        <header className="sticky top-0 z-40 border-b border-black/10 bg-white/90 backdrop-blur">
-          <div className="mx-auto flex min-h-16 max-w-6xl items-center gap-x-6 gap-y-1 px-4 py-2 sm:px-6">
+        <header className="site-header">
+          <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-3 px-4 py-3 sm:px-6 lg:flex-nowrap">
             <Link href="/" className="group flex shrink-0 items-center gap-2.5">
-              <BrandMark boxClassName="h-8 w-8 transition-transform group-hover:scale-105" />
-              <span className="text-xl font-bold tracking-tight text-black">{SITE_NAME}</span>
+              <BrandMark boxClassName="h-9 w-9 transition-transform group-hover:scale-105" />
+              <span>
+                <span className="block text-base font-bold leading-none tracking-tight text-black">{SITE_NAME}</span>
+                <span className="micro-label mt-1 hidden sm:block">AI model market</span>
+              </span>
             </Link>
             <SiteNav />
+            <div className="order-3 w-full md:order-none md:ml-auto md:w-auto">
+              <ModelSearch models={searchModels} />
+            </div>
           </div>
         </header>
-        <main id="main" className="mx-auto w-full max-w-6xl flex-1 px-4 py-10 sm:px-6">
+        <main id="main" className="mx-auto w-full max-w-7xl flex-1 px-4 py-10 sm:px-6 lg:py-14">
           {children}
         </main>
         <div className="mt-12">

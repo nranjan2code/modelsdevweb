@@ -76,14 +76,14 @@ export function SectionHead({
   eyebrowTone?: keyof typeof EYEBROW_TONES;
 }) {
   const linkCls =
-    "shrink-0 rounded-full border border-black/15 bg-white px-3 py-1 text-xs font-medium text-black/60 transition-colors hover:border-black hover:text-black";
+    "shrink-0 rounded-lg border border-black/10 bg-white px-3 py-1.5 text-xs font-semibold text-black/60 shadow-hard-sm transition-colors hover:border-accent/30 hover:text-accent";
   return (
     <div className="mb-5">
       {eyebrow && (
         <p className={`mono-label mb-1 ${eyebrowTone ? EYEBROW_TONES[eyebrowTone] : ""}`}>{eyebrow}</p>
       )}
       <div className="flex items-center justify-between gap-4">
-        <h2 className="font-hand text-3xl font-bold tracking-tight text-black sm:text-4xl">{title}</h2>
+        <h2 className="font-hand text-2xl font-bold tracking-tight text-black sm:text-3xl">{title}</h2>
         {href &&
           (external ? (
             <a href={href} target="_blank" rel="noreferrer" className={linkCls}>

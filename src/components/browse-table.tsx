@@ -26,6 +26,7 @@ export interface BrowseRow {
   providers: number;
   swe: number | null;
   flags: string[];
+  tracked: boolean;
 }
 
 type SortKey = "input" | "output" | "newest" | "providers" | "context" | "swe";
@@ -70,12 +71,14 @@ export function BrowseTable({ rows }: { rows: BrowseRow[] }) {
   const [priceMax, setPriceMax] = useState(Number.POSITIVE_INFINITY);
   const [caps, setCaps] = useState<Set<string>>(new Set());
   const [sort, setSort] = useState<SortKey>("newest");
+  const [includeExtended, setIncludeExtended] = useState(false);
   const [page, setPage] = useState(1);
   const inCompare = useCompareSelection();
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
     let out = rows.filter((r) => {
+      if (!includeExtended && !r.tracked) return false;
       if (needle && !`${r.name} ${r.id} ${r.lab}`.toLowerCase().includes(needle)) return false;
       if ((r.ctx ?? 0) < ctxMin) return false;
       const effInput = r.input ?? (r.free ? 0 : null);
@@ -105,13 +108,13 @@ export function BrowseTable({ rows }: { rows: BrowseRow[] }) {
       }
     });
     return out;
-  }, [rows, q, ctxMin, priceMax, caps, sort]);
+  }, [rows, q, ctxMin, priceMax, caps, sort, includeExtended]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const current = Math.min(page, totalPages);
   const paged = filtered.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE);
 
-  const filterKey = `${q}|${ctxMin}|${priceMax}|${sort}|${[...caps].join(",")}`;
+  const filterKey = `${q}|${ctxMin}|${priceMax}|${sort}|${includeExtended}|${[...caps].join(",")}`;
   const [lastFilterKey, setLastFilterKey] = useState(filterKey);
   if (filterKey !== lastFilterKey) {
     setLastFilterKey(filterKey);
@@ -139,6 +142,7 @@ export function BrowseTable({ rows }: { rows: BrowseRow[] }) {
         <input
           className="input w-56"
           placeholder="Search models…"
+          aria-label="Search models"
           value={q}
           onChange={(e) => setQ(e.target.value)}
         />
@@ -190,6 +194,18 @@ export function BrowseTable({ rows }: { rows: BrowseRow[] }) {
             </button>
           ))}
         </div>
+        <button
+          type="button"
+          onClick={() => setIncludeExtended((value) => !value)}
+          aria-pressed={includeExtended}
+          className={`rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${
+            includeExtended
+              ? "border-special bg-special-soft text-special"
+              : "border-black/15 bg-white text-black/60 hover:border-black hover:text-black"
+          }`}
+        >
+          extended catalog
+        </button>
         <span className="ml-auto font-mono text-xs tabular-nums text-black/45">
           {filtered.length} / {rows.length}
         </span>

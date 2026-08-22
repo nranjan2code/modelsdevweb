@@ -31,6 +31,10 @@ export function StatusBadge({ status }: { status: Listing["status"] }) {
 }
 
 export function PriceTable({ listings }: { listings: Listing[] }) {
+  const variantsByProvider = new Map<string, number>();
+  for (const listing of listings) {
+    variantsByProvider.set(listing.providerId, (variantsByProvider.get(listing.providerId) ?? 0) + 1);
+  }
   return (
     <div className="card overflow-x-auto">
       <table className="table-base min-w-[880px]">
@@ -59,6 +63,11 @@ export function PriceTable({ listings }: { listings: Listing[] }) {
                   >
                     {l.providerName}
                   </Link>
+                  {(variantsByProvider.get(l.providerId) ?? 0) > 1 && (
+                    <Badge tone="muted" className="ml-2">
+                      variant
+                    </Badge>
+                  )}
                   <div className="font-mono text-xs text-black/45">{l.modelId}</div>
                 </td>
                 <td className="text-right font-mono tabular-nums">

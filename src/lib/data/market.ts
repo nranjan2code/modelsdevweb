@@ -1,4 +1,4 @@
-import { blendPrice, groupContext, type ModelGroup } from "./index";
+import { blendPrice, groupContext, pricedProviderCount, providerCount, type ModelGroup } from "./index";
 import { unlistedPrice } from "../pipeline/normalize";
 import type { Listing } from "../pipeline/types";
 
@@ -144,7 +144,9 @@ export function priceSpread(g: ModelGroup): PriceSpread | null {
   const corroborated = (l: Listing): boolean => {
     const p = blendPrice(l.cost.input!, l.cost.output!);
     return ranked.some(
-      (o) => o.key !== l.key && blendPrice(o.cost.input!, o.cost.output!) <= p * CORROBORATION_FACTOR,
+      (o) =>
+        o.providerId !== l.providerId &&
+        blendPrice(o.cost.input!, o.cost.output!) <= p * CORROBORATION_FACTOR,
     );
   };
   const cheapestCredible = ranked.find(corroborated) ?? null;
@@ -184,8 +186,8 @@ export function priceSpread(g: ModelGroup): PriceSpread | null {
  * catch when the outright cheapest listing has one.
  */
 export function spreadSummary(g: ModelGroup, s: PriceSpread): string {
-  const priced = s.ranked.length;
-  const live = g.listings.filter((l) => l.status !== "deprecated").length;
+  const priced = pricedProviderCount(g);
+  const live = providerCount(g);
   const pick = s.cheapestFullContext ?? s.cheapest;
   const price = `$${fmt(pick.cost.input!)}/$${fmt(pick.cost.output!)}`;
   const parts: string[] = [
@@ -215,7 +217,7 @@ export function spreadSummary(g: ModelGroup, s: PriceSpread): string {
         : `${s.cheapest.providerName} lists lower on a reduced tier.`,
     );
   } else if (s.ratio >= 1.5) {
-    parts.push(`Prices across providers span ${s.ratio.toFixed(1)}× for identical weights.`);
+    parts.push(`Listed prices span ${s.ratio.toFixed(1)}× for identical weights.`);
   }
 
   return parts.join(" ");
@@ -246,7 +248,7 @@ export function widestSpreads(groups: ModelGroup[], minProviders = 6, limit = 6)
   const rows: SpreadRow[] = [];
   for (const g of groups) {
     const spread = priceSpread(g);
-    if (!spread || spread.ranked.length < minProviders) continue;
+    if (!spread || pricedProviderCount(g) < minProviders) continue;
     if (spread.ratio < 1.5) continue;
     rows.push({ group: g, spread });
   }

@@ -14,28 +14,27 @@ sound; this document covers how we look. Enforced by `pnpm check:style`.
 | **Tagline** | "Every AI model. Every provider. Every change." |
 | **One-liner** | The front page of the AI model market — prices, releases and repricings, tracked hourly. |
 | **Data source credit** | Always "Built on open data from models.dev" (linked). |
-| **Personality** | A market terminal drawn in a notebook. Precise numbers, human voice, zero corporate gloss. |
+| **Personality** | A modern market terminal with an editorial pulse. Precise numbers, human voice, zero corporate gloss. |
 
-## 2. Design language — neo-brutalism
+## 2. Design language — editorial market terminal
 
-Model Pulse is a **neo-brutalist data product**: flat white surfaces, hard 2px
-ink borders, hard offset shadows, no gradients on UI chrome, no soft glows.
-Playfulness comes from *structure* (the hand-drawn display font, wavy
-underlines, rotated date stickers), never from blurring or fading.
+Model Pulse is a **modern editorial data product**: quiet surfaces, precise
+hairlines, compact controls, strong typography and restrained depth. The
+interface should feel current and trustworthy before it feels decorative.
+Colour and motion explain state; they do not compete with the numbers.
 
 Hard rules:
 
-1. **Borders are 2px solid ink** (`border-black`, i.e. `--color-ink`). Hairlines
-   (`1px`) are allowed only as table row separators and card internal dividers
-   at `black/10`.
-2. **Shadows are hard and offset** — `shadow-[4px_4px_0_0]` resting →
-   `2px` hover → `0` active, always solid ink. Soft Tailwind shadows
-   (`shadow-sm/md/lg/xl`) are forbidden.
-3. **Corners are small radii only**: `rounded-md` (inputs/buttons), `rounded-lg`
-   (cards), `rounded-full` exclusively for chips/badges/pills/dots.
+1. **Borders are quiet hairlines** (`black/10`–`black/15`). Strong 2px borders
+   are reserved for the primary call to action and exceptional focus states.
+2. **Depth is restrained** through the named `shadow-hard*` compatibility
+   tokens. Despite their historical names, they now resolve to soft editorial
+   elevation; raw Tailwind shadows remain forbidden so depth stays consistent.
+3. **Corners are generous but controlled**: `rounded-lg` for compact controls,
+   `rounded-xl` for cards/search, and `rounded-full` for status chips only.
 4. **No dark mode.** The site is paper-on-light by design; `color-scheme: light`.
-5. **Motion is transform-only**: translate on press/lift, 150ms ease. No fades
-   over content, no scale above `group-hover:scale-105` on the logo mark.
+5. **Motion is brief and optional**: small lifts at 150ms, with a global
+   `prefers-reduced-motion` fallback.
 
 ## 3. Color system
 
@@ -47,11 +46,11 @@ classes (`text-emerald-700`, `bg-blue-50`, …) and never raw hex codes in TSX.
 
 | Token | Value | Role |
 |---|---|---|
-| `ink` | `#0a0a0a` | Text, borders, hard shadows. The default ink of the site. |
-| `paper` | `#fafaf9` | Page background (body). |
+| `ink` | `#101828` | Text and structural emphasis. The default ink of the site. |
+| `paper` | `#f6f7fb` | Page background (body). |
 | `surface` | `#ffffff` | Cards, inputs, nav dropdowns. |
-| `surface-tint` | `#fdfbf7` | Footer background only. |
-| `accent` | `#2563eb` | Brand blue: links, interactive affordances, primary chart color, focus accents. |
+| `surface-tint` | `#f0f2f7` | Table headers, footer and quiet controls. |
+| `accent` | `#4f46e5` | Brand indigo: links, interactive affordances, primary chart color, focus accents. |
 | `pos` | `#047857` | Good for the buyer: price cuts ▼, savings, launches, first-party moves, independently measured scores, pts/$ wins, "Free". |
 | `neg` | `#dc2626` | Costly or gone: price hikes ▲, deprecations, errors. |
 | `warn` | `#d97706` | Attention, not judgment: capability changes, price-spread multiples, records/superlatives. |
@@ -99,8 +98,8 @@ Rules that follow:
   /70 strong-secondary` for text, `/10 hairlines · /15 quiet borders · /5
   footer rules` for lines. No other steps.
 - **Who moved is encoded, not just written.** First-party boards render on
-  `card` (hard shadow, full weight); reseller boards render on `card-flat` (no
-  shadow). The hierarchy is structural so it survives being skimmed — a reader
+  `card` (elevated, full weight); reseller boards render on `card-flat` (quiet).
+  The hierarchy is structural so it survives being skimmed — a reader
   should see which board matters before reading either.
 - **Provenance never uses `neg`.** A self-reported score is unattributed, not
   false. Reserve `neg` for things that cost the buyer money or take a model
@@ -139,14 +138,14 @@ Three fonts, three jobs — nothing else ships:
 |---|---|---|
 | Inter | `--font-sans` | All body/UI text. |
 | JetBrains Mono | `--font-mono` | Numbers, prices, IDs, code, table headers, `.mono-label`. Always with `tabular-nums` when numeric. |
-| Caveat | `--font-hand` | Display headings only (page titles, section titles, card titles, footer column heads, stickers). |
+| Inter display | `--font-hand` compatibility alias | Display headings. The alias remains so existing components inherit the modern display treatment. |
 
 Scale (binding):
 
 | Role | Spec |
 |---|---|
 | Page title (h1) | `text-3xl font-bold tracking-tight sm:text-5xl` (hero may go `leading-[1.08]`) |
-| Section head (h2) | `font-hand text-3xl font-bold tracking-tight sm:text-4xl` via `<SectionHead>` |
+| Section head (h2) | `font-hand text-2xl font-bold tracking-tight sm:text-3xl` via `<SectionHead>` |
 | Card/board title (h3) | `font-hand text-2xl font-bold` |
 | Body | `text-sm` (dense contexts) / `text-base` (prose) |
 | Stat value | `font-mono font-bold tabular-nums text-xl`–`4xl` |
@@ -164,7 +163,7 @@ Use the shared primitives before writing any bespoke markup:
 
 | Primitive | File | Use for |
 |---|---|---|
-| `.card` | globals.css | Elevated framed panel (hard shadow). |
+| `.card` | globals.css | Elevated white panel with quiet border and restrained depth. |
 | `.card-flat` | globals.css | Framed panel without shadow (tables, stat tiles, menus). |
 | `.card-dashed` | globals.css | Ghost/placeholder frame. |
 | `.press` / `.lift` | globals.css | Pressable / hoverable motion. Combine with `.card*`. |
@@ -188,7 +187,7 @@ these do, extend a primitive — don't fork styling locally.
 The homepage's lead story is the one place the site makes a claim rather than
 reporting a number, so its form is fixed:
 
-- A `.card` with a full-height 2px colour rail on the left edge, keyed to the
+- A `.card` with a full-height colour rail on the left edge, keyed to the
   story kind — `pos` for cuts and launches, `neg` for rises and sunsets,
   `special` for reseller moves, `accent` for a quiet week.
 - Kind badge and sync stamp above; headline at display size; body at
@@ -207,9 +206,8 @@ This is a visual rule with a data cause — see `AGENTS.md`, editorial rules.
 
 Buttons have exactly two idioms:
 
-- **Primary CTA** (max one per view): `border-2 border-black bg-black text-white`,
-  hard shadow, press-translate. 
-- **Secondary CTA**: same geometry with `bg-white text-black shadow-hard`.
+- **Primary CTA** (max one per view): ink fill, surface text, restrained elevation.
+- **Secondary CTA**: surface fill, quiet border, ink text.
 - Everything else is a link: inline links are `text-accent` (hover `accent-strong`)
   optionally wavy-underlined; trailing-arrow links end in `→`; external in `↗`.
 

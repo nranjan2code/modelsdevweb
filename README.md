@@ -210,6 +210,6 @@ MIT — see [LICENSE](./LICENSE).
   (SWE-Bench, Terminal-Bench, ARC-AGI, Artificial Analysis indexes, …) belong to their maintainers and link
   back to their official sites on every leaderboard
 - **News headlines**: fetched via the Tavily API; copyright stays with publishers, items link to source
-- **Fonts**: Inter, JetBrains Mono, Caveat (SIL OFL)
+- **Fonts**: Inter and JetBrains Mono (SIL OFL)
 
 A live acknowledgment of all sources ships on the site at [`/about`](src/app/about/page.tsx).

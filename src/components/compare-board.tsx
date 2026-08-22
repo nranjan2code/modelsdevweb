@@ -172,6 +172,7 @@ export function CompareBoard({ models }: { models: CompareModel[] }) {
         <input
           className="input w-full sm:w-72"
           placeholder="Search models to compare…"
+          aria-label="Search models to compare"
           value={q}
           onChange={(e) => setQ(e.target.value)}
         />

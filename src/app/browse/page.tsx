@@ -1,5 +1,12 @@
 import type { Metadata } from "next";
-import { getCatalog, groupContext, groupReleaseDate } from "@/lib/data";
+import {
+  getCatalog,
+  groupContext,
+  groupReleaseDate,
+  lowestInputListing,
+  lowestOutputListing,
+  providerCount,
+} from "@/lib/data";
 import type { Modality } from "@/lib/pipeline/types";
 import { BrowseTable, type BrowseRow } from "@/components/browse-table";
 
@@ -17,6 +24,7 @@ export default async function BrowsePage() {
     const verified = b.find((x) => x.name === "SWE-Bench Verified");
     return pro?.score ?? verified?.score ?? null;
   };
+  const trackedIds = new Set(catalog.tracked.map((g) => g.id));
   const rows: BrowseRow[] = [...catalog.groups]
     .sort((a, b) => (groupReleaseDate(b) ?? "").localeCompare(groupReleaseDate(a) ?? ""))
     .map((g) => {
@@ -29,12 +37,14 @@ export default async function BrowsePage() {
     if (statuses.has("beta")) flags.push("beta");
     if (statuses.has("alpha")) flags.push("alpha");
     if (live.some((l) => l.experimental)) flags.push("experimental");
+    const lowestInput = lowestInputListing(g);
+    const lowestOutput = lowestOutputListing(g);
     return {
       id: g.id,
       name: g.name,
       lab: g.labId,
-      input: g.best?.input ?? null,
-      output: g.best?.output ?? null,
+      input: lowestInput?.cost.input ?? null,
+      output: lowestOutput?.cost.output ?? null,
       free: g.free,
       ctx: groupContext(g),
       reasoning: g.canonical?.reasoning ?? g.listings.some((l) => l.reasoning),
@@ -46,9 +56,10 @@ export default async function BrowsePage() {
       pdf: hasMod("input", "pdf"),
       open: g.canonical?.openWeights ?? false,
       released: groupReleaseDate(g),
-      providers: g.listings.length,
+      providers: providerCount(g),
       swe: sweScore(g),
       flags,
+      tracked: trackedIds.has(g.id),
     };
   });
 
@@ -58,7 +69,8 @@ export default async function BrowsePage() {
         <p className="mono-label">Catalog</p>
         <h1 className="text-3xl font-bold tracking-tight text-black sm:text-4xl">Browse models</h1>
         <p className="max-w-2xl text-sm leading-relaxed text-black/60">
-          Best listed price across all serving providers. R = reasoning, T = tool call, S = structured output,
+          Canonical models are shown first. Turn on the extended catalog to include gateway-only variants.
+          R = reasoning, T = tool call, S = structured output,
           V = vision/attachments, A = audio in/out. SWE-Bench = SWE-Bench Pro (fallback: Verified) score where
           published.
         </p>

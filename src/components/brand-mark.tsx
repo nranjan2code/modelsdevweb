@@ -4,7 +4,7 @@
  */
 export function BrandMark({ boxClassName = "", size = 24 }: { boxClassName?: string; size?: number }) {
   return (
-    <span className={`flex items-center justify-center rounded-lg border-2 border-black bg-white ${boxClassName}`}>
+    <span className={`flex items-center justify-center rounded-xl border border-black/10 bg-white shadow-hard-sm ${boxClassName}`}>
       <svg viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: size, height: size }} aria-hidden="true">
         <circle cx="512" cy="512" r="450" fill="var(--color-accent)" fillOpacity="0.08" />
         <path d="M720 292H300V352H480V712C480 792 540 852 620 852H640V792H620C575.817 792 540 756.183 540 712V352H720V292Z" fill="var(--color-ink)" />

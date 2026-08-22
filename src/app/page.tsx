@@ -27,6 +27,7 @@ import {
 import { EventCard, eventTarget } from "@/components/event-card";
 import { Sparkline } from "@/components/price-history";
 import { Badge, DeltaChip, EmptyState, SectionHead } from "@/components/ui";
+import { ModelSearch } from "@/components/model-search";
 import { fmtPerM, fmtAgo, fmtDate } from "@/lib/format";
 import type { Event } from "@/lib/pipeline/types";
 
@@ -268,7 +269,7 @@ function ValueBoardCard({
   if (leaders.length === 0) return null;
   const home = benchmarkHome(board.name);
   return (
-    <div className="card p-5">
+    <div className="card min-w-0 p-5">
       <div className="mb-1 flex items-baseline justify-between gap-2">
         <h3 className="font-hand text-2xl font-bold text-black">
           {home ? (
@@ -457,7 +458,7 @@ export default async function HomePage() {
       story,
       modelId: story.lead.modelIds.find((id) => catalog.groupById.has(id)),
     }))
-    .sort((a, b) => Number(b.modelId != null) - Number(a.modelId != null))
+    .filter((item) => item.modelId != null)
     .slice(0, 6);
 
   // The lead story already carries the newest launch; the wire shows the rest.
@@ -479,25 +480,40 @@ export default async function HomePage() {
   const headlineSummary = headline ? spreadSummary(headline.group, headline.spread) : null;
 
   return (
-    <div className="space-y-14">
-      {/* Masthead — a nameplate, not a landing-page hero. */}
-      <section className="relative">
-        <div className="grid-paper absolute inset-x-0 top-0 -z-10 h-full [mask-image:radial-gradient(ellipse_at_top,black_20%,transparent_70%)]" />
-        <div className="mx-auto max-w-2xl pt-3 text-center">
-          <span className="pill mx-auto">
+    <div className="space-y-16">
+      <section className="hero-shell">
+        <div className="hero-grid" aria-hidden="true" />
+        <div className="relative mx-auto max-w-4xl text-center">
+          <span className="pill mx-auto bg-white/70">
             <span className="relative flex h-2 w-2">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-pos-bright opacity-60" />
               <span className="relative inline-flex h-2 w-2 rounded-full bg-pos-bright" />
             </span>
             Live{syncedAgo ? ` · synced ${syncedAgo}` : ""} · diffed hourly from models.dev
           </span>
-          <h1 className="mt-4 text-2xl font-bold leading-[1.1] tracking-tight text-black sm:text-4xl">
-            What the AI model market did <span className="wavy wavy-accent">today</span>.
+          <h1 className="mt-6 text-4xl font-bold leading-[1.02] tracking-tight text-black sm:text-6xl lg:text-7xl">
+            Know what changed.<br />Choose what works.
           </h1>
-          <p className="mx-auto mt-2.5 max-w-lg text-sm font-medium text-black/60 sm:text-base">
-            {s.models} models from {s.labs} labs, priced across {s.providers} providers. Every
-            change, every hour — and what it means.
+          <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-black/60 sm:text-lg">
+            The decision and change layer for the AI model market — {s.models} canonical models,
+            {" "}{s.providers} providers, releases, retirements, prices and independent evidence.
           </p>
+          <div className="mt-7">
+            <ModelSearch
+              variant="hero"
+              models={catalog.tracked.map((group) => ({ id: group.id, name: group.name, lab: group.labId }))}
+            />
+          </div>
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+            <Link href="/browse" className="button-primary">Find the right model →</Link>
+            <Link href="/changelog" className="button-secondary">See what changed</Link>
+          </div>
+        </div>
+        <div className="relative mt-10 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-black/10 bg-black/10 sm:grid-cols-4">
+          <div className="hero-stat"><strong>{s.models}</strong><span>canonical models</span></div>
+          <div className="hero-stat"><strong>{s.providers}</strong><span>providers</span></div>
+          <div className="hero-stat"><strong>{s.listings.toLocaleString("en-US")}</strong><span>live listings</span></div>
+          <div className="hero-stat"><strong>hourly</strong><span>change detection</span></div>
         </div>
       </section>
 

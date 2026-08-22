@@ -62,6 +62,13 @@ describe("buildIdentityIndex", () => {
     );
   });
 
+  it("quarantines an exact distinct-variant id when a gateway misnames it as the base", () => {
+    const idx = index([{ id: "openai/gpt-5.6-sol", name: "GPT-5.6 Sol" }]);
+    const resolved = idx.resolve("GPT-5.6 Sol", "openai/gpt-5.6-sol-pro");
+    expect(resolved.target).toBeNull();
+    expect(resolved.slug).toBe("gpt56solpro");
+  });
+
   it("treats a dated pin and its stable alias as one model", () => {
     const idx = index([
       { id: "anthropic/claude-haiku-4-5", name: "Claude Haiku 4.5 (latest)" },

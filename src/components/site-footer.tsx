@@ -45,7 +45,7 @@ export async function SiteFooter() {
   const year = new Date().getFullYear();
   return (
     <footer className="border-t border-black/10 bg-surface-tint">
-      <div className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-10 px-4 py-12 sm:px-6 md:flex-row md:items-start">
+      <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-10 px-4 py-12 sm:px-6 md:flex-row md:items-start">
         <div className="max-w-sm">
           <div className="flex items-center gap-2.5">
             <BrandMark boxClassName="h-8 w-8" />
@@ -94,7 +94,7 @@ export async function SiteFooter() {
       </div>
 
       <div className="border-t border-black/5">
-        <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
+        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
           <p className="text-center font-mono text-xs text-black/45">
             © {year} {SITE_NAME} · data updated{" "}
             <time dateTime={stats.snapshotDate ?? undefined}>{fmtDate(stats.snapshotDate)}</time> ·{" "}

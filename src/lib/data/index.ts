@@ -69,6 +69,43 @@ export function blendPrice(input: number, output: number): number {
   return (input * 3 + output) / 4;
 }
 
+/** Active listings, kept as a helper so counts never silently include sunsets. */
+export function liveListings(g: ModelGroup): Listing[] {
+  return g.listings.filter((l) => l.status !== "deprecated");
+}
+
+/** A provider is an organisation; one provider may publish several endpoint variants. */
+export function providerCount(g: ModelGroup): number {
+  return new Set(liveListings(g).map((l) => l.providerId)).size;
+}
+
+/** Providers with at least one real, published input/output price pair. */
+export function pricedProviderCount(g: ModelGroup): number {
+  return new Set(
+    liveListings(g)
+      .filter((l) => l.cost.input != null && l.cost.output != null && !unlistedPrice(l.cost))
+      .map((l) => l.providerId),
+  ).size;
+}
+
+/** True input-price minimum; distinct from the recommended 3:1 blended listing. */
+export function lowestInputListing(g: ModelGroup): Listing | null {
+  return (
+    liveListings(g)
+      .filter((l) => l.cost.input != null && !unlistedPrice(l.cost))
+      .sort((a, b) => a.cost.input! - b.cost.input!)[0] ?? null
+  );
+}
+
+/** True output-price minimum; distinct from the recommended 3:1 blended listing. */
+export function lowestOutputListing(g: ModelGroup): Listing | null {
+  return (
+    liveListings(g)
+      .filter((l) => l.cost.output != null && !unlistedPrice(l.cost))
+      .sort((a, b) => a.cost.output! - b.cost.output!)[0] ?? null
+  );
+}
+
 function bestOf(listings: Listing[]): BestPrice | null {
   let best: BestPrice | null = null;
   for (const l of listings) {

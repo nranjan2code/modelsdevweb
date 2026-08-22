@@ -3,7 +3,17 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { existsSync } from "node:fs";
 import path from "node:path";
-import { getModel, getCatalog, getEvents, getNews, groupContext, groupReleaseDate } from "@/lib/data";
+import {
+  getModel,
+  getCatalog,
+  getEvents,
+  getNews,
+  groupContext,
+  groupReleaseDate,
+  lowestInputListing,
+  lowestOutputListing,
+  providerCount,
+} from "@/lib/data";
 import { SITE_URL } from "@/lib/site";
 import { getPriceHistory } from "@/lib/data/history";
 import { slugify } from "@/lib/data/benchmarks";
@@ -38,8 +48,9 @@ export async function generateMetadata({ params }: { params: Promise<{ model: st
   const ogPath = `/og/m/${group.id}.png`;
   const hasOg = existsSync(path.join(process.cwd(), "public", ogPath));
   const metaCtx = groupContext(group);
+  const providers = providerCount(group);
   const description =
-    `${group.name} pricing across ${group.listings.length} providers` +
+    `${group.name} pricing across ${providers} providers` +
     (group.best
       ? ` — from ${fmtPerM(group.best.input)} input / ${fmtPerM(group.best.output)} per 1M tokens at its cheapest listed provider.`
       : group.free
@@ -47,7 +58,7 @@ export async function generateMetadata({ params }: { params: Promise<{ model: st
         : ".") +
     (metaCtx ? ` ${Math.round(metaCtx / 1000)}K token context window.` : "");
   return {
-    title: `${group.name} — prices across ${group.listings.length} providers`,
+    title: `${group.name} — prices across ${providers} providers`,
     description,
     alternates: { canonical: `/m/${group.id}` },
     openGraph: {
@@ -88,6 +99,9 @@ export default async function ModelPage({ params }: { params: Promise<{ model: s
     return m;
   })();
   const releaseDate = groupReleaseDate(group);
+  const providers = providerCount(group);
+  const lowestInput = lowestInputListing(group);
+  const lowestOutput = lowestOutputListing(group);
   const jsonLd: object[] = [
     {
       "@context": "https://schema.org",
@@ -104,7 +118,7 @@ export default async function ModelPage({ params }: { params: Promise<{ model: s
       name: group.name,
       description:
         c?.description ??
-        `AI model pricing comparison across ${group.listings.length} inference providers. Prices are USD per 1M tokens.`,
+        `AI model pricing comparison across ${providers} inference providers. Prices are USD per 1M tokens.`,
       category: "AI language model",
       ...(releaseDate ? { releaseDate } : {}),
       brand: { "@type": "Brand", name: group.labId },
@@ -147,7 +161,7 @@ export default async function ModelPage({ params }: { params: Promise<{ model: s
         <h1 className="text-3xl font-bold tracking-tight text-black sm:text-4xl">{group.name}</h1>
         {c?.description && <p className="max-w-3xl leading-relaxed text-black/60">{c.description}</p>}
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-black/45">
-          <span>{group.listings.length} providers</span>
+          <span>{providers} providers · {liveListings.length} listings</span>
           {releaseDate && (
             <span>
               released <time dateTime={releaseDate}>{fmtDate(releaseDate)}</time>
@@ -168,17 +182,17 @@ export default async function ModelPage({ params }: { params: Promise<{ model: s
         </div>
       </header>
 
-      {(group.best || group.free || ctx) && (
+      {(lowestInput || lowestOutput || group.free || ctx) && (
         <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {group.best ? (
+          {lowestInput && lowestOutput ? (
             <>
               <div className="card px-4 py-3">
-                <div className="font-mono text-lg font-bold tabular-nums text-black">{fmtPerM(group.best.input)}</div>
-                <div className="mono-label mt-0.5">best input /M · {group.best.providerName}</div>
+                <div className="font-mono text-lg font-bold tabular-nums text-black">{fmtPerM(lowestInput.cost.input)}</div>
+                <div className="mono-label mt-0.5">lowest input /M · {lowestInput.providerName}</div>
               </div>
               <div className="card px-4 py-3">
-                <div className="font-mono text-lg font-bold tabular-nums text-black">{fmtPerM(group.best.output)}</div>
-                <div className="mono-label mt-0.5">best output /M</div>
+                <div className="font-mono text-lg font-bold tabular-nums text-black">{fmtPerM(lowestOutput.cost.output)}</div>
+                <div className="mono-label mt-0.5">lowest output /M · {lowestOutput.providerName}</div>
               </div>
             </>
           ) : (
