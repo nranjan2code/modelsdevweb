@@ -62,12 +62,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <span className="text-xl font-bold tracking-tight text-black">{SITE_NAME}</span>
             </Link>
             <SiteNav />
-            <a
-              href="/rss.xml"
-              className="hidden shrink-0 rounded-md border-2 border-black bg-white px-2.5 py-1 font-mono text-xs font-bold uppercase tracking-wide shadow-[2px_2px_0_0_rgba(0,0,0,1)] transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0_0_rgba(0,0,0,1)] sm:block"
-            >
-              RSS
-            </a>
           </div>
         </header>
         <main id="main" className="mx-auto w-full max-w-6xl flex-1 px-4 py-10 sm:px-6">

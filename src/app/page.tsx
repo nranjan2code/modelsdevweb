@@ -571,31 +571,6 @@ export default async function HomePage() {
         </div>
 
         <aside className="space-y-6">
-          <div className="card-flat p-4">
-            <p className="mono-label mb-2">Follow the pulse</p>
-            <div className="flex flex-wrap gap-1.5">
-              {[
-                { href: "/rss.xml", label: "RSS" },
-                { href: "/feed.json", label: "JSON Feed" },
-                { href: "/news", label: "News" },
-              ].map((l) => (
-                <a
-                  key={l.href}
-                  href={l.href}
-                  className="inline-flex items-center rounded-full border border-black bg-white px-3 py-1 text-xs font-semibold shadow-[2px_2px_0_0_rgba(0,0,0,1)] transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0_0_rgba(0,0,0,1)]"
-                >
-                  {l.label}
-                </a>
-              ))}
-              <Link
-                href="/digest"
-                className="inline-flex items-center rounded-full border border-black bg-amber-100 px-3 py-1 text-xs font-semibold shadow-[2px_2px_0_0_rgba(0,0,0,1)] transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0_0_rgba(0,0,0,1)]"
-              >
-                Weekly recap
-              </Link>
-            </div>
-          </div>
-
           <PulseCard series={pulse} />
 
           <div className="card p-4">
