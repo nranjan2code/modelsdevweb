@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Event, EventType } from "@/lib/pipeline/types";
-import { fmtDate } from "@/lib/format";
+import { fmtDate, fmtPerM, fmtTokens } from "@/lib/format";
 
 const TYPE_STYLES: Record<EventType, { label: string; cls: string }> = {
   model_added: { label: "new model", cls: "bg-emerald-50 text-emerald-700 border-emerald-600/30" },
@@ -23,13 +23,16 @@ export function EventTypeBadge({ type }: { type: EventType }) {
 }
 
 export function changeText(c: Event["changes"][number]): string {
-  const fmt = (v: unknown) => (typeof v === "number" ? `$${v}` : String(v ?? "—"));
-  if (c.field.startsWith("cost.")) return `${c.field.replace("cost.", "")}: ${fmt(c.old)} → ${fmt(c.new)}`;
-  if (c.field === "limit.context") {
-    const f = (n: unknown) => (typeof n === "number" ? `${(n / 1000).toFixed(0)}K` : "—");
-    return `context: ${f(c.old)} → ${f(c.new)} tokens`;
+  if (c.field.startsWith("cost.")) {
+    const f = (v: unknown) => (typeof v === "number" ? fmtPerM(v) : String(v ?? "—"));
+    return `${c.field.replace("cost.", "")}: ${f(c.old)} → ${f(c.new)}`;
   }
-  return `${c.field}: ${fmt(c.old)} → ${fmt(c.new)}`;
+  if (c.field.startsWith("limit.")) {
+    const f = (n: unknown) => (typeof n === "number" ? fmtTokens(n) : "—");
+    return `${c.field.replace("limit.", "")}: ${f(c.old)} → ${f(c.new)} tokens`;
+  }
+  const f = (v: unknown) => String(v ?? "—");
+  return `${c.field}: ${f(c.old)} → ${f(c.new)}`;
 }
 
 export function EventCard({ event }: { event: Event }) {

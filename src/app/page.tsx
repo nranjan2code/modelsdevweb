@@ -140,25 +140,27 @@ function LeadStoryCard({ story }: { story: LeadStory }) {
 function MoverRow({ m, rank }: { m: Mover; rank: number }) {
   const inner = (
     <>
-      <span className="w-5 shrink-0 tabular-nums text-black/35">{rank}.</span>
-      <span className="min-w-0 flex-1 truncate">
-        {m.name}
-        {m.providerId && <span className="ml-1 text-xs text-black/40">via {m.providerId}</span>}
-      </span>
-      <span className="hidden shrink-0 font-mono text-[11px] tabular-nums text-black/50 sm:inline">
-        {fmtPerM(m.from)}→{fmtPerM(m.to)}
-      </span>
-      <span
-        className={`w-14 shrink-0 rounded-full border px-1.5 py-0.5 text-right font-mono text-xs font-bold tabular-nums ${
-          m.pct < 0 ? "border-emerald-600/30 bg-emerald-50 text-emerald-700" : "border-red-500/30 bg-red-50 text-red-600"
-        }`}
-      >
-        {m.pct > 0 ? "+" : ""}
-        {(m.pct * 100).toFixed(0)}%
-      </span>
+      <span className="w-5 shrink-0 self-start pt-0.5 tabular-nums text-black/35">{rank}.</span>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center justify-between gap-2">
+          <span className="truncate font-medium">{m.name}</span>
+          <span
+            className={`shrink-0 rounded-full border px-1.5 py-0.5 font-mono text-[11px] font-bold tabular-nums ${
+              m.pct < 0 ? "border-emerald-600/30 bg-emerald-50 text-emerald-700" : "border-red-500/30 bg-red-50 text-red-600"
+            }`}
+          >
+            {m.pct > 0 ? "+" : ""}
+            {(m.pct * 100).toFixed(0)}%
+          </span>
+        </div>
+        <div className="mt-0.5 truncate font-mono text-[11px] tabular-nums text-black/45">
+          {fmtPerM(m.from)} → {fmtPerM(m.to)} /M
+          {m.providerId && ` · via ${m.providerId}`}
+        </div>
+      </div>
     </>
   );
-  const cls = "flex items-center gap-2 py-2.5";
+  const cls = "flex items-start gap-2 py-2.5";
   return m.id ? (
     <Link href={`/m/${m.id}`} className={`${cls} transition-colors hover:text-blue-700`}>
       {inner}
@@ -171,10 +173,7 @@ function MoverRow({ m, rank }: { m: Mover; rank: number }) {
 function MoversBoard({ title, items, empty }: { title: string; items: Mover[]; empty: string }) {
   return (
     <div className="card p-4">
-      <h3 className="mb-1 flex items-baseline justify-between font-hand text-2xl font-bold text-black">
-        {title}
-        <span className="mono-label">input /M · 7d</span>
-      </h3>
+      <h3 className="mb-1 font-hand text-2xl font-bold text-black">{title}</h3>
       {items.length === 0 ? (
         <p className="py-6 text-center text-sm text-black/40">{empty}</p>
       ) : (
@@ -224,34 +223,64 @@ function PulseCard({ series }: { series: ReturnType<typeof pulseSeries> }) {
 
 function HeatStrip({ cal }: { cal: ReturnType<typeof activityCalendar> }) {
   const max = Math.max(...cal.map((d) => d.count), 1);
+  const fmtDay = (iso: string) =>
+    new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      timeZone: "UTC",
+    });
   return (
-    <div className="flex items-stretch gap-1" role="img" aria-label="Model changes per day over the last two weeks">
-      {cal.map((d) => {
-        const ratio = d.count / max;
-        const tone =
-          d.count === 0
-            ? "bg-white"
-            : ratio <= 0.25
-              ? "bg-blue-200"
-              : ratio <= 0.5
-                ? "bg-blue-400"
-                : ratio <= 0.75
-                  ? "bg-blue-600"
-                  : "bg-blue-900";
-        const short = new Date(`${d.date}T00:00:00Z`).toLocaleDateString("en-US", {
-          month: "short",
-          day: "numeric",
-          timeZone: "UTC",
-        });
-        return (
-          <span
-            key={d.date}
-            title={`${short}: ${d.count} change${d.count === 1 ? "" : "s"}`}
-            className={`h-8 min-w-0 flex-1 rounded-sm border border-black ${tone}`}
-          />
-        );
-      })}
+    <div>
+      <div className="flex items-stretch gap-[3px]" role="img" aria-label="Model changes per day over the last two weeks">
+        {cal.map((d) => {
+          const ratio = d.count / max;
+          const tone =
+            d.count === 0
+              ? "bg-neutral-100"
+              : ratio <= 0.25
+                ? "bg-blue-200"
+                : ratio <= 0.5
+                  ? "bg-blue-400"
+                  : ratio <= 0.75
+                    ? "bg-blue-600"
+                    : "bg-blue-900";
+          return (
+            <span
+              key={d.date}
+              title={`${fmtDay(d.date)}: ${d.count} change${d.count === 1 ? "" : "s"}`}
+              className={`h-7 min-w-0 flex-1 rounded-sm border ${
+                d.count === 0 ? "border-black/15" : "border-black"
+              } ${tone}`}
+            />
+          );
+        })}
+      </div>
+      <div className="mt-1.5 flex justify-between font-mono text-[10px] uppercase tracking-wider text-black/35">
+        <span>{fmtShort(cal[0]?.date)}</span>
+        <span>today</span>
+      </div>
     </div>
+  );
+}
+
+function MoveChip({
+  n,
+  label,
+  href,
+  tone,
+}: {
+  n: number;
+  label: string;
+  href: string;
+  tone: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className={`inline-flex items-baseline gap-1.5 rounded-full border px-3 py-1 text-xs font-medium shadow-[2px_2px_0_0_rgba(0,0,0,1)] transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none ${tone}`}
+    >
+      <strong className="font-mono tabular-nums">{n}</strong> {label}
+    </Link>
   );
 }
 
@@ -514,13 +543,17 @@ export default async function HomePage() {
 
       <section className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="min-w-0 space-y-8">
-          <div>
-            <SectionHead title="The tape" href="/changelog" eyebrow="Movers & losers · 7 days" label="Full changelog" />            <div className="grid gap-4 md:grid-cols-2">
-              <MoversBoard title="Fallers" items={movers.fallers} empty="No input-price cuts this week." />
-              <MoversBoard title="Risers" items={movers.risers} empty="No price hikes this week." />
+<div>
+            <SectionHead title="The tape" href="/changelog" eyebrow="Price moves · last 7 days" label="Full changelog" />
+            <p className="mb-3 flex flex-wrap items-center gap-2 text-xs">
+              <span className="inline-flex items-center gap-1 rounded-full border border-emerald-600/30 bg-emerald-50 px-2 py-0.5 text-emerald-700"><span className="font-bold">▼</span> cheaper</span>
+              <span className="inline-flex items-center gap-1 rounded-full border border-red-500/30 bg-red-50 px-2 py-0.5 text-red-600"><span className="font-bold">▲</span> pricier</span>
+            </p>
+            <div className="grid gap-4 md:grid-cols-2">
+              <MoversBoard title="Price cuts" items={movers.fallers} empty="No input-price cuts this week." />
+              <MoversBoard title="Price hikes" items={movers.risers} empty="No price hikes this week." />
             </div>
           </div>
-
           <div>
             <SectionHead title="Latest activity" href="/changelog" eyebrow="The wire" />
             {events.length === 0 ? (
@@ -565,13 +598,13 @@ export default async function HomePage() {
 
           <PulseCard series={pulse} />
 
-          <div>
-            <SectionHead title="Freshest models" />
-            <ul className="card divide-y divide-black/10 text-sm">
+          <div className="card p-4">
+            <p className="mono-label mb-3">Freshest models</p>
+            <ul className="divide-y divide-black/10 text-sm">
               {fresh.map((g) => {
                 const series = history.get(g.id)?.filter((p) => p.input != null).map((p) => p.input!) ?? [];
                 return (
-                  <li key={g.id} className="flex items-center gap-2 px-4 py-2.5">
+                  <li key={g.id} className="flex items-center gap-2 py-2.5">
                     <div className="min-w-0 flex-1">
                       <Link href={`/m/${g.id}`} className="block truncate font-medium transition-colors hover:text-blue-600">
                         {g.name}
@@ -583,6 +616,12 @@ export default async function HomePage() {
                 );
               })}
             </ul>
+            <Link
+              href="/browse"
+              className="mt-3 inline-block text-xs font-medium text-blue-600 underline decoration-wavy underline-offset-4 transition-colors hover:text-blue-800"
+            >
+              browse the catalog →
+            </Link>
           </div>
         </aside>
       </section>
@@ -595,35 +634,22 @@ export default async function HomePage() {
             A quiet fortnight — no changes detected. The hourly sync keeps watching.
           </p>
         ) : (
-          <div className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-black/55">
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <MoveChip
+              n={digest.total}
+              label="moves"
+              href="/changelog"
+              tone="border-black bg-black text-white hover:bg-black/85"
+            />
             {digest.repriced > 0 && (
-              <span className="flex items-center gap-2">
-                <strong className="font-mono tabular-nums text-purple-700">{digest.repriced}</strong> repricings
-              </span>
+              <MoveChip n={digest.repriced} label="repricings" href="/changelog?type=repriced&days=30" tone="border-purple-600/40 bg-purple-50 text-purple-700" />
             )}
             {digest.added > 0 && (
-              <>
-                {digest.repriced > 0 && <span className="text-black/25">·</span>}
-                <span className="flex items-center gap-2">
-                  <strong className="font-mono tabular-nums text-emerald-700">{digest.added}</strong> launches
-                </span>
-              </>
+              <MoveChip n={digest.added} label="launches" href="/changelog?type=model_added&days=30" tone="border-emerald-600/40 bg-emerald-50 text-emerald-700" />
             )}
             {digest.deprecated > 0 && (
-              <>
-                {(digest.repriced > 0 || digest.added > 0) && <span className="text-black/25">·</span>}
-                <span className="flex items-center gap-2">
-                  <strong className="font-mono tabular-nums text-red-600">{digest.deprecated}</strong> sunsets
-                </span>
-              </>
+              <MoveChip n={digest.deprecated} label="sunsets" href="/deprecations" tone="border-red-500/40 bg-red-50 text-red-600" />
             )}
-            <span className="text-black/25">·</span>
-            <Link
-              href="/changelog"
-              className="font-medium text-blue-600 underline decoration-wavy underline-offset-4 transition-colors hover:text-blue-800"
-            >
-              every diff in the changelog
-            </Link>
           </div>
         )}
       </section>

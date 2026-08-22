@@ -118,7 +118,10 @@ export default async function DigestPage() {
 
       <section className="grid gap-4 md:grid-cols-2">
         <div className="card p-4">
-          <h2 className="font-hand text-2xl font-bold text-black">Fallers</h2>
+          <div className="flex items-baseline justify-between gap-2">
+            <h2 className="font-hand text-2xl font-bold text-black">Price cuts</h2>
+            <p className="mono-label">▼ cheaper · ▲ pricier</p>
+          </div>
           {movers.fallers.length === 0 ? (
             <p className="py-6 text-center text-sm text-black/40">No input-price cuts this week.</p>
           ) : (
@@ -139,7 +142,10 @@ export default async function DigestPage() {
           )}
         </div>
         <div className="card p-4">
-          <h2 className="font-hand text-2xl font-bold text-black">Risers</h2>
+          <div className="flex items-baseline justify-between gap-2">
+            <h2 className="font-hand text-2xl font-bold text-black">Price hikes</h2>
+            <p className="mono-label">▼ cheaper · ▲ pricier</p>
+          </div>
           {movers.risers.length === 0 ? (
             <p className="py-6 text-center text-sm text-black/40">No price hikes this week.</p>
           ) : (

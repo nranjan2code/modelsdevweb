@@ -4,6 +4,7 @@ import { Inter, JetBrains_Mono, Caveat } from "next/font/google";
 import { SITE_NAME, SITE_TAGLINE, SITE_URL } from "@/lib/site";
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
+import { BrandMark } from "@/components/brand-mark";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
@@ -24,6 +25,11 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
+  },
+  icons: {
+    icon: "/icon.svg",
+    shortcut: "/icon.svg",
+    apple: "/icon.svg",
   },
 };
 
@@ -52,12 +58,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <header className="sticky top-0 z-40 border-b border-black/10 bg-white/90 backdrop-blur">
           <div className="mx-auto flex min-h-16 max-w-6xl items-center gap-x-6 gap-y-1 px-4 py-2 sm:px-6">
             <Link href="/" className="group flex shrink-0 items-center gap-2.5">
-              <span className="relative flex h-8 w-8 items-center justify-center rounded-lg border-2 border-black bg-white shadow-[2px_2px_0_0_rgba(0,0,0,1)] transition-transform group-hover:scale-105">
-                <span className="relative flex h-2.5 w-2.5">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-60" />
-                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
-                </span>
-              </span>
+              <BrandMark boxClassName="h-8 w-8 transition-transform group-hover:scale-105" />
               <span className="text-xl font-bold tracking-tight text-black">{SITE_NAME}</span>
             </Link>
             <SiteNav />

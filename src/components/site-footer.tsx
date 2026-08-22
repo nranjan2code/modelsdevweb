@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getCatalog } from "@/lib/data";
 import { fmtDate } from "@/lib/format";
 import { SITE_NAME } from "@/lib/site";
+import { BrandMark } from "@/components/brand-mark";
 
 const COLUMNS: { title: string; links: { href: string; label: string; external?: boolean }[] }[] = [
   {
@@ -47,12 +48,7 @@ export async function SiteFooter() {
       <div className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-10 px-4 py-12 sm:px-6 md:flex-row md:items-start">
         <div className="max-w-sm">
           <div className="flex items-center gap-2.5">
-            <span className="relative flex h-8 w-8 items-center justify-center rounded-lg border-2 border-black bg-white shadow-[2px_2px_0_0_rgba(0,0,0,1)]">
-              <span className="relative flex h-2.5 w-2.5">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-60" />
-                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
-              </span>
-            </span>
+            <BrandMark boxClassName="h-8 w-8" />
             <span className="text-xl font-bold tracking-tight text-black">{SITE_NAME}</span>
           </div>
           <p className="mt-3 text-sm font-medium text-black/60">
@@ -103,7 +99,7 @@ export async function SiteFooter() {
             © {year} {SITE_NAME} · data updated{" "}
             <time dateTime={stats.snapshotDate ?? undefined}>{fmtDate(stats.snapshotDate)}</time> ·{" "}
             <a
-              href="https://vakyartha.com"
+              href="https://www.vakyartha.com"
               target="_blank"
               rel="noopener noreferrer"
               className="underline decoration-black/20 underline-offset-2 transition-colors hover:text-black"
