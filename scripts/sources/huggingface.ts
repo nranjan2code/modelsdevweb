@@ -2,7 +2,7 @@ import type { ModelGroup } from "../../src/lib/data";
 import type { ExternalSignal } from "../../src/lib/pipeline/external-types";
 import { resolveExternalIds, type ExternalCandidate } from "../../src/lib/pipeline/external-resolver";
 
-const HF_API = "https://huggingface.co/api";
+export const HF_API = "https://huggingface.co/api";
 /** Batch size cap keeps a single request small; HF caps ?ids= around 100. */
 const MAX_MODELS = 90;
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -38,7 +38,7 @@ interface HFDailyPaper {
  * accepted only when its id/name is clearly the same model — a wrong match
  * would poison popularity stats, so anything below 0.8 similarity is dropped.
  */
-async function searchHFModel(name: string): Promise<HFModelSummary | null> {
+export async function searchHFModel(name: string): Promise<HFModelSummary | null> {
   try {
     const url = `${HF_API}/models?search=${encodeURIComponent(name)}&limit=5&sort=downloads&direction=-1`;
     const res = await fetch(url, { signal: AbortSignal.timeout(15_000) });
@@ -61,7 +61,7 @@ async function searchHFModel(name: string): Promise<HFModelSummary | null> {
   }
 }
 
-function similarity(a: string, b: string): number {
+export function similarity(a: string, b: string): number {
   const na = normalizeName(a);
   const nb = normalizeName(b);
   if (!na || !nb) return 0;
@@ -191,7 +191,7 @@ export async function fetchHFSignals(groups: ModelGroup[]): Promise<ExternalSign
   return signals;
 }
 
-function normalizeName(name: string): string {
+export function normalizeName(name: string): string {
   return name
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")

@@ -30,8 +30,14 @@ jobs:
       - name: Style gate (brand tokens)
         run: pnpm check:style
 
+      - name: Docs gate (specs match source)
+        run: pnpm check:docs
+
       - name: Lint
         run: pnpm lint
+
+      - name: Typecheck
+        run: npx tsc --noEmit
 
       - run: pnpm test
 
@@ -44,6 +50,9 @@ jobs:
         env:
           TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
         run: pnpm news
+
+      - name: Sync open-weight licence facts (Hugging Face, daily)
+        run: pnpm sync-weights
 
       - name: Sync external signals (HF, GitHub, PWC, LMSYS)
         env:
@@ -58,7 +67,7 @@ jobs:
           WATCHER_SECRET: ${{ secrets.WATCHER_SECRET }}
         run: pnpm notify
 
-      - name: Commit snapshots, events, and external signals
+      - name: Commit snapshots, archive, weights, events and signals
         run: |
           git config user.name "model-pulse-bot"
           git config user.email "actions@users.noreply.github.com"

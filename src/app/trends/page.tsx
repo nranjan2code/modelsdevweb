@@ -89,7 +89,9 @@ function Scatter({ points }: { points: { key: string; x: number; y: number; open
 
 export default async function TrendsPage() {
   const [catalog, events] = await Promise.all([getCatalog(), getEvents()]);
-  const groups = catalog.groups;
+  // Aggregates run over lab-attributed models: counting gateway-only variants
+  // weights every distribution by how many resellers carry a model.
+  const groups = catalog.tracked;
 
   const caps = capabilityAdoption(groups);
 

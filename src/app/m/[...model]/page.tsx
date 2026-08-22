@@ -7,6 +7,15 @@ import { getModel, getCatalog, getEvents, getNews, groupContext, groupReleaseDat
 import { SITE_URL } from "@/lib/site";
 import { getPriceHistory } from "@/lib/data/history";
 import { slugify } from "@/lib/data/benchmarks";
+import { priceSpread, spreadSummary } from "@/lib/data/market";
+import {
+  ACCESS_NOTE,
+  fmtParams,
+  getWeights,
+  LICENCE_LABEL,
+  LICENCE_NOTE,
+} from "@/lib/data/weights";
+import { PROVENANCE_LABEL, PROVENANCE_NOTE, provenanceOf } from "@/lib/data/provenance";
 import { benchmarkHome } from "@/lib/data/benchmark-links";
 import { PriceTable } from "@/components/price-table";
 import { PriceHistory } from "@/components/price-history";
@@ -55,6 +64,8 @@ export default async function ModelPage({ params }: { params: Promise<{ model: s
   if (!group) notFound();
   const c = group.canonical;
   const history = await getPriceHistory(id);
+  const spread = priceSpread(group);
+  const facts = (await getWeights()).models[group.id] ?? null;
   const [events, news] = await Promise.all([getEvents(), getNews()]);
   const listingKeys = new Set(group.listings.map((l) => l.key));
   const modelEvents = events
@@ -194,6 +205,11 @@ export default async function ModelPage({ params }: { params: Promise<{ model: s
             (sorted by listed input price)
           </span>
         </h2>
+        {spread && (
+          <p className="card-flat p-4 text-sm leading-relaxed text-black/70">
+            {spreadSummary(group, spread)}
+          </p>
+        )}
         <PriceTable listings={group.listings} />
       </section>
 
@@ -289,9 +305,9 @@ export default async function ModelPage({ params }: { params: Promise<{ model: s
         </section>
       )}
 
-      {(c?.benchmarks.length || c?.weights.length) ? (
+      {(c?.benchmarks.length || c?.weights.length || facts) ? (
         <section className="grid gap-6 md:grid-cols-2">
-          {c.benchmarks.length > 0 && (
+          {c != null && c.benchmarks.length > 0 && (
             <div className="space-y-4">
               <h2 className="font-hand text-3xl font-bold tracking-tight text-black">Benchmarks</h2>
               <ul className="card divide-y divide-black/10 text-sm">
@@ -328,16 +344,74 @@ export default async function ModelPage({ params }: { params: Promise<{ model: s
                           </a>
                         )}
                       </span>
-                      <span className="shrink-0 font-mono font-semibold tabular-nums text-black">{b.score}</span>
+                      <span className="flex shrink-0 items-center gap-2">
+                        <span title={PROVENANCE_NOTE[provenanceOf(b.source)]}>
+                          <Badge tone={provenanceOf(b.source) === "independent" ? "pos" : "muted"}>
+                            {PROVENANCE_LABEL[provenanceOf(b.source)]}
+                          </Badge>
+                        </span>
+                        <span className="font-mono font-semibold tabular-nums text-black">{b.score}</span>
+                      </span>
                     </li>
                   );
                 })}
               </ul>
+              <p className="text-xs leading-relaxed text-black/45">
+                Scores a lab published about its own model are claims, not measurements. Rankings
+                elsewhere on this site use independently measured scores only.
+              </p>
             </div>
           )}
-          {c.weights.length > 0 && (
+          {((c?.weights.length ?? 0) > 0 || facts) && (
             <div className="space-y-4">
               <h2 className="font-hand text-3xl font-bold tracking-tight text-black">Weights</h2>
+              {facts && (
+                <div className="card space-y-3 p-4 text-sm">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <Badge
+                      tone={
+                        facts.licenceClass === "permissive"
+                          ? "pos"
+                          : facts.licenceClass === "non-commercial"
+                            ? "neg"
+                            : facts.licenceClass === "community"
+                              ? "warn"
+                              : "muted"
+                      }
+                      bold
+                    >
+                      {LICENCE_LABEL[facts.licenceClass]}
+                    </Badge>
+                    {facts.licence && <Badge tone="muted" mono>{facts.licence}</Badge>}
+                    {facts.access === "gated" && <Badge tone="warn">Access request</Badge>}
+                    {fmtParams(facts.parameters) && (
+                      <Badge tone="neutral" mono>{fmtParams(facts.parameters)} params</Badge>
+                    )}
+                  </div>
+                  <p className="leading-relaxed text-black/70">
+                    {LICENCE_NOTE[facts.licenceClass]}{" "}
+                    {facts.access === "gated" ? ACCESS_NOTE.gated : ACCESS_NOTE.open}
+                  </p>
+                  {facts.baseModel && (
+                    <p className="text-xs text-black/45">
+                      Derived from <span className="font-mono">{facts.baseModel}</span>.
+                    </p>
+                  )}
+                  <p className="micro-label tracking-wider">
+                    licence and gating from the{" "}
+                    <a
+                      href={facts.cardUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-accent hover:text-accent-strong"
+                    >
+                      Hugging Face model card ↗
+                    </a>{" "}
+                    — the card is authoritative, this is a summary
+                  </p>
+                </div>
+              )}
+              {c != null && c.weights.length > 0 && (
               <ul className="card divide-y divide-black/10 text-sm">
                 {c.weights.map((w, i) => (
                   <li key={i} className="px-4 py-2.5">
@@ -352,6 +426,7 @@ export default async function ModelPage({ params }: { params: Promise<{ model: s
                   </li>
                 ))}
               </ul>
+              )}
             </div>
           )}
         </section>

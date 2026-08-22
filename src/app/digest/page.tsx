@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getEvents } from "@/lib/data";
-import { moversLosers } from "@/lib/data/story";
+import { getCatalog, getEvents } from "@/lib/data";
+import { collapseByModel, marketMoves } from "@/lib/data/brief";
 import { EventCard, EventTypeBadge } from "@/components/event-card";
 import { fmtPerM } from "@/lib/format";
 import type { Event } from "@/lib/pipeline/types";
@@ -53,13 +53,17 @@ function busiestDay(list: Event[]): { date: string; count: number } | null {
 }
 
 export default async function DigestPage() {
-  const events = await getEvents();
+  const [events, catalog] = await Promise.all([getEvents(), getCatalog()]);
   const { current, previous } = split(events);
 
   const launches = current.filter((e) => e.type === "model_added");
   const sunsets = current.filter((e) => e.type === "deprecated");
   const contextMoves = current.filter((e) => e.type === "context_changed" || e.type === "capability_changed");
-  const movers = moversLosers(current.length >= 2 ? current : events, 7);
+  // Same split the front page uses: a lab repricing its model is the story, a
+  // gateway adjusting its markup is context.
+  const moves = marketMoves(events, catalog, 7);
+  const labMoves = collapseByModel(moves.firstParty);
+  const streetMoves = collapseByModel(moves.street);
   const cut = biggestCut(current);
   const busy = busiestDay(current);
 
@@ -119,22 +123,22 @@ export default async function DigestPage() {
       <section className="grid gap-4 md:grid-cols-2">
         <div className="card p-4">
           <div className="flex items-baseline justify-between gap-2">
-            <h2 className="font-hand text-2xl font-bold text-black">Price cuts</h2>
-            <p className="mono-label">▼ cheaper · ▲ pricier</p>
+            <h2 className="font-hand text-2xl font-bold text-black">The labs moved</h2>
+            <p className="mono-label">first-party pricing</p>
           </div>
-          {movers.fallers.length === 0 ? (
-            <p className="py-6 text-center text-sm text-black/45">No input-price cuts this week.</p>
+          {labMoves.length === 0 ? (
+            <p className="py-6 text-center text-sm text-black/45">No lab changed its own pricing this week.</p>
           ) : (
             <ol className="divide-y divide-black/10 text-sm">
-              {movers.fallers.map((m, i) => (
+              {labMoves.map((m, i) => (
                 <li key={`${m.id}-${i}`} className="flex items-center gap-2 py-2.5">
                   <span className="w-5 shrink-0 tabular-nums text-black/35">{i + 1}.</span>
                   <span className="min-w-0 flex-1 truncate">{m.name}</span>
                   <span className="font-mono text-xs tabular-nums text-black/45">
                     {fmtPerM(m.from)}→{fmtPerM(m.to)}
                   </span>
-                  <span className="w-12 shrink-0 text-right font-mono font-bold tabular-nums text-pos">
-                    {(m.pct * 100).toFixed(0)}%
+                  <span className={`w-12 shrink-0 text-right font-mono font-bold tabular-nums ${m.pct < 0 ? "text-pos" : "text-neg"}`}>
+                    {m.pct > 0 ? "+" : ""}{(m.pct * 100).toFixed(0)}%
                   </span>
                 </li>
               ))}
@@ -143,22 +147,22 @@ export default async function DigestPage() {
         </div>
         <div className="card p-4">
           <div className="flex items-baseline justify-between gap-2">
-            <h2 className="font-hand text-2xl font-bold text-black">Price hikes</h2>
-            <p className="mono-label">▼ cheaper · ▲ pricier</p>
+            <h2 className="font-hand text-2xl font-bold text-black">The street moved</h2>
+            <p className="mono-label">gateway markup</p>
           </div>
-          {movers.risers.length === 0 ? (
-            <p className="py-6 text-center text-sm text-black/45">No price hikes this week.</p>
+          {streetMoves.length === 0 ? (
+            <p className="py-6 text-center text-sm text-black/45">No reseller changed its listing this week.</p>
           ) : (
             <ol className="divide-y divide-black/10 text-sm">
-              {movers.risers.map((m, i) => (
+              {streetMoves.slice(0, 8).map((m, i) => (
                 <li key={`${m.id}-${i}`} className="flex items-center gap-2 py-2.5">
                   <span className="w-5 shrink-0 tabular-nums text-black/35">{i + 1}.</span>
                   <span className="min-w-0 flex-1 truncate">{m.name}</span>
                   <span className="font-mono text-xs tabular-nums text-black/45">
                     {fmtPerM(m.from)}→{fmtPerM(m.to)}
                   </span>
-                  <span className="w-12 shrink-0 text-right font-mono font-bold tabular-nums text-neg">
-                    +{(m.pct * 100).toFixed(0)}%
+                  <span className={`w-12 shrink-0 text-right font-mono font-bold tabular-nums ${m.pct < 0 ? "text-pos" : "text-neg"}`}>
+                    {m.pct > 0 ? "+" : ""}{(m.pct * 100).toFixed(0)}%
                   </span>
                 </li>
               ))}

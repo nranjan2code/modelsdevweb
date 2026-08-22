@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import { getWeights } from "../src/lib/data/weights";
 import { getCatalog, groupToFacts } from "../src/lib/data";
 import { runQuality, type QualityInput, type QualityIssue } from "../src/lib/pipeline/quality";
 import type { Event } from "../src/lib/pipeline/types";
@@ -84,6 +85,7 @@ async function main(): Promise<void> {
       providers: catalog.stats.providers,
       listings: catalog.stats.listings,
       models: catalog.stats.models,
+      catalogEntries: catalog.stats.catalogEntries,
       labs: catalog.stats.labs,
     },
     labIds,
@@ -92,6 +94,7 @@ async function main(): Promise<void> {
     events,
     news: newsJson?.items ?? [],
     externalSignals: external?.signals ?? [],
+    weights: Object.values((await getWeights()).models),
     liveApiRaw,
   };
 

@@ -18,7 +18,7 @@ export const metadata: Metadata = {
     template: `%s · ${SITE_NAME}`,
   },
   description:
-    "Compare AI model prices across inference providers, track releases, price drops and deprecations. Built on open data from models.dev.",
+    "What the AI model market did today. Track first-party price moves separately from reseller markups, compare the same model across every provider, and rank value on independently measured benchmarks only. Built on open data from models.dev.",
   openGraph: {
     type: "website",
     images: [`${SITE_URL}/og/site.png`],

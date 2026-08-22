@@ -52,10 +52,10 @@ classes (`text-emerald-700`, `bg-blue-50`, …) and never raw hex codes in TSX.
 | `surface` | `#ffffff` | Cards, inputs, nav dropdowns. |
 | `surface-tint` | `#fdfbf7` | Footer background only. |
 | `accent` | `#2563eb` | Brand blue: links, interactive affordances, primary chart color, focus accents. |
-| `pos` | `#047857` | Good for the buyer: price cuts ▼, savings, launches, momentum leaders, pts/$ wins, "Free". |
+| `pos` | `#047857` | Good for the buyer: price cuts ▼, savings, launches, first-party moves, independently measured scores, pts/$ wins, "Free". |
 | `neg` | `#dc2626` | Costly or gone: price hikes ▲, deprecations, errors. |
-| `warn` | `#d97706` | Attention, not judgment: capability changes, records/superlatives, "this week's pick" ribbon. |
-| `special` | `#9333ea` | Market machinery: repricing events/chips, secondary chart series. |
+| `warn` | `#d97706` | Attention, not judgment: capability changes, price-spread multiples, records/superlatives. |
+| `special` | `#9333ea` | Market machinery: repricing events/chips, reseller ("street") moves, secondary chart series. |
 
 Soft backgrounds (`-soft`, the 50-level tints) and border alphas exist per hue:
 
@@ -73,13 +73,15 @@ A color means the same thing everywhere on the site. This table is binding:
 
 | Concept | Treatment |
 |---|---|
-| Cheaper / cut / savings / Free / launch / momentum / pts-$ winner | `pos` text on `pos-soft`, `border-pos/30` |
+| Cheaper / cut / savings / Free / launch / pts-$ winner | `pos` text on `pos-soft`, `border-pos/30` |
 | Pricier / hike / deprecation / removed-value | `neg` text on `neg-soft`, `border-neg/30` |
-| Repriced event / repricings chip / steepest move eyebrow / secondary series | `special` |
-| Capability change / record cards / week's-pick ribbon | `warn` |
-| Context change / new provider / informational events / links | `accent` |
+| Repriced event / repricings chip / reseller move / secondary series | `special` |
+| Capability change / price-spread multiple / record cards | `warn` |
+| Context change / new provider / informational events / links / quiet-week lede | `accent` |
 | Removals (model/provider left) | neutral gray chip (`black/5` bg, `black/15` border) |
 | Capability present / filter active / "on" state in tables | `pos` (present = good for the buyer) |
+| Benchmark provenance: `Independent` | `pos` badge |
+| Benchmark provenance: `Self-reported` / `Marketplace` / `Unsourced` | `muted` badge — never `neg`; the score is not *wrong*, it is unattributed |
 | Charts, two series | pair `accent` + `special`; a binary attribute of one domain is solid vs hollow (`accent` fill vs `surface` fill + `accent` stroke), never a second hue |
 
 Rules that follow:
@@ -96,6 +98,13 @@ Rules that follow:
 - **Ink alpha scale is fixed** to `/35 faint · /45 muted · /60 secondary ·
   /70 strong-secondary` for text, `/10 hairlines · /15 quiet borders · /5
   footer rules` for lines. No other steps.
+- **Who moved is encoded, not just written.** First-party boards render on
+  `card` (hard shadow, full weight); reseller boards render on `card-flat` (no
+  shadow). The hierarchy is structural so it survives being skimmed — a reader
+  should see which board matters before reading either.
+- **Provenance never uses `neg`.** A self-reported score is unattributed, not
+  false. Reserve `neg` for things that cost the buyer money or take a model
+  away.
 
 ### 3.3 Forbidden forever
 
@@ -174,6 +183,28 @@ Use the shared primitives before writing any bespoke markup:
 New primitives require an entry here first. If a page needs something none of
 these do, extend a primitive — don't fork styling locally.
 
+### 6.1 The lede
+
+The homepage's lead story is the one place the site makes a claim rather than
+reporting a number, so its form is fixed:
+
+- A `.card` with a full-height 2px colour rail on the left edge, keyed to the
+  story kind — `pos` for cuts and launches, `neg` for rises and sunsets,
+  `special` for reseller moves, `accent` for a quiet week.
+- Kind badge and sync stamp above; headline at display size; body at
+  `text-base`/`sm:text-lg` and never more than two sentences.
+- Exactly one primary CTA, then the rule disclosure in `.micro-label`.
+- **The rail class is written out, never interpolated.** Tailwind resolves class
+  names statically, so `` `bg-${tone}` `` compiles to nothing — map kind → class
+  in a lookup object.
+
+### 6.2 Pending states are a component, not an omission
+
+When a view needs more data than exists, render `.card-dashed` with what is
+missing, when it arrives, and how much has accumulated. Never render the live
+component with degenerate values (a flat sparkline, `▼ 0.0%`, a zeroed bar).
+This is a visual rule with a data cause — see `AGENTS.md`, editorial rules.
+
 Buttons have exactly two idioms:
 
 - **Primary CTA** (max one per view): `border-2 border-black bg-black text-white`,
@@ -189,6 +220,10 @@ Numbers are part of the brand. Always:
 - Prices: `$1.25/M`, `$0.15/$0.60 /M` (input/output), via `fmtPerM`.
 - Deltas: signed percent, `▼` down / `▲` up arrows, one decimal (`▼ 4.2%`).
 - Token counts / context: `fmtTokens` (`200K`, `1M`).
+- **A ratio and the prices beside it share one basis.** Spread multiples are
+  computed on blended price, so the prices shown next to them are blended too —
+  printing an input rate beside a blended multiple reads as an arithmetic
+  error, because it is one.
 - Dates: `fmtDate` (`Aug 22, 2026`); relative time via `fmtAgo` (`3h ago`).
 - Missing data is an em dash `—`, never "N/A", never blank.
 - All numerals in tables/stat blocks: `font-mono tabular-nums`.

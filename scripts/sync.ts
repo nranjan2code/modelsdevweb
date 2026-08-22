@@ -7,6 +7,8 @@ import type { Event } from "../src/lib/pipeline/types";
 import type { ExternalSignalsSnapshot } from "../src/lib/pipeline/external-types";
 import { rawApi, rawModels } from "../src/lib/pipeline/schema";
 import { groupListings, groupToFacts } from "../src/lib/data";
+import { appendDay, EMPTY_ARCHIVE, toObservations, type PriceArchive } from "../src/lib/data/archive";
+import { getWeights } from "../src/lib/data/weights";
 
 const ROOT = path.dirname(import.meta.dirname);
 const SNAPSHOTS = path.join(ROOT, "snapshots");
@@ -32,7 +34,20 @@ async function readJson(file: string): Promise<unknown | null> {
   }
 }
 
-const RETENTION_DAYS = 14;
+/**
+ * Full snapshots are only needed to diff against and to rebuild the archive if
+ * it is ever lost — 30 days is generous for both. The permanent record lives in
+ * snapshots/price-archive.json, which is never pruned.
+ */
+const RETENTION_DAYS = 30;
+
+const ARCHIVE_PATH = path.join(SNAPSHOTS, "price-archive.json");
+
+async function readArchive(): Promise<PriceArchive> {
+  const raw = (await readJson(ARCHIVE_PATH)) as Partial<PriceArchive> | null;
+  if (!raw || !Array.isArray(raw.dates)) return EMPTY_ARCHIVE;
+  return { dates: raw.dates, models: raw.models ?? {} };
+}
 
 async function pruneOldSnapshots(): Promise<void> {
   const cutoff = Date.now() - RETENTION_DAYS * 24 * 60 * 60 * 1000;
@@ -98,6 +113,10 @@ async function main(): Promise<void> {
     // No external signals file yet — that's OK for first run
   }
 
+  // Licence facts are refreshed by their own daily job; the gate validates
+  // whatever is currently committed so a bad record cannot sit on the site.
+  const weights = Object.values((await getWeights()).models);
+
   const quality = runQuality({
     now: new Date(fetchedAt),
     snapshotDate: date,
@@ -107,7 +126,8 @@ async function main(): Promise<void> {
     stats: {
       providers: next.providers.length,
       listings: next.listings.length,
-      models: candidateGroups.length,
+      models: candidateGroups.filter((g) => g.labKnown).length,
+      catalogEntries: candidateGroups.length,
       labs: new Set(candidateGroups.filter((g) => g.labKnown).map((g) => g.labId)).size,
     },
     labIds: [...new Set(candidateGroups.filter((g) => g.labKnown).map((g) => g.labId))],
@@ -116,6 +136,7 @@ async function main(): Promise<void> {
     events: merged,
     news: [],
     externalSignals,
+    weights,
     liveApiRaw: parsedApi as Record<string, { models?: unknown }>,
   });
   for (const issue of quality.warnings) console.log(`[sync] gate WARN [${issue.check}] ${issue.message}`);
@@ -125,6 +146,12 @@ async function main(): Promise<void> {
     process.exit(1);
   }
   console.log(`[sync] quality gates passed (${quality.warnings.length} warning(s))`);
+
+  // The permanent record. Written before the prune so a day is archived even if
+  // its full snapshot is later aged out.
+  const archive = appendDay(await readArchive(), date, toObservations(candidateGroups));
+  await writeFile(ARCHIVE_PATH, JSON.stringify(archive));
+  console.log(`[sync] archive: ${archive.dates.length} day(s), ${Object.keys(archive.models).length} models`);
 
   for (const dir of [LATEST, path.join(SNAPSHOTS, date)]) {
     await mkdir(dir, { recursive: true });

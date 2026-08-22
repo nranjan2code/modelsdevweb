@@ -28,6 +28,8 @@ export interface QualityInput {
   news: NewsFacts[];
   /** External signals from HF, GitHub, PWC, LMSYS. */
   externalSignals?: ExternalSignal[];
+  /** Open-weight licence/gating facts from Hugging Face model cards. */
+  weights?: WeightsFactsLike[];
   /** Fresh upstream fetch; when omitted the upstream-completeness check is skipped. */
   liveApiRaw?: Record<string, { models?: unknown }> | null;
 }
@@ -45,8 +47,22 @@ export interface GroupFacts {
 export interface StatsFacts {
   providers: number;
   listings: number;
+  /** Lab-attributed models — what the site publishes as its model count. */
   models: number;
+  /** Every group, attributed or not. */
+  catalogEntries: number;
   labs: number;
+}
+
+/** Structural view of one weights record, as the gate needs it. */
+export interface WeightsFactsLike {
+  groupId: string;
+  repoId: string;
+  licenceClass: string;
+  access: string;
+  cardUrl: string;
+  parameters: number | null;
+  fetchedAt: string;
 }
 
 export interface NewsFacts {
@@ -58,6 +74,15 @@ export interface NewsFacts {
 }
 
 export const MAX_SNAPSHOT_AGE_HOURS = 26;
+
+/**
+ * Lab-attributed groups per upstream canonical model. Healthy is ~1.0 (a few
+ * canonical entries have no live listing). The fragmentation bug scored ~6x.
+ */
+export const IDENTITY_MAX_RATIO = 1.5;
+export const IDENTITY_MIN_RATIO = 0.5;
+/** Below this many canonical models the ratio is noise, not signal. */
+export const IDENTITY_MIN_CANONICAL = 50;
 export const NEW_RELEASE_WINDOW_DAYS = 3;
 export const EVENT_RETENTION_DAYS = 14;
 export const NEWS_MAX_AGE_HOURS = 48;
@@ -210,7 +235,90 @@ function checkStatsIntegrity(i: QualityInput): QualityIssue[] {
   const listings = i.groups.reduce((n, g) => n + g.listings.length, 0);
   if (i.stats.providers !== providers) out.push({ check: "stats-integrity", message: `stats.providers=${i.stats.providers}, api.json has ${providers}` });
   if (i.stats.listings !== listings) out.push({ check: "stats-integrity", message: `stats.listings=${i.stats.listings}, groups hold ${listings}` });
-  if (i.stats.models !== i.groups.length) out.push({ check: "stats-integrity", message: `stats.models=${i.stats.models}, catalog has ${i.groups.length} groups` });
+  const attributed = i.groups.filter((g) => g.labKnown).length;
+  if (i.stats.catalogEntries !== i.groups.length) out.push({ check: "stats-integrity", message: `stats.catalogEntries=${i.stats.catalogEntries}, catalog has ${i.groups.length} groups` });
+  if (i.stats.models !== attributed) out.push({ check: "stats-integrity", message: `stats.models=${i.stats.models}, ${attributed} groups are lab-attributed` });
+  return out;
+}
+
+/**
+ * Weights facts drive statements about what a reader may legally ship, so they
+ * are held to a stricter standard than popularity signals: every record must
+ * point at a model we list, carry its source card for verification, and use a
+ * known classification. A wrong licence here is worse than a missing one.
+ */
+const WEIGHTS_LICENCE_CLASSES = new Set(["permissive", "community", "non-commercial", "unknown"]);
+const WEIGHTS_ACCESS_CLASSES = new Set(["open", "gated", "unknown"]);
+/** Licence terms change slowly, but a record this old is no longer evidence. */
+export const WEIGHTS_MAX_AGE_DAYS = 45;
+
+function checkWeights(i: QualityInput): QualityIssue[] {
+  const out: QualityIssue[] = [];
+  const facts = i.weights ?? [];
+  if (facts.length === 0) return out;
+  const groupIds = new Set(i.groups.map((g) => g.id));
+
+  for (const f of facts) {
+    if (!groupIds.has(f.groupId)) {
+      out.push({ check: "weights-orphan", message: `weights record ${f.repoId} references unknown model ${f.groupId}` });
+    }
+    if (!WEIGHTS_LICENCE_CLASSES.has(f.licenceClass)) {
+      out.push({ check: "weights-integrity", message: `${f.repoId} has unknown licence class "${f.licenceClass}"` });
+    }
+    if (!WEIGHTS_ACCESS_CLASSES.has(f.access)) {
+      out.push({ check: "weights-integrity", message: `${f.repoId} has unknown access class "${f.access}"` });
+    }
+    // Without the card URL a reader cannot check the licence we summarised.
+    if (!f.cardUrl || !/^https:\/\/huggingface\.co\//.test(f.cardUrl)) {
+      out.push({ check: "weights-integrity", message: `${f.repoId} is missing a Hugging Face card URL` });
+    }
+    if (f.parameters != null && (!Number.isFinite(f.parameters) || f.parameters <= 0)) {
+      out.push({ check: "weights-integrity", message: `${f.repoId} has implausible parameter count ${f.parameters}` });
+    }
+    const age = (i.now.getTime() - Date.parse(f.fetchedAt)) / 86_400_000;
+    if (!Number.isFinite(age) || age > WEIGHTS_MAX_AGE_DAYS) {
+      out.push({ check: "weights-stale", message: `${f.repoId} licence data is ${Math.round(age)}d old` });
+    }
+  }
+  return out;
+}
+
+/**
+ * Catalog identity: one real model must be one group.
+ *
+ * Regression guard for the fragmentation bug where provider-side ids keyed the
+ * groups, so GPT-5.6 Sol existed 15 times and resellers (databricks, gitlab,
+ * venice) were promoted to labs. Two invariants catch any recurrence: the
+ * attributed model count has to track the upstream canonical count, and no lab
+ * may share an id with a provider.
+ */
+function checkCatalogIdentity(i: QualityInput): QualityIssue[] {
+  const out: QualityIssue[] = [];
+  const canonical = i.canonicalIds.size;
+  const attributed = i.groups.filter((g) => g.labKnown).length;
+  if (canonical >= IDENTITY_MIN_CANONICAL) {
+    const ratio = attributed / canonical;
+    if (ratio > IDENTITY_MAX_RATIO) {
+      out.push({
+        check: "catalog-identity",
+        message: `${attributed} lab-attributed groups for ${canonical} canonical models (${ratio.toFixed(2)}x) — model grouping is fragmenting`,
+      });
+    }
+    if (ratio < IDENTITY_MIN_RATIO) {
+      out.push({
+        check: "catalog-identity",
+        message: `only ${attributed} lab-attributed groups for ${canonical} canonical models (${ratio.toFixed(2)}x) — grouping is over-merging or canonical load failed`,
+      });
+    }
+  }
+  const providerIds = new Set(Object.keys(i.apiRaw));
+  const resellerLabs = i.labIds.filter((l) => providerIds.has(l) && !i.canonicalLabs.has(l));
+  if (resellerLabs.length > 0) {
+    out.push({
+      check: "catalog-identity",
+      message: `provider ids leaked in as labs: ${cap(resellerLabs)}`,
+    });
+  }
   return out;
 }
 
@@ -373,12 +481,26 @@ export function runQuality(input: QualityInput): QualityResult {
     ...checkEvents(input),
     ...checkNews(input),
     ...checkExternalSignals(input),
+    ...checkCatalogIdentity(input),
+    ...checkWeights(input),
     ...checkContextSanity(input),
   ];
   // News staleness/dead links degrade UX, upstream drift self-heals next sync,
   // and context-sanity is upstream's data to fix (we already defend display);
   // everything else is hard-fail.
-  const soft = new Set(["news-integrity", "upstream-drift", "external-signal-stale", "context-sanity"]);
+  // A signal pointing at a model we do not list is a resolver miss, not
+  // corruption — it must not discard an otherwise good snapshot.
+  const soft = new Set([
+    "news-integrity",
+    "upstream-drift",
+    "external-signal-stale",
+    "external-signal-orphan",
+    "context-sanity",
+    // A repo we could not resolve this run keeps its last known licence; that
+    // is staleness to flag, not a reason to discard a good snapshot.
+    "weights-orphan",
+    "weights-stale",
+  ]);
   for (const issue of all) {
     if (soft.has(issue.check)) warnings.push(issue);
     else errors.push(issue);

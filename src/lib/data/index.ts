@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import { buildIdentityIndex, isGenericModelId } from "../pipeline/identity";
 import { normalizeApi, normalizeModels, unlistedPrice } from "../pipeline/normalize";
 import type { GroupFacts } from "../pipeline/quality";
 import type { CanonicalModel, Event, Listing, NewsItem, Provider } from "../pipeline/types";
@@ -38,7 +39,10 @@ export interface Lab {
 export interface Stats {
   providers: number;
   listings: number;
+  /** Lab-attributed models — the number the site reports and reasons over. */
   models: number;
+  /** Every group including gateway-only variants with no canonical backing. */
+  catalogEntries: number;
   labs: number;
   deprecated: number;
   openWeights: number;
@@ -46,7 +50,15 @@ export interface Stats {
 }
 
 export interface Catalog {
+  /** Every group, including unattributed gateway-only entries. Browse shows these. */
   groups: ModelGroup[];
+  /**
+   * Groups backed by a canonical lab entry. Every aggregate on the site —
+   * indices, distributions, scorecards, records — runs over these, because
+   * unattributed gateway rows carry unreliable metadata and would weight the
+   * numbers by how many resellers list a model rather than by model.
+   */
+  tracked: ModelGroup[];
   groupById: Map<string, ModelGroup>;
   providers: Provider[];
   labs: Lab[];
@@ -77,66 +89,72 @@ function bestOf(listings: Listing[]): BestPrice | null {
   return best;
 }
 
+/**
+ * Groups with no canonical lab are attributed here rather than to whoever
+ * happens to sell them. Crediting `databricks` or `gitlab` as the *lab* behind
+ * GPT-5.6 Sol was how resellers ended up on the lab scoreboard.
+ */
+export const UNATTRIBUTED_LAB = "unattributed";
+
 export function groupListings(
   listings: Listing[],
   canonicalById: Map<string, CanonicalModel>,
   canonicalLabs: Set<string>,
 ): ModelGroup[] {
+  // One real model reaches us under many provider spellings. Resolve each
+  // listing to a canonical identity so the catalog counts models, not listings.
+  const identity = buildIdentityIndex([...canonicalById.values()], (m) => ({ id: m.id, name: m.name }));
+
   const map = new Map<string, Listing[]>();
-  // Case-insensitive canonical lookup: providers spell the same upstream model
-  // id differently ("MiniMax-M2" vs "minimax-m2") — they must land in one group.
-  const canonicalByLower = new Map<string, CanonicalModel>();
-  // Bare gateway ids ("qwen-flash", "hy3") matching the tail segment of exactly
-  // one canonical id ("qwen/qwen-flash", "tencent/hy3") resolve to that canonical.
-  const canonicalByLowerTail = new Map<string, CanonicalModel>();
-  for (const m of canonicalById.values()) {
-    canonicalByLower.set(m.id.toLowerCase(), m);
-    const segs = m.id.split("/");
-    if (segs.length > 1) {
-      const tail = segs[segs.length - 1].toLowerCase();
-      if (canonicalByLowerTail.has(tail)) canonicalByLowerTail.set(tail, null as unknown as CanonicalModel);
-      else canonicalByLowerTail.set(tail, m);
-    }
-  }
+  const canonicalOf = new Map<string, CanonicalModel | null>();
   for (const l of listings) {
     let gid: string;
-    if (l.canonicalId) {
+    let canonical: CanonicalModel | null;
+    if (l.canonicalId && canonicalById.has(l.canonicalId)) {
       gid = l.canonicalId;
+      canonical = canonicalById.get(l.canonicalId) ?? null;
+    } else if (isGenericModelId(l.name, l.modelId)) {
+      // "auto" / "default" name a router, not a model — keep them per provider.
+      gid = l.key;
+      canonical = null;
     } else {
-      // No canonical entry — merge listings that share the same model id across
-      // providers so one real-world model doesn't fragment into N catalog rows.
-      const lower = l.modelId.toLowerCase();
-      const byExact = canonicalByLower.get(lower);
-      const byTail = canonicalByLowerTail.get(lower);
-      gid = byExact?.id ?? byTail?.id ?? lower;
+      const { target, slug } = identity.resolve(l.name, l.modelId);
+      // No canonical match still merges every provider that spells the model
+      // the same way, so unlisted models form one group instead of N.
+      gid = target?.id ?? slug;
+      canonical = target ?? null;
     }
+    canonicalOf.set(gid, canonical);
     const arr = map.get(gid);
     if (arr) arr.push(l);
     else map.set(gid, [l]);
   }
+
   const groups: ModelGroup[] = [];
   for (const [gid, ls] of map) {
-    const canonical = canonicalById.get(gid) ?? null;
+    const canonical = canonicalById.get(gid) ?? canonicalOf.get(gid) ?? null;
+    // Cheapest real offer first; listings with no published price ($0/$0 or
+    // null upstream) are not offers, so they sort below every priced one
+    // instead of heading the table at an apparent price of zero.
+    const rank = (l: Listing): number => {
+      if (l.status === "deprecated") return 2;
+      return l.cost.input == null || unlistedPrice(l.cost) ? 1 : 0;
+    };
     const sorted = [...ls].sort((a, b) => {
-      const pa = a.status === "deprecated" ? 1 : 0;
-      const pb = b.status === "deprecated" ? 1 : 0;
-      if (pa !== pb) return pa - pb;
+      const ra = rank(a);
+      const rb = rank(b);
+      if (ra !== rb) return ra - rb;
       const ia = a.cost.input ?? Number.POSITIVE_INFINITY;
       const ib = b.cost.input ?? Number.POSITIVE_INFINITY;
       return ia - ib;
     });
     const slashLab = gid.includes("/") ? gid.split("/")[0] : null;
-    const labId =
-      canonical?.labId ??
-      (slashLab && canonicalLabs.has(slashLab)
-        ? slashLab
-        : (sorted.find((l) => l.status !== "deprecated") ?? sorted[0])?.providerId ??
-          slashLab ??
-          gid);
+    const labKnown = canonical != null || (slashLab != null && canonicalLabs.has(slashLab));
+    const labId = canonical?.labId ?? (labKnown && slashLab ? slashLab : UNATTRIBUTED_LAB);
     groups.push({
       id: gid,
       labId,
-      labKnown: canonical != null || (slashLab != null && canonicalLabs.has(slashLab)),
+      labKnown,
       name: canonical?.name ?? sorted[0]?.name ?? gid,
       canonical,
       listings: sorted,
@@ -274,18 +292,22 @@ export async function getCatalog(): Promise<Catalog> {
     .map(([id, modelCount]) => ({ id, modelCount }))
     .sort((a, b) => b.modelCount - a.modelCount);
 
+  const tracked = groups.filter((g) => g.labKnown);
+
   catalogCache = {
     groups,
+    tracked,
     groupById: new Map(groups.map((g) => [g.id, g])),
     providers: providers.sort((a, b) => b.modelCount - a.modelCount),
     labs,
     stats: {
       providers: providers.length,
       listings: listings.length,
-      models: groups.length,
+      models: tracked.length,
+      catalogEntries: groups.length,
       labs: labs.length,
       deprecated: listings.filter((l) => l.status === "deprecated").length,
-      openWeights: groups.filter((g) => g.canonical?.openWeights === true).length,
+      openWeights: tracked.filter((g) => g.canonical?.openWeights === true).length,
       snapshotDate: meta?.date ?? null,
     },
   };

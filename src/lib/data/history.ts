@@ -2,6 +2,7 @@ import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 import { normalizeApi, normalizeModels } from "../pipeline/normalize";
 import { rawApi, rawModels } from "../pipeline/schema";
+import { getPriceArchive, seriesOf } from "./archive";
 
 export interface PricePoint {
   date: string;
@@ -12,8 +13,30 @@ export interface PricePoint {
 
 let cache: Map<string, PricePoint[]> | null = null;
 
+/**
+ * Price history, preferring the permanent archive.
+ *
+ * Dated snapshots are pruned, so reading history from them capped every series
+ * at the retention window. The archive is never pruned; the snapshot walk below
+ * survives only as a fallback for a cold start where the archive has not been
+ * seeded yet (see scripts/archive-backfill.ts).
+ */
 export async function getAllPriceHistory(): Promise<Map<string, PricePoint[]>> {
   if (cache) return cache;
+
+  const archive = await getPriceArchive();
+  if (archive.dates.length > 0) {
+    const fromArchive = new Map<string, PricePoint[]>();
+    for (const id of Object.keys(archive.models)) {
+      const series = seriesOf(archive, id);
+      if (series.length > 0) fromArchive.set(id, series);
+    }
+    if (fromArchive.size > 0) {
+      cache = fromArchive;
+      return cache;
+    }
+  }
+
   const map = new Map<string, PricePoint[]>();
   let snapshotDirs: string[] = [];
   try {
