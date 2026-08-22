@@ -21,6 +21,7 @@ export async function GET() {
     "/trends",
     "/calculator",
     "/changelog",
+    "/digest",
     "/news",
     "/deprecations",
     "/about",

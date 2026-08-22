@@ -36,6 +36,7 @@ const GROUPS: NavGroup[] = [
     label: "Track",
     children: [
       { href: "/changelog", label: "Changelog", desc: "Hourly diffs of everything" },
+      { href: "/digest", label: "Weekly digest", desc: "This week in AI pricing" },
       { href: "/news", label: "Model news", desc: "Daily headlines" },
       { href: "/deprecations", label: "Deprecations", desc: "Sunset watch" },
     ],

@@ -127,6 +127,34 @@ describe("runQuality", () => {
     expect(r.errors.some((e) => e.check === "events-integrity" && e.message.includes("ofox/vanished-model"))).toBe(true);
   });
 
+  it("accepts removal events whose modelKey/canonicalId have left the snapshot", () => {
+    // Upstream deleted the listing; the model_removed event must not red-line the gate.
+    const removed = (id: string, modelKey: string): Event => ({
+      id,
+      type: "model_removed",
+      date: "2026-08-22",
+      modelKey,
+      modelName: "Vanished",
+      canonicalId: "ofox/vanished-model",
+      labId: "ofox",
+      providerId: "kilo",
+      changes: [],
+    });
+    const r = runQuality(
+      baseInput({
+        now: new Date("2026-08-22T00:30:00Z"),
+        fetchedAt: "2026-08-21T23:00:00Z",
+        snapshotDate: "2026-08-21",
+        events: [
+          removed("r1", "openrouter/deepcogito/cogito-v2.1-671b"),
+          removed("r2", "kilo/deepcogito/cogito-v2.1-671b"),
+        ],
+      }),
+    );
+    expect(r.errors.filter((e) => e.check === "events-integrity")).toEqual([]);
+    expect(r.ok).toBe(true);
+  });
+
   it("warns (not errors) on stale news and dead news deep-links", () => {
     const r = runQuality(
       baseInput({

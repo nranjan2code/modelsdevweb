@@ -41,6 +41,7 @@ capability_changed, model_removed, provider_removed
 - /calculator — monthly cost estimator by token mix
 - /deprecations — listings no longer served
 - /changelog — full event history (${events.length} events)
+- /digest — auto-written weekly recap of releases, repricings and sunsets
 - /news — daily model news headlines with source links
 
 ## Notes for agents

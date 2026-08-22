@@ -67,6 +67,14 @@ async function main(): Promise<void> {
     newEvents = diffListings(prev.listings, next.listings, date);
   }
 
+  // The gate must validate what will actually land: existing events plus the
+  // freshly diffed candidates, checked against the candidate catalog.
+  const existing = ((await readJson(EVENTS_FILE)) as Event[] | null) ?? [];
+  const seen = new Set(existing.map((e) => e.id));
+  const merged = [...newEvents.filter((e) => !seen.has(e.id)), ...existing].sort((a, b) =>
+    a.date === b.date ? a.id.localeCompare(b.id) : a.date < b.date ? 1 : -1,
+  );
+
   // Quality gates run on the freshly computed dataset BEFORE anything is written:
   // a red gate leaves the previous snapshot in place and fails the workflow.
   const canonicalById = new Map(models.map((m) => [m.id, m]));
@@ -87,7 +95,7 @@ async function main(): Promise<void> {
     labIds: [...new Set(candidateGroups.filter((g) => g.labKnown).map((g) => g.labId))],
     canonicalLabs,
     canonicalIds: index,
-    events: [],
+    events: merged,
     news: [],
     liveApiRaw: parsedApi as Record<string, { models?: unknown }>,
   });
@@ -110,11 +118,6 @@ async function main(): Promise<void> {
   );
   await pruneOldSnapshots();
 
-  const existing = ((await readJson(EVENTS_FILE)) as Event[] | null) ?? [];
-  const seen = new Set(existing.map((e) => e.id));
-  const merged = [...newEvents.filter((e) => !seen.has(e.id)), ...existing].sort((a, b) =>
-    a.date === b.date ? a.id.localeCompare(b.id) : a.date < b.date ? 1 : -1,
-  );
   await mkdir(path.dirname(EVENTS_FILE), { recursive: true });
   await writeFile(EVENTS_FILE, JSON.stringify(merged));
 

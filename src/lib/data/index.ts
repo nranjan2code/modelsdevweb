@@ -192,6 +192,26 @@ let catalogCache: Catalog | null = null;
 
 interface SnapshotMeta {
   date?: string;
+  fetchedAt?: string;
+}
+
+export interface SnapshotMetaInfo {
+  date: string | null;
+  fetchedAt: string | null;
+}
+
+let metaCache: SnapshotMetaInfo | null = null;
+
+/** When the current snapshot was pulled — powers "synced Xh ago" freshness stamps. */
+export async function getSnapshotMeta(): Promise<SnapshotMetaInfo> {
+  if (metaCache) return metaCache;
+  try {
+    const meta = JSON.parse(await readFile(path.join(LATEST(), "meta.json"), "utf8")) as SnapshotMeta;
+    metaCache = { date: meta.date ?? null, fetchedAt: meta.fetchedAt ?? null };
+  } catch {
+    metaCache = { date: null, fetchedAt: null };
+  }
+  return metaCache;
 }
 
 async function readMeta(): Promise<SnapshotMeta | null> {
@@ -201,7 +221,6 @@ async function readMeta(): Promise<SnapshotMeta | null> {
     return null;
   }
 }
-
 export async function getCatalog(): Promise<Catalog> {
   if (catalogCache) return catalogCache;
   const [apiBuf, modelsBuf, meta] = await Promise.all([

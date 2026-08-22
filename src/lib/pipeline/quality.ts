@@ -1,4 +1,4 @@
-import type { Event } from "./types";
+import type { Event, EventType } from "./types";
 
 export interface QualityIssue {
   check: string;
@@ -231,6 +231,9 @@ function checkFreeIntegrity(i: QualityInput): QualityIssue[] {
   return out;
 }
 
+/** Removals describe state that has left the snapshot — their modelKey/canonicalId are absent by definition. */
+const REMOVAL_TYPES = new Set<EventType>(["model_removed", "provider_removed"]);
+
 /** Events must be well-formed and reference things that exist in the current snapshot window. */
 function checkEvents(i: QualityInput): QualityIssue[] {
   const out: QualityIssue[] = [];
@@ -246,6 +249,7 @@ function checkEvents(i: QualityInput): QualityIssue[] {
     seen.add(e.id);
     if (!/^\d{4}-\d{2}-\d{2}$/.test(e.date) || e.date > tomorrow) bad.push(`${e.id}@${e.date}`);
     if (e.date >= oldest) {
+      if (REMOVAL_TYPES.has(e.type)) continue;
       if (!keys.has(e.modelKey)) dangling.push(`${e.id}:${e.modelKey}`);
       else if (e.canonicalId != null && !i.canonicalIds.has(e.canonicalId)) dangling.push(`${e.id}:canonical ${e.canonicalId}`);
     }
