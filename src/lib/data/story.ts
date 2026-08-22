@@ -1,5 +1,6 @@
 import type { Event } from "../pipeline/types";
 import { blendPrice, groupContext, groupReleaseDate, type Catalog, type ModelGroup } from "./index";
+import { CONTEXT_REVIEW_THRESHOLD } from "../pipeline/quality";
 import type { PricePoint } from "./history";
 import { fmtDate, fmtPerM, fmtTokens } from "../format";
 
@@ -265,9 +266,24 @@ export function records(catalog: Catalog): RecordRow[] {
   const rows: RecordRow[] = [];
   const live = (g: ModelGroup) => g.listings.filter((l) => l.status !== "deprecated").length;
 
+  /**
+   * Records are presented as facts, so extreme claims need corroboration:
+   * a context window at or above CORROBORATION_THRESHOLD is only record-
+   * eligible when the vendor spec itself says so, or when >= 2 independent
+   * providers agree (single gateways have published placeholder numbers).
+   */
+  const corroborated = (g: ModelGroup, ctx: number): boolean => {
+    if (ctx < CONTEXT_REVIEW_THRESHOLD) return true;
+    if (g.canonical?.limit?.context === ctx) return true;
+    const agreeing = new Set(
+      g.listings.filter((l) => l.limit.context === ctx && l.status !== "deprecated").map((l) => l.providerId),
+    );
+    return agreeing.size >= 2;
+  };
+
   const longestCtx = dedupeByName(catalog.groups)
     .map((g) => ({ g, ctx: groupContext(g) }))
-    .filter((x): x is { g: ModelGroup; ctx: number } => x.ctx != null)
+    .filter((x): x is { g: ModelGroup; ctx: number } => x.ctx != null && corroborated(x.g, x.ctx))
     .sort((a, b) => b.ctx - a.ctx)[0];
   if (longestCtx) {
     rows.push({

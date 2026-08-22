@@ -340,6 +340,25 @@ function checkExternalSignals(i: QualityInput): QualityIssue[] {
   return out;
 }
 
+/** Context claims at or beyond this warrant human review of the upstream spec. */
+export const CONTEXT_REVIEW_THRESHOLD = 10_000_000;
+
+/** Flag implausible context windows so upstream garbage is visible in CI. */
+function checkContextSanity(i: QualityInput): QualityIssue[] {
+  const out: QualityIssue[] = [];
+  for (const { pid, mid, entry } of rawListings(i.apiRaw)) {
+    const limit = entry.limit as { context?: unknown } | undefined;
+    const ctx = typeof limit?.context === "number" ? limit.context : null;
+    if (ctx != null && ctx >= CONTEXT_REVIEW_THRESHOLD) {
+      out.push({
+        check: "context-sanity",
+        message: `${pid}/${mid} claims ${(ctx / 1_000_000).toFixed(0)}M-token context — verify upstream spec`,
+      });
+    }
+  }
+  return out;
+}
+
 export function runQuality(input: QualityInput): QualityResult {
   const errors: QualityIssue[] = [];
   const warnings: QualityIssue[] = [];
@@ -354,10 +373,12 @@ export function runQuality(input: QualityInput): QualityResult {
     ...checkEvents(input),
     ...checkNews(input),
     ...checkExternalSignals(input),
+    ...checkContextSanity(input),
   ];
-  // News staleness/dead links degrade UX and upstream drift self-heals next sync;
+  // News staleness/dead links degrade UX, upstream drift self-heals next sync,
+  // and context-sanity is upstream's data to fix (we already defend display);
   // everything else is hard-fail.
-  const soft = new Set(["news-integrity", "upstream-drift", "external-signal-stale"]);
+  const soft = new Set(["news-integrity", "upstream-drift", "external-signal-stale", "context-sanity"]);
   for (const issue of all) {
     if (soft.has(issue.check)) warnings.push(issue);
     else errors.push(issue);

@@ -161,13 +161,42 @@ export function groupReleaseDate(g: ModelGroup): string | null {
   return latest;
 }
 
-/** Largest known context window across canonical data and listings. */
+/**
+ * Plausibility ceiling for context windows. Largest real shipping claim is
+ * ~10M tokens (Llama 4 Scout); everything observed above this in the wild has
+ * been gateway placeholder junk (qiniu-ai published 20M for a 2M model and
+ * 99999999 for another). The quality gates warn on ANY claim >= 10M
+ * (CONTEXT_REVIEW_THRESHOLD) so a genuinely larger model surfaces for review
+ * instead of being silently trusted.
+ */
+export const IMPLAUSIBLE_CONTEXT_TOKENS = 16_000_000;
+/**
+ * Gateways sometimes publish typo'd limits (20M where every other provider of
+ * the same model says 2M). With enough sources, values far above the group
+ * median are treated as single-provider errors rather than truth.
+ */
+const CONTEXT_OUTLIER_FACTOR = 4;
+
+/** Largest known context window across canonical data and listings, defended
+ *  against implausible placeholders and single-provider outliers. */
 export function groupContext(g: ModelGroup): number | null {
-  let max = g.canonical?.limit?.context ?? null;
-  for (const l of g.listings) {
-    if (l.limit.context != null && (max == null || l.limit.context > max)) max = l.limit.context;
+  const plausible = (v: number | null | undefined): v is number =>
+    typeof v === "number" && Number.isFinite(v) && v > 0 && v < IMPLAUSIBLE_CONTEXT_TOKENS;
+
+  let values: number[] = [];
+  if (plausible(g.canonical?.limit?.context)) values.push(g.canonical.limit.context);
+  for (const l of g.listings) if (plausible(l.limit.context)) values.push(l.limit.context);
+  if (values.length === 0) return null;
+
+  if (values.length >= 3) {
+    const sorted = [...values].sort((a, b) => a - b);
+    const mid = Math.floor(sorted.length / 2);
+    const median = sorted.length % 2 === 1 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+    const cap = median * CONTEXT_OUTLIER_FACTOR;
+    // The median itself always survives its own cap, so this never empties.
+    values = values.filter((v) => v <= cap);
   }
-  return max;
+  return Math.max(...values);
 }
 
 /** Structural view of a group consumed by the data-quality gates. */
