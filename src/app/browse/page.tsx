@@ -17,7 +17,9 @@ export default async function BrowsePage() {
     const verified = b.find((x) => x.name === "SWE-Bench Verified");
     return pro?.score ?? verified?.score ?? null;
   };
-  const rows: BrowseRow[] = catalog.groups.map((g) => {
+  const rows: BrowseRow[] = [...catalog.groups]
+    .sort((a, b) => (groupReleaseDate(b) ?? "").localeCompare(groupReleaseDate(a) ?? ""))
+    .map((g) => {
     const hasMod = (dir: "input" | "output", mod: Modality): boolean =>
       (g.canonical?.modalities?.[dir].includes(mod) ?? false) ||
       g.listings.some((l) => l.modalities[dir].includes(mod));

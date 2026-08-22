@@ -761,25 +761,37 @@ export default async function HomePage() {
 
       <section>
         <SectionHead title="Record watch" eyebrow="Standing superlatives" tone="!text-amber-600" href="/browse" label="Browse all" />
-        <ol className="card divide-y divide-black/10">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {recs.map((r, i) => (
-            <li key={r.title} className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 px-4 py-3 text-sm">
-              <span className="w-5 shrink-0 tabular-nums text-black/35">{i + 1}.</span>
-              <span className="mono-label w-52 shrink-0 pt-0.5">{r.title}</span>
-              <span className="min-w-0 flex-1 truncate font-medium">
-                {r.id ? (
-                  <Link href={`/m/${r.id}`} className="transition-colors hover:text-blue-600">
+            <Link
+              key={r.title}
+              href={r.id ? `/m/${r.id}` : "/browse"}
+              className="card p-4 flex flex-col gap-2 transition-colors hover:border-amber-500"
+            >
+              <div className="flex items-baseline justify-between gap-2">
+                <span className="text-black/35 font-mono tabular-nums">{i + 1}.</span>
+                <span className="mono-label text-amber-600">{r.title}</span>
+              </div>
+              <div className="flex-1 min-h-0">
+                {r.id && (
+                  <Link
+                    href={`/m/${r.id}`}
+                    className="block truncate font-medium text-black transition-colors hover:text-blue-600"
+                  >
                     {r.holder}
                   </Link>
-                ) : (
-                  r.holder
                 )}
-              </span>
-              <span className="font-mono text-xs font-semibold tabular-nums text-blue-700">{r.value}</span>
-              {r.detail && <span className="w-full pl-8 text-xs text-black/40 sm:w-auto">{r.detail}</span>}
-            </li>
+                {!r.id && <span className="font-medium text-black">{r.holder}</span>}
+              </div>
+              <div className="font-mono text-lg font-semibold tabular-nums text-blue-700">{r.value}</div>
+              {r.detail && (
+                <div className="text-[11px] text-black/45 font-mono truncate">
+                  {r.detail}
+                </div>
+              )}
+            </Link>
           ))}
-        </ol>
+        </div>
       </section>
 
       <section>
