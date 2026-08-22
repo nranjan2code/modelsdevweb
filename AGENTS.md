@@ -18,6 +18,7 @@ pnpm sync-weights  # fetch HF licence/gating/params for open-weight models → s
 pnpm archive-backfill # rebuild snapshots/price-archive.json from retained daily snapshots
 pnpm gate          # standalone data-quality gates over committed snapshots (add --offline to skip live upstream compare)
 pnpm news          # Tavily daily news → news/index.json (--force to refetch same day)
+pnpm notify        # POST new matching events to watchers.json endpoints; retries failures next sync
 pnpm og            # satori-render OG cards → public/og/ (site + top 300 models)
 pnpm badges        # shields-style SVG price badges → public/badge/ (all models)
 ```
@@ -141,7 +142,11 @@ keep describing it.
 hourly GH Action (sync.yml)
   ├─ pnpm sync   → snapshots/{latest,date}/ + events/index.json
   ├─ pnpm news   → news/index.json (Tavily; runs once/day, skips rest of day)
+  ├─ pnpm sync-weights → snapshots/latest/weights.json (HF licence/access/params; skips if <20h old)
   ├─ pnpm sync-external → snapshots/latest/external-signals.json (HF downloads/likes/trending/papers + GitHub stars/forks)
+  │                         + snapshots/external-history/{date}.json
+  ├─ pnpm gate   → validates the complete candidate state after external refreshes
+  ├─ pnpm notify → watcher webhooks; successful event ids → events/notified.json
   └─ git commit + push → Vercel git integration rebuilds production
 ```
 
@@ -169,8 +174,10 @@ hourly GH Action (sync.yml)
   any size in the model name, and refuses to let one repo back two groups. Rejected records
   are **purged**, not merely skipped — keeping a stored one would preserve the licence we just
   disproved. This drops roughly a quarter of matches; that is the intended trade.
-- `scripts/news.ts` picks the 6 freshest + 4 most-listed models, queries Tavily topic=news,
-  dedupes URLs, tags items with canonical model IDs for deep-linking to `/m/<id>`.
+- `scripts/news.ts` builds a bounded Tavily query plan from the five most recently active
+  canonical models, fresh external-signal leaders, up to three recent releases, and three
+  generic market queries. It scores results by source quality, recency, vertical relevance and
+  model linkage, dedupes URLs, and tags items with canonical model IDs for `/m/<id>` deep links.
 - If all Tavily queries fail, the previous `news/index.json` is kept (stale over empty).
 - Missing `TAVILY_API_KEY` → script exits 0 with a warning (CI stays green).
 - `scripts/og.tsx` renders OG social cards (satori + resvg) into `public/og/` during
@@ -198,10 +205,12 @@ hourly GH Action (sync.yml)
 
 ## Pages & client state
 
-- **Homepage is seven modules, deliberately.** Lede → who moved the price (labs | street) +
-  the wire → same model different price → what a dollar buys → self-host or buy → news →
-  stats/APIs. Everything else already has a page; adding a module needs a question no existing
-  module answers. The previous 13-module version rendered the price index twice verbatim.
+- **Homepage is seven decision-led modules, deliberately.** Daily lede + model lookup → three
+  decision entry points → market pulse (labs | street | wire) → same model different price →
+  independently measured value → self-host or buy → weekly digest. Raw statistics, generic news
+  and machine interfaces stay on their dedicated pages or in the footer. Adding a module needs a
+  question no existing module answers. The previous dashboard-style versions repeated events and
+  made visitors process the database before helping them decide.
 - **`/self-host` is the decision tool; the homepage module is its headline.** The module states
   the threshold in *dollars of API spend* rather than tokens, because the rent already is the
   break-even and a bill is a unit readers can act on — "2.5B tokens/mo" was arithmetic they had

@@ -5,13 +5,14 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 const PRIMARY = [
-  { href: "/browse", label: "Find a model" },
+  { href: "/browse", label: "Models" },
   { href: "/compare", label: "Compare" },
   { href: "/changelog", label: "Changes" },
-  { href: "/trends", label: "Market" },
+  { href: "/digest", label: "Digest" },
 ];
 
 const MORE = [
+  { href: "/trends", label: "Market overview", desc: "Prices, capabilities and change pulse" },
   { href: "/benchmarks", label: "Benchmarks", desc: "Independent evidence and value" },
   { href: "/providers", label: "Providers", desc: "Every serving organisation" },
   { href: "/self-host", label: "Self-host or buy", desc: "API bill versus GPU rent" },

@@ -324,7 +324,7 @@ body {
       radial-gradient(circle at 20% 0%, rgb(79 70 229 / 0.16), transparent 24rem),
       radial-gradient(circle at 85% 25%, rgb(147 51 234 / 0.11), transparent 22rem),
       var(--color-surface);
-    padding: 3rem 1.25rem 0;
+    padding: 3rem 1.5rem;
     box-shadow: var(--shadow-hard);
   }
   .hero-grid {
@@ -455,7 +455,7 @@ body {
 
 @media (min-width: 640px) {
   .hero-shell {
-    padding: 4.5rem 3rem 0;
+    padding: 4rem 3rem;
   }
 }
 

@@ -24,8 +24,8 @@ const COLUMNS: { title: string; links: { href: string; label: string; external?:
   {
     title: "Track",
     links: [
+      { href: "/digest", label: "Weekly digest" },
       { href: "/changelog", label: "Changelog" },
-      { href: "/news", label: "Model news" },
       { href: "/deprecations", label: "Deprecations" },
     ],
   },

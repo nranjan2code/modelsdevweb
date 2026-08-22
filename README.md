@@ -2,8 +2,10 @@
 
 **Every AI model. Every provider. Every change.**
 
-Model Pulse is a price-comparison and changelog site for AI models, built entirely on the open
-[models.dev](https://models.dev) dataset. Live at **[vaanalytics.in](https://www.vaanalytics.in)**.
+Model Pulse is a price-comparison and changelog site for AI models. The canonical catalog,
+provider listings and prices come from the open [models.dev](https://models.dev) dataset;
+Hugging Face supplies licence/access facts and popularity metadata, GitHub supplies repository
+signals, and Tavily supplies linked model news. Live at **[vaanalytics.in](https://www.vaanalytics.in)**.
 
 It answers four questions:
 
@@ -23,8 +25,11 @@ It answers four questions:
 ```
 GitHub Actions (hourly cron)
   └─ fetch https://models.dev/{api,models}.json
-  └─ validate + normalize + diff against previous snapshot
+  └─ validate + normalize + diff against previous snapshot; append permanent price archive
   └─ fetch daily model news via Tavily (skips after first run of the day)
+  └─ refresh HF licence/access/parameter facts (skips when less than 20h old)
+  └─ refresh HF + GitHub signals and write a dated external-signal history snapshot
+  └─ run quality gates over the complete candidate state; notify configured watchers
   └─ commit snapshots/ + events/ + news/ to this repo   ← git history is the database
   └─ push triggers Vercel git integration → static rebuild & deploy
 ```
@@ -50,11 +55,13 @@ Two invariants matter more than the rest:
 pnpm install
 pnpm sync        # fetch models.dev, diff vs last snapshot, update snapshots/ + events/
 pnpm news        # fetch daily model news via Tavily into news/index.json (--force to refetch)
+pnpm sync-external # refresh HF/GitHub signals + dated external-signal history
+pnpm sync-weights  # refresh HF licence/access/parameter facts (daily; --force overrides)
+pnpm notify      # deliver new matching events to watchers.json endpoints
 pnpm test        # pipeline unit tests (vitest)
 pnpm gate        # data-quality gates over committed snapshots (--offline skips live compare)
 pnpm check:style # brand token gate (docs/brand.md §9)
 pnpm check:docs  # docs gate — dead paths, deleted modules, drifted constants
-pnpm sync-weights     # daily HF licence/gating refresh (--force to override the 20h skip)
 pnpm archive-backfill # rebuild the permanent price archive from retained snapshots
 pnpm dev         # local dev server
 pnpm build       # static export to out/ (runs pnpm og + pnpm badges first)
@@ -76,8 +83,12 @@ Local secrets live in `.env.local` (gitignored): `TAVILY_API_KEY` is read automa
 | `src/lib/data/provenance.ts` | benchmark score provenance (independent / self-reported) |
 | `src/lib/data/weights.ts` | open-weight licence + gating classification (what you may ship) |
 | `src/lib/data/selfhost.ts` | self-host vs API economics — GPU rent floor and break-even |
+| `src/lib/pipeline/external-resolver.ts` | external item → canonical model resolution |
+| `src/lib/scoring/composite.ts` | per-source normalization, decay and composite signals |
 | `src/app/self-host/page.tsx` | interactive decision tool: your volume vs GPU rent, per model |
 | `scripts/sync-weights.ts` | daily Hugging Face licence/gating/params refresh |
+| `scripts/sync-external.ts` | Hugging Face/GitHub signal refresh + dated history |
+| `scripts/notify.ts` | filtered watcher webhook delivery with retry state |
 | `scripts/sync.ts` | hourly sync job: fetch → gate → archive → diff → commit |
 | `scripts/news.ts` | daily Tavily news job: top models → headlines → `news/index.json` |
 | `scripts/og.tsx` | OG social cards → `public/og/` (build-time, gitignored) |
@@ -85,6 +96,8 @@ Local secrets live in `.env.local` (gitignored): `TAVILY_API_KEY` is read automa
 | `snapshots/latest/` | most recent raw models.dev data |
 | `snapshots/price-archive.json` | permanent daily price series — **never delete this** |
 | `snapshots/latest/weights.json` | open-weight licence, gating and parameter counts from HF |
+| `snapshots/latest/external-signals.json` | current HF/GitHub signals and composite scores |
+| `snapshots/external-history/` | dated external snapshots retained for future delta rankings |
 | `events/index.json` | merged changelog events, newest first |
 | `news/index.json` | daily model news items (title, source, favicon, matched model IDs) |
 | `src/app/` | Next.js App Router pages (static export) |
@@ -95,6 +108,7 @@ Local secrets live in `.env.local` (gitignored): `TAVILY_API_KEY` is read automa
 - `/api/models.json` — canonical model catalog with best prices
 - `/api/news.json` — daily model news headlines tagged with model IDs
 - `/api/benchmarks.json` — benchmark leaderboards with scores, provenance, best prices and points-per-dollar
+- `/api/signals.json` — attributed external signals and composite scores
 - `/rss.xml` — RSS feed of changes and news; `/feeds/<lab>/rss.xml` — per-lab feeds
 - `/badge/<model>.svg` — live SVG price badge for embedding in READMEs (regenerated each sync)
 - `/llms.txt` — index for AI agents

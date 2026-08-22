@@ -184,15 +184,17 @@ these do, extend a primitive — don't fork styling locally.
 
 ### 6.1 The lede
 
-The homepage's lead story is the one place the site makes a claim rather than
-reporting a number, so its form is fixed:
+The homepage's lead story is the hero and the one place the site makes a claim
+rather than reporting a number, so its form is fixed:
 
 - A `.card` with a full-height colour rail on the left edge, keyed to the
   story kind — `pos` for cuts and launches, `neg` for rises and sunsets,
   `special` for reseller moves, `accent` for a quiet week.
 - Kind badge and sync stamp above; headline at display size; body at
   `text-base`/`sm:text-lg` and never more than two sentences.
-- Exactly one primary CTA, then the rule disclosure in `.micro-label`.
+- Exactly one story CTA, one changelog link, then the rule disclosure in
+  `.micro-label`. The adjacent model lookup turns the claim into a buying action;
+  it is not a second editorial story.
 - **The rail class is written out, never interpolated.** Tailwind resolves class
   names statically, so `` `bg-${tone}` `` compiles to nothing — map kind → class
   in a lookup object.

@@ -54,7 +54,7 @@ jobs:
       - name: Sync open-weight licence facts (Hugging Face, daily)
         run: pnpm sync-weights
 
-      - name: Sync external signals (HF, GitHub, PWC, LMSYS)
+      - name: Sync external signals (Hugging Face and GitHub)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: pnpm sync-external

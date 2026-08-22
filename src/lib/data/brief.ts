@@ -276,7 +276,7 @@ export function lede(
       headline: `${launch.name} is out`,
       body: `${labName(launch.labId)} shipped it${ctx ? ` with a ${compact(ctx)}-token context window` : ""}, and ${launch.listings.length} provider${launch.listings.length === 1 ? "" : "s"} already list it at ${price}.`,
       href: `/m/${launch.id}`,
-      cta: "Open the profile",
+      cta: "Compare provider prices",
       rule: `first-party launch within ${LAUNCH_WINDOW_DAYS} days`,
     };
   }
