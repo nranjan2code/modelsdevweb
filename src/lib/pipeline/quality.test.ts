@@ -156,14 +156,48 @@ describe("runQuality", () => {
     expect(r.ok).toBe(true);
   });
 
-  it("warns (not errors) on stale news and dead news deep-links", () => {
+  it("warns on stale news but fails on dead news deep-links", () => {
     const r = runQuality(
       baseInput({
         news: [{ id: "n1", title: "t", url: "https://x/a", publishedAt: "2026-08-01T00:00:00Z", modelIds: ["nope/model"] }],
       }),
     );
-    expect(r.errors).toEqual([]);
+    expect(r.errors.some((e) => e.check === "news-links" && e.message.includes("nope/model"))).toBe(true);
     expect(r.warnings.some((w) => w.check === "news-integrity" && w.message.includes("old"))).toBe(true);
-    expect(r.warnings.some((w) => w.message.includes("nope/model"))).toBe(true);
+  });
+
+  it("fails on an orphaned external signal", () => {
+    const r = runQuality(baseInput({
+      externalSignals: [{
+        source: "github",
+        signalType: "stars",
+        modelId: "gone/model",
+        value: 12,
+        metadata: {},
+        fetchedAt: NOW.toISOString(),
+        license: "repo-specific",
+        attributionUrl: "https://github.com/gone/model",
+      }],
+    }));
+    expect(r.errors.some((e) => e.check === "external-signal-orphan")).toBe(true);
+  });
+
+  it("fails on an unreviewed extreme context claim", () => {
+    const r = runQuality(baseInput({
+      apiRaw: { openai: { models: { gpt: { limit: { context: 10_000_000 } } } } },
+    }));
+    expect(r.errors.some((e) => e.check === "context-sanity" && e.message.includes("without a sourced review"))).toBe(true);
+  });
+
+  it("accepts an exact reviewed extreme context claim but fails when it changes", () => {
+    const accepted = runQuality(baseInput({
+      apiRaw: { "nano-gpt": { models: { "pokee-isaac": { limit: { context: 10_000_000 } } } } },
+    }));
+    expect(accepted.errors.some((e) => e.check === "context-sanity")).toBe(false);
+
+    const changed = runQuality(baseInput({
+      apiRaw: { "nano-gpt": { models: { "pokee-isaac": { limit: { context: 12_000_000 } } } } },
+    }));
+    expect(changed.errors.some((e) => e.check === "context-sanity" && e.message.includes("review is stale"))).toBe(true);
   });
 });

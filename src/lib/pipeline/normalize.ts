@@ -1,4 +1,5 @@
 import type { CanonicalModel, Cost, Limits, Listing, Modality, Modalities, Provider } from "./types";
+import { reviewedLimits } from "./context-review";
 import { rawApi, rawModels } from "./schema";
 
 type RawEntry = Record<string, unknown>;
@@ -28,9 +29,13 @@ function normModalities(v: unknown): Modalities {
   return { input: pick(m.input), output: pick(m.output) };
 }
 
-function normLimit(v: unknown): Limits {
+function normLimit(v: unknown, providerId = "", modelId = ""): Limits {
   const l = (v ?? {}) as RawEntry;
-  return { context: num(l.context), output: num(l.output), input: num(l.input) };
+  return reviewedLimits(providerId, modelId, {
+    context: num(l.context),
+    output: num(l.output),
+    input: num(l.input),
+  });
 }
 
 function normCost(v: unknown): Cost {
@@ -93,7 +98,7 @@ export function toListing(
     releaseDate: str(entry.release_date),
     lastUpdated: str(entry.last_updated),
     modalities: normModalities(entry.modalities),
-    limit: normLimit(entry.limit),
+    limit: normLimit(entry.limit, providerId, modelId),
     cost: normCost(entry.cost),
   };
 }

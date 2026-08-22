@@ -89,6 +89,26 @@ describe("normalizeApi", () => {
     const partial = toListing("x", "X", "g1", { cost: { input: 0, output: 5 } }, index);
     expect(unlistedPrice(partial.cost)).toBe(false);
   });
+
+  it("suppresses only exact extreme claims rejected by the review registry", () => {
+    const rejected = toListing(
+      "qiniu-ai",
+      "Qiniu",
+      "kling-v2-6",
+      { limit: { context: 99_999_999, output: 99_999_999 } },
+      new Set(),
+    );
+    expect(rejected.limit).toEqual({ context: null, input: null, output: null });
+
+    const changed = toListing(
+      "qiniu-ai",
+      "Qiniu",
+      "kling-v2-6",
+      { limit: { context: 100_000_000, output: 99_999_999 } },
+      new Set(),
+    );
+    expect(changed.limit.context).toBe(100_000_000);
+  });
 });
 
 describe("diffListings", () => {

@@ -3,6 +3,7 @@ import path from "node:path";
 import { getCatalog } from "../src/lib/data";
 import { computeCompositeScore } from "../src/lib/scoring/composite";
 import type { ExternalSignal, ExternalSignalsSnapshot } from "../src/lib/pipeline/external-types";
+import { pruneExternalSignals } from "../src/lib/pipeline/enrichment-hygiene";
 import { fetchHFSignals } from "./sources/huggingface";
 import { fetchGitHubSignals } from "./sources/github";
 
@@ -76,7 +77,12 @@ async function main(): Promise<void> {
   const dropped = freshSignals.length - resolvable.length;
   if (dropped > 0) console.warn(`[sync-external] dropped ${dropped} signals referencing unknown groups`);
 
-  const mergedSignals = mergeSignals(previousSignals, resolvable);
+  const merged = mergeSignals(previousSignals, resolvable);
+  const cleaned = pruneExternalSignals(merged, groupIds);
+  const mergedSignals = cleaned.signals;
+  if (cleaned.removed > 0) {
+    console.warn(`[sync-external] purged ${cleaned.removed} retained signal(s) for groups no longer in the catalog`);
+  }
   console.log(`[sync-external] Merged signals: ${mergedSignals.length}`);
 
   const compositeScores = computeCompositeScore(mergedSignals);

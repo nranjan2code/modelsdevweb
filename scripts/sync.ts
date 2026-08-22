@@ -5,6 +5,7 @@ import { normalizeApi, normalizeModels } from "../src/lib/pipeline/normalize";
 import { runQuality } from "../src/lib/pipeline/quality";
 import type { Event } from "../src/lib/pipeline/types";
 import type { ExternalSignalsSnapshot } from "../src/lib/pipeline/external-types";
+import { pruneExternalSignals } from "../src/lib/pipeline/enrichment-hygiene";
 import { rawApi, rawModels } from "../src/lib/pipeline/schema";
 import { groupListings, groupToFacts } from "../src/lib/data";
 import { appendDay, EMPTY_ARCHIVE, toObservations, type PriceArchive } from "../src/lib/data/archive";
@@ -112,6 +113,13 @@ async function main(): Promise<void> {
   } catch {
     // No external signals file yet — that's OK for first run
   }
+  // Enrichments run later in the workflow. Validate only records that still
+  // belong to the candidate catalog so a legitimate model removal can land;
+  // sync-external then purges those retained records before the final gate.
+  externalSignals = pruneExternalSignals(
+    externalSignals,
+    new Set(candidateGroups.map((group) => group.id)),
+  ).signals;
 
   // Licence facts are refreshed by their own daily job; the gate validates
   // whatever is currently committed so a bad record cannot sit on the site.

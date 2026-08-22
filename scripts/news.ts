@@ -3,6 +3,7 @@ import path from "node:path";
 import { getCatalog } from "../src/lib/data";
 import type { ModelGroup } from "../src/lib/data";
 import type { Event, NewsItem } from "../src/lib/pipeline/types";
+import { sanitizeNewsLinks } from "../src/lib/pipeline/enrichment-hygiene";
 
 const ROOT = path.dirname(import.meta.dirname);
 const NEWS_FILE = path.join(ROOT, "news", "index.json");
@@ -274,11 +275,6 @@ function enforceSourceDiversity(items: NewsItem[], perHostCap = 2): NewsItem[] {
 async function main(): Promise<void> {
   await loadEnvFile();
   const key = process.env.TAVILY_API_KEY;
-  if (!key) {
-    console.warn("[news] TAVILY_API_KEY not set — skipping news fetch");
-    return;
-  }
-
   const force = process.argv.includes("--force");
   interface PrevPayload {
     fetchedAt?: string;
@@ -286,22 +282,38 @@ async function main(): Promise<void> {
     items?: NewsItem[];
   }
   let prevItems: NewsItem[] = [];
+  let previousFetchedAt: string | undefined;
   try {
     const prev = JSON.parse(await readFile(NEWS_FILE, "utf8")) as PrevPayload;
     // --force = clean rebuild: ignore both the interval gate AND stale merges.
     if (!force) prevItems = prev.items ?? [];
-    if (!force && prev.fetchedAt) {
-      const ageH = (Date.now() - new Date(prev.fetchedAt).getTime()) / 3_600_000;
-      if (Number.isFinite(ageH) && ageH < MIN_INTERVAL_HOURS) {
-        console.log(`[news] last fetch ${ageH.toFixed(1)}h ago (< ${MIN_INTERVAL_HOURS}h) — skipping`);
-        return;
-      }
-    }
+    previousFetchedAt = prev.fetchedAt;
   } catch {
     // no previous file — proceed
   }
 
   const catalog = await getCatalog();
+  const groupLabs = new Map(catalog.groups.map((group) => [group.id, group.labId]));
+  const sanitized = sanitizeNewsLinks(prevItems, groupLabs);
+  prevItems = sanitized.items;
+  if (sanitized.removed > 0) {
+    const payload = { fetchedAt: previousFetchedAt ?? new Date().toISOString(), date: today(), items: prevItems };
+    await mkdir(path.dirname(NEWS_FILE), { recursive: true });
+    await writeFile(NEWS_FILE, JSON.stringify(payload));
+    console.warn(`[news] removed ${sanitized.removed} stale model tag(s) before fetch checks`);
+  }
+
+  if (!key) {
+    console.warn("[news] TAVILY_API_KEY not set — news links sanitized; skipping fetch");
+    return;
+  }
+  if (!force && previousFetchedAt) {
+    const ageH = (Date.now() - new Date(previousFetchedAt).getTime()) / 3_600_000;
+    if (Number.isFinite(ageH) && ageH < MIN_INTERVAL_HOURS) {
+      console.log(`[news] last fetch ${ageH.toFixed(1)}h ago (< ${MIN_INTERVAL_HOURS}h) — links sanitized; skipping fetch`);
+      return;
+    }
+  }
   const queries = await buildQueryPlan(catalog.groups);
 
   // Previous items participate in ranking so the feed evolves continuously

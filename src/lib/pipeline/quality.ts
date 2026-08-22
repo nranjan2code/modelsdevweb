@@ -1,5 +1,6 @@
 import type { Event, EventType } from "./types";
 import type { ExternalSignal } from "./external-types";
+import { CONTEXT_REVIEW_THRESHOLD, contextReview } from "./context-review";
 
 export interface QualityIssue {
   check: string;
@@ -26,7 +27,7 @@ export interface QualityInput {
   canonicalIds: Set<string>;
   events: Event[];
   news: NewsFacts[];
-  /** External signals from HF, GitHub, PWC, LMSYS. */
+  /** External signals from Hugging Face and GitHub. */
   externalSignals?: ExternalSignal[];
   /** Open-weight licence/gating facts from Hugging Face model cards. */
   weights?: WeightsFactsLike[];
@@ -398,7 +399,7 @@ function checkNews(i: QualityInput): QualityIssue[] {
   const dupeUrls = [...urls.entries()].filter(([, c]) => c > 1);
   if (dupeUrls.length > 0) out.push({ check: "news-integrity", message: `duplicate news URLs: ${cap(dupeUrls.map(([u]) => u))}` });
   if (malformed.length > 0) out.push({ check: "news-integrity", message: `news items missing title/url/date or with unparseable date: ${cap(malformed)}` });
-  if (deadLinks.length > 0) out.push({ check: "news-integrity", message: `news tagged with model ids that resolve to no catalog group (deep-link chips dead): ${cap([...new Set(deadLinks)])}` });
+  if (deadLinks.length > 0) out.push({ check: "news-links", message: `news tagged with model ids that resolve to no catalog group (deep-link chips dead): ${cap([...new Set(deadLinks)])}` });
   if (newest != null) {
     const ageH = (i.now.getTime() - newest) / 3_600_000;
     if (ageH > NEWS_MAX_AGE_HOURS) out.push({ check: "news-integrity", message: `newest news item is ${Math.round(ageH)}h old (max ${NEWS_MAX_AGE_HOURS}h)`, });
@@ -448,20 +449,25 @@ function checkExternalSignals(i: QualityInput): QualityIssue[] {
   return out;
 }
 
-/** Context claims at or beyond this warrant human review of the upstream spec. */
-export const CONTEXT_REVIEW_THRESHOLD = 10_000_000;
-
-/** Flag implausible context windows so upstream garbage is visible in CI. */
+/** Extreme claims require an exact, sourced decision; new or changed claims fail CI. */
 function checkContextSanity(i: QualityInput): QualityIssue[] {
   const out: QualityIssue[] = [];
   for (const { pid, mid, entry } of rawListings(i.apiRaw)) {
     const limit = entry.limit as { context?: unknown } | undefined;
     const ctx = typeof limit?.context === "number" ? limit.context : null;
     if (ctx != null && ctx >= CONTEXT_REVIEW_THRESHOLD) {
-      out.push({
-        check: "context-sanity",
-        message: `${pid}/${mid} claims ${(ctx / 1_000_000).toFixed(0)}M-token context — verify upstream spec`,
-      });
+      const review = contextReview(pid, mid);
+      if (!review) {
+        out.push({
+          check: "context-sanity",
+          message: `${pid}/${mid} claims ${(ctx / 1_000_000).toFixed(0)}M-token context without a sourced review decision`,
+        });
+      } else if (review.claimedContext !== ctx) {
+        out.push({
+          check: "context-sanity",
+          message: `${pid}/${mid} changed its extreme context claim from ${review.claimedContext} to ${ctx}; review is stale`,
+        });
+      }
     }
   }
   return out;
@@ -485,17 +491,13 @@ export function runQuality(input: QualityInput): QualityResult {
     ...checkWeights(input),
     ...checkContextSanity(input),
   ];
-  // News staleness/dead links degrade UX, upstream drift self-heals next sync,
-  // and context-sanity is upstream's data to fix (we already defend display);
-  // everything else is hard-fail.
-  // A signal pointing at a model we do not list is a resolver miss, not
-  // corruption — it must not discard an otherwise good snapshot.
+  // News freshness, small upstream drift, and stale retained enrichments are
+  // advisory. Broken news links, orphan signals, and unreviewed extreme claims
+  // are hard failures because they can render false or dead facts.
   const soft = new Set([
     "news-integrity",
     "upstream-drift",
     "external-signal-stale",
-    "external-signal-orphan",
-    "context-sanity",
     // A repo we could not resolve this run keeps its last known licence; that
     // is staleness to flag, not a reason to discard a good snapshot.
     "weights-orphan",

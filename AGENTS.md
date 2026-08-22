@@ -80,9 +80,12 @@ surface via `groupReleaseDate` — the "0x/Ox Alpha missing from home" regressio
 fragmentation (case-insensitive merge invariants), lab hygiene (only canonical labs, no
 provider fallbacks like `kilo`/`nano-gpt`), catalog identity (attributed-group count tracks
 upstream; no provider id as a lab), stats integrity, free-model ($0/$0) classification,
-and event referential integrity. Soft warnings: upstream drift within budget, stale/dead-linked
-news, context sanity, and orphaned external signals (a resolver miss must not discard an
-otherwise good snapshot — it self-heals on the next `pnpm sync-external`).
+and event referential integrity. News deep links and external-signal model IDs are also
+hard-fail referential checks; their ingestion scripts remove retained IDs that no longer exist
+before the final gate. Context claims at or above 10M are hard-fail unless the exact
+provider/model/value has a sourced decision in `src/lib/pipeline/context-review.ts`; rejected
+claims are removed during normalization. Soft warnings are limited to upstream drift within
+budget, stale/malformed news, stale external signals, and stale/orphaned weight records.
 
 ## Social accounts are distribution, not data
 
@@ -160,6 +163,9 @@ hourly GH Action (sync.yml)
   signals, so it was "all-time popularity" mislabelled "last 7 days". Do not restore it until
   it ranks on *deltas* (stars/downloads gained in the window) using
   `snapshots/external-history/`.
+- Retained news tags and external signals are sanitized against the current catalog on every
+  enrichment run, including news interval/API-key skips. The final `pnpm gate` runs only after
+  news, weights, and signals have refreshed; orphaned enrichment IDs cannot be committed.
 - `scripts/sync-weights.ts` refreshes `snapshots/latest/weights.json` once a day (licences
   change on the order of months; a pass is ~140 per-repo requests against HF's anonymous
   budget of 500 per 300s). It **merges** rather than replaces, so a repo that fails to
