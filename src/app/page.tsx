@@ -7,6 +7,7 @@ import {
   groupContext,
   groupReleaseDate,
   getTrendingExternalModels,
+  type ModelGroup,
 } from "@/lib/data";
 import { getAllPriceHistory } from "@/lib/data/history";
 import {
@@ -14,14 +15,12 @@ import {
   headToHeads,
   labName,
   labScorecards,
-  leadStory,
   modelOfWeek,
   moversLosers,
   pulseSeries,
   records,
   type HeadToHead,
   type LabScorecard,
-  type LeadStory,
   type Mover,
 } from "@/lib/data/story";
 import { getBenchmarkBoards } from "@/lib/data/benchmarks";
@@ -93,47 +92,140 @@ function Stat({ value, label, href }: { value: string; label: string; href?: str
   );
 }
 
-const LEAD_TONE: Record<LeadStory["kind"], { bar: string; eyebrow: string }> = {
-  cut: { bar: "bg-emerald-500", eyebrow: "text-emerald-700" },
-  hike: { bar: "bg-red-500", eyebrow: "text-red-600" },
-  launch: { bar: "bg-blue-600", eyebrow: "text-blue-700" },
-  context: { bar: "bg-purple-500", eyebrow: "text-purple-700" },
-  sunset: { bar: "bg-red-500", eyebrow: "text-red-600" },
-  quiet: { bar: "bg-black/30", eyebrow: "text-black/50" },
-  baseline: { bar: "bg-black/30", eyebrow: "text-black/50" },
-};
+interface MarketBriefProps {
+  series: ReturnType<typeof pulseSeries>;
+  cut: Mover | null;
+  launch: ModelGroup | null;
+  hot: { group: ModelGroup; priceLabel: string; score: number } | null;
+  moves: number;
+  syncedAgo: string;
+}
 
-function LeadStoryCard({ story }: { story: LeadStory }) {
-  const tone = LEAD_TONE[story.kind];
+/**
+ * The homepage's prime slot: a market-level briefing assembled from the
+ * freshest data views — frontier index, steepest weekly move, newest launch,
+ * momentum leader. Always meaningful regardless of whether a single event
+ * qualifies as "news".
+ */
+function MarketBrief({ series, cut, launch, hot, moves, syncedAgo }: MarketBriefProps) {
+  const hasIndex = series.length >= 2;
+  const first = series[0];
+  const last = series[series.length - 1];
+  const deltaPct = hasIndex ? (last.median - first.median) / first.median : 0;
+  const down = deltaPct <= 0;
+
   return (
     <article className="card relative overflow-hidden p-6 pl-7 sm:p-8 sm:pl-9">
-      <span className={`absolute inset-y-0 left-0 w-2 ${tone.bar}`} aria-hidden="true" />
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_240px]">
-        <div>
-          <p className={`mono-label ${tone.eyebrow}`}>{story.eyebrow}</p>
-          <Link href={story.href} className="group block">
-            <h2 className="mt-2 max-w-3xl text-3xl font-bold leading-[1.12] tracking-tight text-black transition-colors group-hover:text-blue-700 sm:text-4xl">
-              {story.headline}
-            </h2>
-          </Link>
-          <p className="mt-3 max-w-3xl text-base leading-relaxed text-black/60">{story.dek}</p>
-          <div className="mt-5 flex flex-wrap items-center gap-2">
-            {story.meta.map((m) => (
-              <span
-                key={m}
-                className="rounded-full border border-black/15 bg-white px-2.5 py-1 font-mono text-xs tabular-nums text-black/70"
-              >
-                {m}
+      <span className="absolute inset-y-0 left-0 w-2 bg-blue-600" aria-hidden="true" />
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <p className="mono-label text-blue-700">Market briefing · synced {syncedAgo || "recently"} ago</p>
+        <Link href="/changelog" className="text-xs font-medium text-blue-600 underline decoration-wavy underline-offset-4 hover:text-blue-800">
+          full changelog →
+        </Link>
+      </div>
+
+      <div className="mt-5 grid gap-6 lg:grid-cols-[1.3fr_1fr_1fr]">
+        {hasIndex && (
+          <div>
+            <p className="mono-label">Frontier price index</p>
+            <div className="mt-1.5 flex flex-wrap items-end gap-3">
+              <span className="font-mono text-4xl font-bold tabular-nums tracking-tight text-black sm:text-[2.75rem]">
+                {fmtPerM(last.median)}
               </span>
-            ))}
+              <span
+                className={`mb-1 rounded-full border px-2 py-0.5 font-mono text-xs font-semibold tabular-nums ${
+                  down ? "border-emerald-600/30 bg-emerald-50 text-emerald-700" : "border-red-500/30 bg-red-50 text-red-600"
+                }`}
+              >
+                {down ? "▼" : "▲"} {Math.abs(deltaPct * 100).toFixed(1)}%
+              </span>
+            </div>
+            <div className="mt-3 max-w-sm">
+              <Sparkline values={series.map((p) => p.median)} width={320} height={56} />
+            </div>
+            <p className="mt-2 text-xs leading-snug text-black/50">
+              Median blended /M across {last.models} frontier models · since {fmtDate(first.date)}.
+            </p>
           </div>
-          <Link
-            href={story.href}
-            className="mt-5 inline-flex items-center gap-1 text-sm font-semibold text-blue-600 underline decoration-wavy underline-offset-4 transition-colors hover:text-blue-800"
-          >
-            {story.ctaLabel} →
-          </Link>
+        )}
+
+        <div className={hasIndex ? "" : "lg:col-span-2"}>
+          <p className="mono-label !text-purple-600">Steepest move · 7 days</p>
+          {cut ? (
+            <>
+              <Link href={`/m/${cut.id ?? ""}`} className="group mt-1.5 block">
+                <span className="block truncate text-lg font-bold text-black transition-colors group-hover:text-blue-700">
+                  {cut.name}
+                </span>
+              </Link>
+              <div className="mt-1.5 font-mono text-sm tabular-nums text-black/60">
+                {fmtPerM(cut.from)} → <strong className="font-bold text-emerald-700">{fmtPerM(cut.to)}</strong> /M
+              </div>
+              <div className="mt-2 flex items-center gap-2">
+                <span className="rounded-full border border-emerald-600/30 bg-emerald-50 px-2 py-0.5 font-mono text-xs font-bold tabular-nums text-emerald-700">
+                  {(cut.pct * 100).toFixed(0)}%
+                </span>
+                {cut.providerId && <span className="text-xs text-black/45">via {cut.providerId}</span>}
+              </div>
+            </>
+          ) : (
+            <p className="mt-2 text-sm leading-snug text-black/50">
+              No input-price cuts this week — the tape is quiet. Watch the{" "}
+              <Link href="/changelog?type=repriced&days=14" className="underline decoration-wavy underline-offset-2 hover:text-blue-700">
+                repricing feed
+              </Link>
+              .
+            </p>
+          )}
         </div>
+
+        <div>
+          <p className="mono-label !text-emerald-600">Freshest launch</p>
+          {launch ? (
+            <>
+              <Link href={`/m/${launch.id}`} className="group mt-1.5 block">
+                <span className="block truncate text-lg font-bold text-black transition-colors group-hover:text-blue-700">
+                  {launch.name}
+                </span>
+              </Link>
+              <div className="mt-1.5 font-mono text-sm tabular-nums text-black/60">
+                {launch.best ? (
+                  <>
+                    <strong className="font-bold text-black">{fmtPerM(launch.best.input)}</strong> /{" "}
+                    {fmtPerM(launch.best.output)} /M
+                  </>
+                ) : launch.free ? (
+                  <strong className="font-bold text-emerald-700">Free</strong>
+                ) : (
+                  "pricing TBD"
+                )}
+              </div>
+              <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-black/45">
+                {launch.listings.length > 0 && <span>{launch.listings.length} provider{launch.listings.length === 1 ? "" : "s"}</span>}
+                <span>{labName(launch.labId)}</span>
+              </div>
+            </>
+          ) : (
+            <p className="mt-2 text-sm text-black/50">Catalog is stable — no new releases this cycle.</p>
+          )}
+        </div>
+      </div>
+
+      <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-black/10 pt-4 text-xs">
+        <Link href="/changelog" className="inline-flex items-center gap-1.5 font-medium text-black transition-colors hover:text-blue-700">
+          <strong className="font-mono tabular-nums">{moves}</strong> moves tracked
+        </Link>
+        {hot && (
+          <Link href={`/m/${hot.group.id}`} className="inline-flex items-center gap-1.5 text-black/70 transition-colors hover:text-blue-700">
+            <span className="rounded-full border border-emerald-600/30 bg-emerald-50 px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide text-emerald-700">
+              #1 momentum
+            </span>
+            {hot.group.name}
+          </Link>
+        )}
+        <Link href="/trends" className="ml-auto inline-flex items-center gap-1 font-medium text-blue-600 underline decoration-wavy underline-offset-4 hover:text-blue-800">
+          market trends →
+        </Link>
       </div>
     </article>
   );
@@ -352,7 +444,7 @@ function Spotlight({ spot }: { spot: NonNullable<ReturnType<typeof modelOfWeek>>
       </span>
       <p className="mono-label !text-purple-600">Model of the week</p>
       <Link href={`/m/${spot.id}`} className="group block">
-        <h3 className="mt-1.5 font-hand text-3xl font-bold tracking-tight text-black transition-colors group-hover:text-blue-700">
+        <h3 className="mt-1.5 text-2xl font-bold tracking-tight text-black transition-colors group-hover:text-blue-700 sm:text-3xl">
           {spot.name}
         </h3>
       </Link>
@@ -436,21 +528,35 @@ const fmtShort = (iso: string | null): string =>
     ? new Date(`${iso.slice(0, 10)}T00:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" })
     : "—";
 
-function TrendingRow({ score, name, priceLabel }: { score: CompositeScore; name: string; priceLabel: string }) {
-  const sources = Object.keys(score.breakdown)
-    .map((k) => k.split(":")[0])
-    .filter((v, i, a) => a.indexOf(v) === i);
+const SOURCE_LABELS: Record<string, string> = { hf: "HF", github: "GitHub" };
+
+function TrendingRow({ score, rank, name, priceLabel }: { score: CompositeScore; rank: number; name: string; priceLabel: string }) {
+  const sources = [...new Set(Object.keys(score.breakdown).map((k) => k.split(":")[0]))];
   return (
-    <li className="flex items-center gap-2 py-2.5">
-      <span className="w-4 shrink-0 tabular-nums text-black/35">{score.score.toFixed(2)}</span>
+    <li className="flex items-center gap-3 py-2.5">
+      <span className="w-5 shrink-0 tabular-nums text-black/35">{rank}.</span>
       <div className="min-w-0 flex-1">
         <Link href={`/m/${score.groupId}`} className="block truncate font-medium transition-colors hover:text-blue-600">
           {name}
         </Link>
         <span className="mono-label">{priceLabel}</span>
       </div>
-      <span className="shrink-0 rounded-full border border-black/15 bg-white px-1.5 py-0.5 font-mono text-[10px] uppercase text-black/50">
-        {sources.join("+")}
+      <div className="hidden w-24 shrink-0 sm:block" title={`composite ${score.score.toFixed(2)} of 1.00`}>
+        <MiniBar pct={score.score} color="bg-emerald-500" />
+      </div>
+      <span className="w-10 shrink-0 text-right font-mono text-xs font-semibold tabular-nums text-emerald-700">
+        {score.score.toFixed(2)}
+      </span>
+      <span className="flex w-[5.5rem] shrink-0 justify-end gap-1">
+        {sources.map((s) => (
+          <span
+            key={s}
+            title={s === "hf" ? "Hugging Face signals" : "GitHub signals"}
+            className="rounded-full border border-black/15 bg-white px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wide text-black/50"
+          >
+            {SOURCE_LABELS[s] ?? s}
+          </span>
+        ))}
       </span>
     </li>
   );
@@ -483,7 +589,6 @@ export default async function HomePage() {
   const digest = windowDigest(events, 14);
   const modelNameOf = (id: string) => catalog.groupById.get(id)?.name;
 
-  const lead = leadStory(events, catalog.groupById);
   const rawMovers = moversLosers(events, 7);
   const demote = (ms: Mover[]): Mover[] =>
     ms.map((m) => (m.id == null || catalog.groupById.has(m.id) ? m : { ...m, id: null }));
@@ -517,6 +622,16 @@ export default async function HomePage() {
   const buckets = priceBuckets(catalog.groups);
   const bucketMax = Math.max(...buckets.map((b) => b.count), 1);
   const seenFrontier = new Set<string>();
+  const groupByListingKey = new Map(catalog.groups.flatMap((g) => g.listings.map((l) => [l.key, g.id] as const)));
+  const eventHref = (e: Event): string | null => {
+    const target = eventTarget(e);
+    if (target?.startsWith("/m/") && !catalog.groupById.has(target.slice(3))) {
+      return groupByListingKey.get(e.modelKey) ? `/m/${groupByListingKey.get(e.modelKey)}` : "/changelog";
+    }
+    if (target) return target;
+    const viaListing = groupByListingKey.get(e.modelKey);
+    return viaListing ? `/m/${viaListing}` : null;
+  };
 
   const trending = trendingExternal
     .map((t) => {
@@ -563,8 +678,17 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section aria-label="Top story">
-        <LeadStoryCard story={lead} />
+      <section aria-label="Market briefing">
+        <MarketBrief
+          series={pulse}
+          cut={movers.fallers[0] ?? null}
+          launch={fresh[0] ?? null}
+          hot={trending[0]
+            ? { group: trending[0].group, priceLabel: trending[0].priceLabel, score: trending[0].t.score }
+            : null}
+          moves={digest.total}
+          syncedAgo={syncedAgo}
+        />
       </section>
 
       <section className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
@@ -588,11 +712,9 @@ export default async function HomePage() {
               </p>
             ) : (
               <div className="grid gap-4 sm:grid-cols-2">
-                {events.slice(0, 6).map((e) => {
-                  const target = eventTarget(e);
-                  const safe = target?.startsWith("/m/") && !catalog.groupById.has(target.slice(3)) ? "/changelog" : target;
-                  return <EventCard key={e.id} event={e} href={safe} />;
-                })}
+                {events.slice(0, 6).map((e) => (
+                  <EventCard key={e.id} event={e} href={eventHref(e)} />
+                ))}
               </div>
             )}
           </div>
@@ -708,8 +830,8 @@ export default async function HomePage() {
           </p>
           <div className="card p-4">
             <ul className="divide-y divide-black/10 text-sm">
-              {trending.map(({ t, group, priceLabel }) => (
-                <TrendingRow key={t.groupId} score={t} name={group.name} priceLabel={priceLabel} />
+              {trending.map(({ t, group, priceLabel }, i) => (
+                <TrendingRow key={t.groupId} score={t} rank={i + 1} name={group.name} priceLabel={priceLabel} />
               ))}
             </ul>
             <p className="mt-3 font-mono text-[10px] uppercase tracking-wider text-black/35">
