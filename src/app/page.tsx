@@ -75,19 +75,19 @@ function SectionHead({
 function Stat({ value, label, href }: { value: string; label: string; href?: string }) {
   const inner = (
     <>
-      <div className="text-2xl font-bold tabular-nums text-black">{value}</div>
-      <div className="mono-label mt-0.5">{label}</div>
+      <div className="text-xl font-bold tabular-nums text-black">{value}</div>
+      <div className="mono-label mt-0.5 text-[10px]">{label}</div>
     </>
   );
   return href ? (
     <Link
       href={href}
-      className="card-flat lift block px-4 py-3 transition-colors hover:border-blue-600"
+      className="card-flat lift block px-3 py-2 transition-colors hover:border-blue-600"
     >
       {inner}
     </Link>
   ) : (
-    <div className="card-flat px-4 py-3">{inner}</div>
+    <div className="card-flat px-3 py-2">{inner}</div>
   );
 }
 
@@ -380,27 +380,15 @@ function HeadToHeadCard({ h2h }: { h2h: HeadToHead }) {
   );
 }
 
-function weekDigest(events: Event[]) {
-  const cutoff = Date.now() - 7 * 86_400_000;
+function windowDigest(events: Event[], days: number) {
+  const cutoff = Date.now() - days * 86_400_000;
   const recent = events.filter((e) => new Date(`${e.date}T00:00:00Z`).getTime() >= cutoff);
   const count = (t: Event["type"]) => recent.filter((e) => e.type === t).length;
-  let biggest: { name: string; id: string | null; oldV: number; newV: number } | null = null;
-  for (const e of recent) {
-    if (e.type !== "repriced") continue;
-    for (const c of e.changes) {
-      if (c.field === "cost.input" && typeof c.old === "number" && typeof c.new === "number" && c.new < c.old) {
-        if (!biggest || c.old / c.new > biggest.oldV / biggest.newV) {
-          biggest = { name: e.modelName, id: e.canonicalId, oldV: c.old, newV: c.new };
-        }
-      }
-    }
-  }
   return {
     total: recent.length,
     repriced: count("repriced"),
     added: count("model_added"),
     deprecated: count("deprecated"),
-    biggest,
   };
 }
 
@@ -440,7 +428,7 @@ export default async function HomePage() {
     })
     .slice(0, 6);
 
-  const digest = weekDigest(events);
+  const digest = windowDigest(events, 14);
   const modelNameOf = (id: string) => catalog.groupById.get(id)?.name;
 
   const lead = leadStory(events, catalog.groupById);
@@ -476,10 +464,10 @@ export default async function HomePage() {
   const seenFrontier = new Set<string>();
 
   return (
-    <div className="space-y-16">
+    <div className="space-y-12">
       <section className="relative">
         <div className="grid-paper absolute inset-x-0 top-0 -z-10 h-full [mask-image:radial-gradient(ellipse_at_top,black_20%,transparent_70%)]" />
-        <div className="mx-auto max-w-3xl pt-6 text-center sm:pt-10">
+        <div className="mx-auto max-w-3xl pt-4 text-center sm:pt-6">
           <span className="pill mx-auto">
             <span className="relative flex h-2 w-2">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-60" />
@@ -487,31 +475,30 @@ export default async function HomePage() {
             </span>
             Live{syncedAgo ? ` · synced ${syncedAgo}` : ""} · diffed hourly from models.dev
           </span>
-          <h1 className="mt-6 text-4xl font-bold leading-[1.05] tracking-tight text-black sm:text-6xl">
+          <h1 className="mt-4 text-3xl font-bold leading-[1.08] tracking-tight text-black sm:text-5xl">
             Every AI model. Every provider.{" "}
             <span className="wavy wavy-blue">Every change.</span>
           </h1>
-          <p className="mx-auto mt-5 max-w-2xl text-lg font-medium text-black/55">
-            The front page of the AI model market: prices, releases and repricings tracked hourly — with the
-            numbers to prove who is cheapest, newest and fastest-moving.
+          <p className="mx-auto mt-3 max-w-xl text-base font-medium text-black/55">
+            The front page of the AI model market — prices, releases and repricings, tracked hourly.
           </p>
-          <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
             <Link
               href="/browse"
-              className="rounded-md border-2 border-black bg-black px-5 py-2.5 text-sm font-semibold text-white shadow-[4px_4px_0_0_rgba(0,0,0,0.25)] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_0_rgba(0,0,0,0.25)]"
+              className="rounded-md border-2 border-black bg-black px-4 py-2 text-sm font-semibold text-white shadow-[4px_4px_0_0_rgba(0,0,0,0.25)] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_0_rgba(0,0,0,0.25)]"
             >
               Browse models
             </Link>
             <Link
               href="/changelog"
-              className="rounded-md border-2 border-black bg-white px-5 py-2.5 text-sm font-semibold text-black shadow-[4px_4px_0_0_rgba(0,0,0,1)] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_0_rgba(0,0,0,1)]"
+              className="rounded-md border-2 border-black bg-white px-4 py-2 text-sm font-semibold text-black shadow-[4px_4px_0_0_rgba(0,0,0,1)] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_0_rgba(0,0,0,1)]"
             >
               See what changed
             </Link>
           </div>
         </div>
 
-        <div className="mt-12 grid grid-cols-2 gap-3 border-y-2 border-black py-6 sm:grid-cols-3 lg:grid-cols-6">
+        <div className="mt-8 grid grid-cols-3 gap-2 border-y-2 border-black py-4 sm:grid-cols-3 lg:grid-cols-6">
           <Stat value={String(s.models)} label="models" href="/browse" />
           <Stat value={String(s.providers)} label="providers" href="/providers" />
           <Stat value={String(s.listings)} label="listings" />
@@ -601,25 +588,44 @@ export default async function HomePage() {
       </section>
 
       <section>
-        <SectionHead title="Two weeks of moves" href="/digest" label="Weekly recap →" eyebrow="At a glance" />
+        <SectionHead title="Two weeks of moves" href="/digest" label="Weekly recap" eyebrow="At a glance" />
         <HeatStrip cal={cal} />
-        <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-black/55">
-          <span>
-            <strong className="font-mono tabular-nums text-purple-700">{digest.repriced}</strong> repricings
-          </span>
-          <span>
-            <strong className="font-mono tabular-nums text-emerald-700">{digest.added}</strong> launches
-          </span>
-          <span>
-            <strong className="font-mono tabular-nums text-red-600">{digest.deprecated}</strong> sunsets
-          </span>
-          <span className="text-black/40">
-            in the past 7 days —{" "}
-            <Link href="/digest" className="font-medium text-blue-600 underline decoration-wavy underline-offset-4 hover:text-blue-800">
-              read the recap
+        {digest.total === 0 ? (
+          <p className="mt-4 text-sm text-black/45">
+            A quiet fortnight — no changes detected. The hourly sync keeps watching.
+          </p>
+        ) : (
+          <div className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-black/55">
+            {digest.repriced > 0 && (
+              <span className="flex items-center gap-2">
+                <strong className="font-mono tabular-nums text-purple-700">{digest.repriced}</strong> repricings
+              </span>
+            )}
+            {digest.added > 0 && (
+              <>
+                {digest.repriced > 0 && <span className="text-black/25">·</span>}
+                <span className="flex items-center gap-2">
+                  <strong className="font-mono tabular-nums text-emerald-700">{digest.added}</strong> launches
+                </span>
+              </>
+            )}
+            {digest.deprecated > 0 && (
+              <>
+                {(digest.repriced > 0 || digest.added > 0) && <span className="text-black/25">·</span>}
+                <span className="flex items-center gap-2">
+                  <strong className="font-mono tabular-nums text-red-600">{digest.deprecated}</strong> sunsets
+                </span>
+              </>
+            )}
+            <span className="text-black/25">·</span>
+            <Link
+              href="/changelog"
+              className="font-medium text-blue-600 underline decoration-wavy underline-offset-4 transition-colors hover:text-blue-800"
+            >
+              every diff in the changelog
             </Link>
-          </span>
-        </div>
+          </div>
+        )}
       </section>
 
       <section>

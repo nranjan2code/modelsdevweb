@@ -44,9 +44,18 @@ export default function AboutPage() {
           })),
         }}
       />
-      <header className="space-y-2">
+      <header className="space-y-3">
         <p className="mono-label">Methodology</p>
         <h1 className="text-3xl font-bold tracking-tight text-black sm:text-4xl">About &amp; methodology</h1>
+        <p className="text-2xl font-bold leading-snug tracking-tight text-black sm:text-3xl">
+          Every AI model. Every provider.{" "}
+          <span className="wavy wavy-blue">Every change.</span>
+        </p>
+        <p className="max-w-2xl text-base font-medium leading-relaxed text-black/55">
+          Model Pulse is the front page of the AI model market: prices, releases and repricings tracked
+          hourly — with the numbers to prove who is cheapest, newest and fastest-moving. Built on open data,
+          auditable in git, and free for humans and agents alike.
+        </p>
       </header>
 
       <section className="space-y-2">
