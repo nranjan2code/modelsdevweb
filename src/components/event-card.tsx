@@ -1,25 +1,26 @@
 import Link from "next/link";
 import type { Event, EventType } from "@/lib/pipeline/types";
 import { fmtDate, fmtPerM, fmtTokens } from "@/lib/format";
+import { Badge, type Tone } from "@/components/ui";
 
-const TYPE_STYLES: Record<EventType, { label: string; cls: string }> = {
-  model_added: { label: "new model", cls: "bg-emerald-50 text-emerald-700 border-emerald-600/30" },
-  provider_added: { label: "new provider", cls: "bg-teal-50 text-teal-700 border-teal-600/30" },
-  repriced: { label: "repriced", cls: "bg-purple-50 text-purple-700 border-purple-600/30" },
-  deprecated: { label: "deprecated", cls: "bg-red-50 text-red-600 border-red-500/30" },
-  context_changed: { label: "context", cls: "bg-blue-50 text-blue-700 border-blue-600/30" },
-  capability_changed: { label: "capability", cls: "bg-amber-50 text-amber-700 border-amber-600/40" },
-  model_removed: { label: "removed", cls: "bg-black/5 text-black/50 border-black/15" },
-  provider_removed: { label: "provider left", cls: "bg-black/5 text-black/50 border-black/15" },
+/*
+ * Event-type -> tone mapping follows docs/brand.md §3.2: hue encodes kind
+ * (good / costly / notable / informational), never identity.
+ */
+const TYPE_STYLES: Record<EventType, { label: string; tone: Tone }> = {
+  model_added: { label: "new model", tone: "pos" },
+  provider_added: { label: "new provider", tone: "accent" },
+  repriced: { label: "repriced", tone: "special" },
+  deprecated: { label: "deprecated", tone: "neg" },
+  context_changed: { label: "context", tone: "accent" },
+  capability_changed: { label: "capability", tone: "warn" },
+  model_removed: { label: "removed", tone: "muted" },
+  provider_removed: { label: "provider left", tone: "muted" },
 };
 
 export function EventTypeBadge({ type }: { type: EventType }) {
   const s = TYPE_STYLES[type];
-  return (
-    <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold ${s.cls}`}>
-      {s.label}
-    </span>
-  );
+  return <Badge tone={s.tone}>{s.label}</Badge>;
 }
 
 export function changeText(c: Event["changes"][number]): string {
@@ -55,7 +56,7 @@ export function EventCard({ event, href }: { event: Event; href?: string | null 
       <div className="flex items-center gap-2 flex-wrap">
         <EventTypeBadge type={event.type} />
         {target ? (
-          <span className="font-medium text-black group-hover:text-blue-600 transition-colors">
+          <span className="font-medium text-black group-hover:text-accent transition-colors">
             {event.modelName}
           </span>
         ) : (
@@ -78,7 +79,7 @@ export function EventCard({ event, href }: { event: Event; href?: string | null 
   );
   const cls = "card lift group flex flex-col gap-1.5 p-4";
   return target ? (
-    <Link href={target} className={`${cls} transition-colors hover:border-blue-600`}>
+    <Link href={target} className={`${cls} transition-colors hover:border-accent`}>
       {body}
     </Link>
   ) : (

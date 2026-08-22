@@ -82,19 +82,19 @@ export default async function DigestPage() {
   return (
     <div className="space-y-10">
       <header className="space-y-3">
-        <p className="mono-label !text-purple-600">Weekly recap · auto-written from the diff log</p>
+        <p className="mono-label text-special">Weekly recap · auto-written from the diff log</p>
         <h1 className="text-3xl font-bold tracking-tight text-black sm:text-4xl">This week in AI pricing</h1>
-        <p className="max-w-2xl text-sm leading-relaxed text-black/55">{intro}</p>
+        <p className="max-w-2xl text-sm leading-relaxed text-black/60">{intro}</p>
         <div className="flex flex-wrap gap-3 pt-1 text-xs">
           <Link
             href="/changelog"
-            className="rounded-full border border-black bg-white px-3 py-1 font-medium shadow-[2px_2px_0_0_rgba(0,0,0,1)] transition-all hover:translate-x-[1px] hover:translate-y-[1px]"
+            className="rounded-full border border-black bg-white px-3 py-1 font-medium shadow-hard-sm transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none"
           >
             Full changelog
           </Link>
           <a
             href="/rss.xml"
-            className="rounded-full border border-black bg-white px-3 py-1 font-medium shadow-[2px_2px_0_0_rgba(0,0,0,1)] transition-all hover:translate-x-[1px] hover:translate-y-[1px]"
+            className="rounded-full border border-black bg-white px-3 py-1 font-medium shadow-hard-sm transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none"
           >
             Subscribe via RSS
           </a>
@@ -103,13 +103,13 @@ export default async function DigestPage() {
 
       {cut && (
         <section className="card p-6">
-          <p className="mono-label !text-emerald-600">Cut of the week</p>
+          <p className="mono-label text-pos">Cut of the week</p>
           <h2 className="mt-2 text-2xl font-bold tracking-tight text-black">
             {cut.name}: {fmtPerM(cut.oldV)} → {fmtPerM(cut.newV)} /M input{" "}
-            <span className="text-emerald-600">(−{Math.round((1 - cut.newV / cut.oldV) * 100)}%)</span>
+            <span className="text-pos">(−{Math.round((1 - cut.newV / cut.oldV) * 100)}%)</span>
           </h2>
           {cut.id && (
-            <Link href={`/m/${cut.id}`} className="mt-3 inline-block text-sm font-semibold text-blue-600 underline decoration-wavy underline-offset-4 hover:text-blue-800">
+            <Link href={`/m/${cut.id}`} className="mt-3 inline-block text-sm font-semibold text-accent underline decoration-wavy underline-offset-4 hover:text-accent-strong">
               All its provider prices →
             </Link>
           )}
@@ -123,17 +123,17 @@ export default async function DigestPage() {
             <p className="mono-label">▼ cheaper · ▲ pricier</p>
           </div>
           {movers.fallers.length === 0 ? (
-            <p className="py-6 text-center text-sm text-black/40">No input-price cuts this week.</p>
+            <p className="py-6 text-center text-sm text-black/45">No input-price cuts this week.</p>
           ) : (
             <ol className="divide-y divide-black/10 text-sm">
               {movers.fallers.map((m, i) => (
                 <li key={`${m.id}-${i}`} className="flex items-center gap-2 py-2.5">
                   <span className="w-5 shrink-0 tabular-nums text-black/35">{i + 1}.</span>
                   <span className="min-w-0 flex-1 truncate">{m.name}</span>
-                  <span className="font-mono text-xs tabular-nums text-black/50">
+                  <span className="font-mono text-xs tabular-nums text-black/45">
                     {fmtPerM(m.from)}→{fmtPerM(m.to)}
                   </span>
-                  <span className="w-12 shrink-0 text-right font-mono font-bold tabular-nums text-emerald-700">
+                  <span className="w-12 shrink-0 text-right font-mono font-bold tabular-nums text-pos">
                     {(m.pct * 100).toFixed(0)}%
                   </span>
                 </li>
@@ -147,17 +147,17 @@ export default async function DigestPage() {
             <p className="mono-label">▼ cheaper · ▲ pricier</p>
           </div>
           {movers.risers.length === 0 ? (
-            <p className="py-6 text-center text-sm text-black/40">No price hikes this week.</p>
+            <p className="py-6 text-center text-sm text-black/45">No price hikes this week.</p>
           ) : (
             <ol className="divide-y divide-black/10 text-sm">
               {movers.risers.map((m, i) => (
                 <li key={`${m.id}-${i}`} className="flex items-center gap-2 py-2.5">
                   <span className="w-5 shrink-0 tabular-nums text-black/35">{i + 1}.</span>
                   <span className="min-w-0 flex-1 truncate">{m.name}</span>
-                  <span className="font-mono text-xs tabular-nums text-black/50">
+                  <span className="font-mono text-xs tabular-nums text-black/45">
                     {fmtPerM(m.from)}→{fmtPerM(m.to)}
                   </span>
-                  <span className="w-12 shrink-0 text-right font-mono font-bold tabular-nums text-red-600">
+                  <span className="w-12 shrink-0 text-right font-mono font-bold tabular-nums text-neg">
                     +{(m.pct * 100).toFixed(0)}%
                   </span>
                 </li>
@@ -211,20 +211,20 @@ export default async function DigestPage() {
       {(prevSummary || previous.length > 0) && (
         <section className="card-dashed p-6">
           <h2 className="font-hand text-2xl font-bold text-black">Last week’s tape</h2>
-          <p className="mt-2 text-sm text-black/55">{prevSummary}</p>
+          <p className="mt-2 text-sm text-black/60">{prevSummary}</p>
           <ul className="mt-3 space-y-1 text-sm">
             {previous.slice(0, 5).map((e) => (
               <li key={e.id} className="flex items-center gap-2">
                 <EventTypeBadge type={e.type} />
                 <span>{e.modelName}</span>
-                <span className="text-xs text-black/40">{e.date}</span>
+                <span className="text-xs text-black/45">{e.date}</span>
               </li>
             ))}
           </ul>
           {previous.length > 5 && (
             <Link
               href="/changelog?days=30"
-              className="mt-3 inline-block text-sm font-medium text-blue-600 underline decoration-wavy underline-offset-4 hover:text-blue-800"
+              className="mt-3 inline-block text-sm font-medium text-accent underline decoration-wavy underline-offset-4 hover:text-accent-strong"
             >
               +{previous.length - 5} more in the changelog →
             </Link>

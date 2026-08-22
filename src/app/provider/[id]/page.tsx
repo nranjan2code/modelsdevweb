@@ -25,7 +25,7 @@ export default async function ProviderPage({ params }: { params: Promise<{ id: s
   return (
     <div className="space-y-6">
       <nav className="text-sm text-black/45">
-        <Link href="/browse" className="transition-colors hover:text-blue-600">
+        <Link href="/browse" className="transition-colors hover:text-accent">
           Browse
         </Link>
         <span className="mx-1.5">/</span>
@@ -35,7 +35,7 @@ export default async function ProviderPage({ params }: { params: Promise<{ id: s
       <header className="space-y-2">
         <p className="mono-label">Provider</p>
         <h1 className="text-3xl font-bold tracking-tight text-black sm:text-4xl">{provider.name}</h1>
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-black/50">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-black/45">
           <span>{rows.length} listings ({live} live)</span>
           {provider.npm && <span className="font-mono">{provider.npm}</span>}
           {provider.env.length > 0 && (
@@ -48,7 +48,7 @@ export default async function ProviderPage({ params }: { params: Promise<{ id: s
               href={provider.doc}
               target="_blank"
               rel="noreferrer"
-              className="font-medium text-blue-600 underline decoration-wavy underline-offset-4 hover:text-blue-700"
+              className="font-medium text-accent underline decoration-wavy underline-offset-4 hover:text-accent-strong"
             >
               docs ↗
             </a>
@@ -74,7 +74,7 @@ export default async function ProviderPage({ params }: { params: Promise<{ id: s
             {rows.map(({ listing: l, groupId, groupName }) => (
               <tr key={l.key}>
                 <td>
-                  <Link href={`/m/${groupId}`} className="font-medium text-black transition-colors hover:text-blue-600">
+                  <Link href={`/m/${groupId}`} className="font-medium text-black transition-colors hover:text-accent">
                     {groupName}
                   </Link>
                   {l.modelId !== groupId && <span className="ml-2 font-mono text-xs text-black/45">{l.modelId}</span>}

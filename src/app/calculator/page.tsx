@@ -26,7 +26,7 @@ export default async function CalculatorPage() {
       <header className="space-y-2">
         <p className="mono-label">Plan your spend</p>
         <h1 className="text-3xl font-bold tracking-tight text-black sm:text-4xl">Monthly cost calculator</h1>
-        <p className="max-w-2xl text-sm leading-relaxed text-black/55">
+        <p className="max-w-2xl text-sm leading-relaxed text-black/60">
           Set your token mix and see what each model would cost per month at its cheapest listed provider.
         </p>
       </header>

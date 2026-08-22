@@ -4,6 +4,7 @@ import { blendPrice, getCatalog, getEvents, groupContext } from "@/lib/data";
 import { capabilityAdoption, priceBuckets } from "@/lib/data/stats";
 import type { Event } from "@/lib/pipeline/types";
 import { EventTypeBadge } from "@/components/event-card";
+import { Bar } from "@/components/ui";
 
 export const metadata: Metadata = {
   title: "Market trends",
@@ -16,14 +17,6 @@ function median(values: number[]): number | null {
   const s = [...values].sort((a, b) => a - b);
   const mid = Math.floor(s.length / 2);
   return s.length % 2 === 1 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
-}
-
-function Bar({ pct, color = "bg-blue-600" }: { pct: number; color?: string }) {
-  return (
-    <div className="h-2 min-w-6 flex-1 overflow-hidden rounded-sm border border-black bg-white">
-      <div className={`h-full ${color}`} style={{ width: `${Math.max(1, Math.min(100, pct * 100))}%` }} />
-    </div>
-  );
 }
 
 const CTX_TICKS = [
@@ -68,8 +61,8 @@ function Scatter({ points }: { points: { key: string; x: number; y: number; open
           </text>
         </g>
       ))}
-      <line x1={ML} y1={H - MB} x2={W - MR} y2={H - MB} stroke="#0a0a0a" strokeWidth="1.5" />
-      <line x1={ML} y1={MT} x2={ML} y2={H - MB} stroke="#0a0a0a" strokeWidth="1.5" />
+      <line x1={ML} y1={H - MB} x2={W - MR} y2={H - MB} stroke="var(--color-ink)" strokeWidth="1.5" />
+      <line x1={ML} y1={MT} x2={ML} y2={H - MB} stroke="var(--color-ink)" strokeWidth="1.5" />
       <text x={(W + ML) / 2} y={H - 6} textAnchor="middle" fontSize="12" fill="rgba(0,0,0,0.55)">
         best blended price /M (log)
       </text>
@@ -77,7 +70,16 @@ function Scatter({ points }: { points: { key: string; x: number; y: number; open
         context window (log)
       </text>
       {points.map((p) => (
-        <circle key={p.key} cx={sx(p.x)} cy={sy(p.y)} r={4} fill={p.open ? "#10b981" : "#2563eb"} opacity={0.55}>
+        <circle
+          key={p.key}
+          cx={sx(p.x)}
+          cy={sy(p.y)}
+          r={4}
+          fill={p.open ? "var(--color-surface)" : "var(--color-accent)"}
+          stroke="var(--color-accent)"
+          strokeWidth={p.open ? 1.5 : 0}
+          opacity={0.75}
+        >
           <title>{`${p.name} — $${p.x.toFixed(2)}/M blended`}</title>
         </circle>
       ))}
@@ -142,7 +144,7 @@ export default async function TrendsPage() {
       <header className="space-y-2">
         <p className="mono-label">State of the market</p>
         <h1 className="text-3xl font-bold tracking-tight text-black sm:text-4xl">Trends</h1>
-        <p className="max-w-2xl text-sm leading-relaxed text-black/55">
+        <p className="max-w-2xl text-sm leading-relaxed text-black/60">
           Aggregate view of the {groups.length}-model catalog: what capabilities are standard, where prices sit,
           which labs charge what, and what has been moving lately. Computed at build time from the same open
           snapshot as every other page.
@@ -184,11 +186,11 @@ export default async function TrendsPage() {
 
       <section className="space-y-3">
         <h2 className="font-hand text-2xl font-bold tracking-tight text-black">Median prices by lab</h2>
-        <p className="text-sm text-black/50">Labs with ≥ 3 priced models. Bars scaled to the most expensive median.</p>
+        <p className="text-sm text-black/45">Labs with ≥ 3 priced models. Bars scaled to the most expensive median.</p>
         <ul className="card space-y-3 p-4">
           {labStats.map((s) => (
             <li key={s.labId} className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
-              <Link href={`/lab/${s.labId}`} className="w-28 shrink-0 truncate font-medium transition-colors hover:text-blue-600">
+              <Link href={`/lab/${s.labId}`} className="w-28 shrink-0 truncate font-medium transition-colors hover:text-accent">
                 {s.labId}
               </Link>
               <div className="flex min-w-48 flex-1 items-center gap-2">
@@ -198,12 +200,12 @@ export default async function TrendsPage() {
                 </span>
               </div>
               <div className="flex min-w-48 flex-1 items-center gap-2">
-                <Bar pct={(s.medOut ?? 0) / medMax} color="bg-purple-500" />
+                <Bar pct={(s.medOut ?? 0) / medMax} fill="bg-special-bright" />
                 <span className="shrink-0 font-mono text-xs tabular-nums text-black/70">
                   out {s.medOut != null ? `$${s.medOut.toFixed(2)}` : "—"}
                 </span>
               </div>
-              <span className="w-14 shrink-0 text-right font-mono text-xs tabular-nums text-black/40">{s.count} mod.</span>
+              <span className="w-14 shrink-0 text-right font-mono text-xs tabular-nums text-black/45">{s.count} mod.</span>
             </li>
           ))}
         </ul>
@@ -211,8 +213,8 @@ export default async function TrendsPage() {
 
       <section className="space-y-3">
         <h2 className="font-hand text-2xl font-bold tracking-tight text-black">Context vs price</h2>
-        <p className="text-sm text-black/50">
-          Each dot is one priced model with a known context window. Green dots are open-weights models — the
+        <p className="text-sm text-black/45">
+          Each dot is one priced model with a known context window. Hollow dots are open-weights models — the
           frontier of cheap-and-large lives mostly on that side.
         </p>
         <div className="card p-4">
@@ -230,7 +232,7 @@ export default async function TrendsPage() {
               types.map(([type, count]) => (
                 <li key={type} className="flex items-center gap-3 text-sm">
                   <EventTypeBadge type={type as Event["type"]} />
-                  <Bar pct={count / typeMax} color="bg-black/60" />
+                  <Bar pct={count / typeMax} fill="bg-black/45" />
                   <span className="w-8 shrink-0 text-right font-mono tabular-nums text-black/70">{count}</span>
                 </li>
               ))
@@ -246,13 +248,13 @@ export default async function TrendsPage() {
               hotModels.map((m) => (
                 <li key={m.id ?? m.name} className="flex items-center justify-between gap-2 px-4 py-2.5">
                   {m.id ? (
-                    <Link href={`/m/${m.id}`} className="truncate font-medium transition-colors hover:text-blue-600">
+                    <Link href={`/m/${m.id}`} className="truncate font-medium transition-colors hover:text-accent">
                       {m.name}
                     </Link>
                   ) : (
                     <span className="truncate">{m.name}</span>
                   )}
-                  <span className="shrink-0 font-mono text-xs tabular-nums text-purple-700">{m.count}×</span>
+                  <span className="shrink-0 font-mono text-xs tabular-nums text-special">{m.count}×</span>
                 </li>
               ))
             )}

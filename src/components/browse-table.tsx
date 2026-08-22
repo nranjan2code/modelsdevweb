@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useRef, useState } from "react";
 import { fmtPerM, fmtTokens, fmtDate } from "@/lib/format";
 import { toggleCompare, useCompareSelection } from "@/lib/compare";
+import { Badge } from "@/components/ui";
 
 export interface BrowseRow {
   id: string;
@@ -181,8 +182,8 @@ export function BrowseTable({ rows }: { rows: BrowseRow[] }) {
               aria-pressed={caps.has(cap)}
               className={`rounded-full border px-2.5 py-1 text-xs font-medium transition-all ${
                 caps.has(cap)
-                  ? "border-black bg-black text-white shadow-[2px_2px_0_0_rgba(0,0,0,0.3)]"
-                  : "border-black/15 bg-white text-black/55 hover:border-black hover:text-black"
+                  ? "border-black bg-black text-white shadow-hard-sm"
+                  : "border-black/15 bg-white text-black/60 hover:border-black hover:text-black"
               }`}
             >
               {label}
@@ -198,7 +199,7 @@ export function BrowseTable({ rows }: { rows: BrowseRow[] }) {
         <div className="sticky bottom-4 z-30 flex justify-center">
           <Link
             href="/compare"
-            className="rounded-full border-2 border-black bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-[3px_3px_0_0_rgba(0,0,0,1)] transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_rgba(0,0,0,1)]"
+            className="rounded-full border-2 border-black bg-accent px-4 py-2 text-sm font-semibold text-white shadow-hard-sm transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none"
           >
             Compare {inCompare.length} models →
           </Link>
@@ -227,34 +228,25 @@ export function BrowseTable({ rows }: { rows: BrowseRow[] }) {
             {paged.map((r) => (
               <tr key={r.id}>
                 <td>
-                  <Link href={`/m/${r.id}`} className="font-medium text-black transition-colors hover:text-blue-600">
+                  <Link href={`/m/${r.id}`} className="font-medium text-black transition-colors hover:text-accent">
                     {r.name}
                   </Link>
                   <span className="ml-2 text-xs text-black/45">{r.lab}</span>
                   {r.flags.length > 0 && (
                     <span className="ml-2 inline-flex gap-1 align-middle">
                       {r.flags.map((f) => (
-                        <span
-                          key={f}
-                          className={
-                            f === "beta"
-                              ? "rounded-full border border-amber-600/40 bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700"
-                              : f === "alpha"
-                                ? "rounded-full border border-blue-600/30 bg-blue-50 px-1.5 py-0.5 text-[10px] font-semibold text-blue-700"
-                                : "rounded-full border border-purple-600/30 bg-purple-50 px-1.5 py-0.5 text-[10px] font-semibold text-purple-700"
-                          }
-                        >
+                        <Badge key={f} tone={f === "beta" ? "warn" : f === "alpha" ? "accent" : "special"}>
                           {f}
-                        </span>
+                        </Badge>
                       ))}
                     </span>
                   )}
                 </td>
                 <td className="text-right font-mono tabular-nums">
-                  {r.input != null ? fmtPerM(r.input) : r.free ? <span className="font-semibold text-emerald-700">Free</span> : "—"}
+                  {r.input != null ? fmtPerM(r.input) : r.free ? <span className="font-semibold text-pos">Free</span> : "—"}
                 </td>
                 <td className="text-right font-mono tabular-nums">
-                  {r.output != null ? fmtPerM(r.output) : r.free ? <span className="font-semibold text-emerald-700">Free</span> : "—"}
+                  {r.output != null ? fmtPerM(r.output) : r.free ? <span className="font-semibold text-pos">Free</span> : "—"}
                 </td>
                 <td className="text-right font-mono tabular-nums">{fmtTokens(r.ctx)}</td>
                 <td>
@@ -273,10 +265,10 @@ export function BrowseTable({ rows }: { rows: BrowseRow[] }) {
                         title={
                           { R: "reasoning", T: "tool call", S: "structured output", V: "vision/attachment", A: "audio in/out" }[ch]
                         }
-                        className={`inline-flex size-5 items-center justify-center rounded border text-[11px] font-semibold ${
+                        className={`inline-flex size-5 items-center justify-center rounded border text-xs font-semibold ${
                           on
-                            ? "border-emerald-600/30 bg-emerald-50 text-emerald-700"
-                            : "border-black/10 bg-black/[0.03] text-black/25"
+                            ? "border-pos/30 bg-pos-soft text-pos"
+                            : "border-black/10 bg-black/5 text-black/35"
                         }`}
                       >
                         {ch}
@@ -286,19 +278,17 @@ export function BrowseTable({ rows }: { rows: BrowseRow[] }) {
                 </td>
                 <td className="text-xs">
                   {r.open ? (
-                    <span className="rounded-full border border-emerald-600/30 bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
-                      open
-                    </span>
+                    <Badge tone="pos">open</Badge>
                   ) : (
-                    <span className="rounded-full border border-black/10 bg-black/[0.03] px-2 py-0.5 text-[11px] text-black/40">
+                    <Badge tone="muted" bold={false} className="font-medium">
                       closed
-                    </span>
+                    </Badge>
                   )}
                 </td>
                 <td className="text-right font-mono tabular-nums">
-                  {r.swe != null ? <span className="font-semibold">{r.swe.toFixed(1)}</span> : <span className="text-black/30">—</span>}
+                  {r.swe != null ? <span className="font-semibold">{r.swe.toFixed(1)}</span> : <span className="text-black/35">—</span>}
                 </td>
-                <td className="text-right tabular-nums text-black/55">{r.providers}</td>
+                <td className="text-right tabular-nums text-black/60">{r.providers}</td>
                 <td className="whitespace-nowrap text-xs text-black/45">{fmtDate(r.released)}</td>
                 <td>
                   <button
@@ -307,8 +297,8 @@ export function BrowseTable({ rows }: { rows: BrowseRow[] }) {
                     title={inCompare.includes(r.id) ? "Remove from comparison" : "Add to comparison"}
                     className={`inline-flex size-6 items-center justify-center rounded border text-xs font-bold transition-all ${
                       inCompare.includes(r.id)
-                        ? "border-blue-600 bg-blue-600 text-white"
-                        : "border-black/20 bg-white text-black/40 hover:border-black hover:text-black"
+                        ? "border-accent bg-accent text-white"
+                        : "border-black/15 bg-white text-black/45 hover:border-black hover:text-black"
                     }`}
                   >
                     {inCompare.includes(r.id) ? "✓" : "+"}
@@ -332,7 +322,7 @@ export function BrowseTable({ rows }: { rows: BrowseRow[] }) {
           <button
             onClick={() => goTo(current - 1)}
             disabled={current === 1}
-            className="rounded-md border-2 border-black bg-white px-3 py-1.5 font-medium shadow-[2px_2px_0_0_rgba(0,0,0,1)] transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0_0_rgba(0,0,0,1)] disabled:opacity-40 disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-[2px_2px_0_0_rgba(0,0,0,1)]"
+            className="rounded-md border-2 border-black bg-white px-3 py-1.5 font-medium shadow-hard-sm transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none disabled:opacity-40 disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-hard-sm"
           >
             ← Prev
           </button>
@@ -348,8 +338,8 @@ export function BrowseTable({ rows }: { rows: BrowseRow[] }) {
                 aria-current={p === current ? "page" : undefined}
                 className={`min-w-8 rounded-md border-2 px-2 py-1.5 tabular-nums transition-all ${
                   p === current
-                    ? "border-black bg-black font-semibold text-white shadow-[2px_2px_0_0_rgba(0,0,0,0.3)]"
-                    : "border-black bg-white font-medium shadow-[2px_2px_0_0_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0_0_rgba(0,0,0,1)]"
+                    ? "border-black bg-black font-semibold text-white shadow-hard-sm"
+                    : "border-black bg-white font-medium shadow-hard-sm hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none"
                 }`}
               >
                 {p}
@@ -359,7 +349,7 @@ export function BrowseTable({ rows }: { rows: BrowseRow[] }) {
           <button
             onClick={() => goTo(current + 1)}
             disabled={current === totalPages}
-            className="rounded-md border-2 border-black bg-white px-3 py-1.5 font-medium shadow-[2px_2px_0_0_rgba(0,0,0,1)] transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0_0_rgba(0,0,0,1)] disabled:opacity-40 disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-[2px_2px_0_0_rgba(0,0,0,1)]"
+            className="rounded-md border-2 border-black bg-white px-3 py-1.5 font-medium shadow-hard-sm transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none disabled:opacity-40 disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-hard-sm"
           >
             Next →
           </button>

@@ -3,6 +3,7 @@
 import { useMemo, useState, useSyncExternalStore } from "react";
 import type { Event, EventType } from "@/lib/pipeline/types";
 import { EventCard } from "@/components/event-card";
+import { EmptyState } from "@/components/ui";
 
 const TYPES: { value: EventType | "all"; label: string }[] = [
   { value: "all", label: "All" },
@@ -139,8 +140,8 @@ export function ChangelogList({ events }: { events: Event[] }) {
               aria-pressed={type === t.value}
               className={`rounded-full border px-2.5 py-1 text-xs font-medium transition-all ${
                 type === t.value
-                  ? "border-black bg-black text-white shadow-[2px_2px_0_0_rgba(0,0,0,0.3)]"
-                  : "border-black/15 bg-white text-black/55 hover:border-black hover:text-black"
+                  ? "border-black bg-black text-white shadow-hard-sm"
+                  : "border-black/15 bg-white text-black/60 hover:border-black hover:text-black"
               }`}
             >
               {t.label}
@@ -155,8 +156,8 @@ export function ChangelogList({ events }: { events: Event[] }) {
               aria-pressed={days === w.value}
               className={`rounded-full border px-2.5 py-1 text-xs font-medium transition-all ${
                 days === w.value
-                  ? "border-blue-600 bg-blue-600 text-white shadow-[2px_2px_0_0_rgba(0,0,0,0.3)]"
-                  : "border-black/15 bg-white text-black/55 hover:border-black hover:text-black"
+                  ? "border-black bg-black text-white shadow-hard-sm"
+                  : "border-black/15 bg-white text-black/60 hover:border-black hover:text-black"
               }`}
             >
               {w.label}
@@ -167,14 +168,14 @@ export function ChangelogList({ events }: { events: Event[] }) {
       </div>
 
       {isFiltered && (
-        <div className="flex items-center gap-2 rounded-md border border-blue-600/25 bg-blue-50 px-3 py-1.5 text-xs text-blue-800">
+        <div className="flex items-center gap-2 rounded-md border border-accent/25 bg-accent-soft px-3 py-1.5 text-xs text-accent-strong">
           <span>
             Filtered view — {TYPES.find((t) => t.value === type)?.label.toLowerCase()}
             {days ? ` · last ${days} days` : ""}
           </span>
           <button
             onClick={() => setFilters(DEFAULT_FILTERS)}
-            className="ml-auto rounded border border-blue-600/40 px-1.5 py-0.5 font-semibold transition-colors hover:border-blue-600 hover:bg-white"
+            className="ml-auto rounded border border-accent/40 px-1.5 py-0.5 font-semibold transition-colors hover:border-accent hover:bg-white"
           >
             clear ×
           </button>
@@ -182,16 +183,16 @@ export function ChangelogList({ events }: { events: Event[] }) {
       )}
 
       {grouped.length === 0 ? (
-        <p className="card-dashed p-6 text-sm text-black/50">
+        <EmptyState>
           {isFiltered || q
             ? "No events match this filter."
             : "No events yet. The first sync captured a baseline; diffs appear here as models.dev data changes."}
-        </p>
+        </EmptyState>
       ) : (
         <div className="space-y-8">
           {grouped.map((group) => (
             <div key={group.date} className="space-y-3">
-              <h2 className="sticky top-16 z-10 -rotate-1 bg-amber-100 px-2 py-0.5 font-hand text-xl font-bold text-black shadow-[1px_1px_0_0_rgba(0,0,0,1)] w-fit">
+              <h2 className="sticky top-16 z-10 -rotate-1 bg-warn-fill px-2 py-0.5 font-hand text-xl font-bold text-black shadow-hard-sm w-fit">
                 {group.date}
               </h2>
               {group.events.map((e) => (

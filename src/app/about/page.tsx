@@ -49,9 +49,9 @@ export default function AboutPage() {
         <h1 className="text-3xl font-bold tracking-tight text-black sm:text-4xl">About &amp; methodology</h1>
         <p className="text-2xl font-bold leading-snug tracking-tight text-black sm:text-3xl">
           Every AI model. Every provider.{" "}
-          <span className="wavy wavy-blue">Every change.</span>
+          <span className="wavy wavy-accent">Every change.</span>
         </p>
-        <p className="max-w-2xl text-base font-medium leading-relaxed text-black/55">
+        <p className="max-w-2xl text-base font-medium leading-relaxed text-black/60">
           Model Pulse is the front page of the AI model market: prices, releases and repricings tracked
           hourly — with the numbers to prove who is cheapest, newest and fastest-moving. Built on open data,
           auditable in git, and free for humans and agents alike.
@@ -64,14 +64,14 @@ export default function AboutPage() {
           All model specifications, capabilities and prices come from{" "}
           <a
             href="https://models.dev"
-            className="font-medium text-blue-600 underline decoration-wavy underline-offset-4 hover:text-blue-700"
+            className="font-medium text-accent underline decoration-wavy underline-offset-4 hover:text-accent-strong"
           >
             models.dev
           </a>
           , an open-source, community-maintained database of AI models. An hourly job fetches
-          <code className="mx-1 rounded-md border border-black/15 bg-black/[0.04] px-1.5 py-0.5 font-mono text-xs">api.json</code>
+          <code className="mx-1 rounded-md border border-black/15 bg-black/5 px-1.5 py-0.5 font-mono text-xs">api.json</code>
           and
-          <code className="mx-1 rounded-md border border-black/15 bg-black/[0.04] px-1.5 py-0.5 font-mono text-xs">models.json</code>,
+          <code className="mx-1 rounded-md border border-black/15 bg-black/5 px-1.5 py-0.5 font-mono text-xs">models.json</code>,
           validates them, and diffs the result against the previous snapshot.
         </p>
       </section>
@@ -106,7 +106,7 @@ export default function AboutPage() {
           Every view has a JSON twin — see{" "}
           <a
             href="/llms.txt"
-            className="font-medium text-blue-600 underline decoration-wavy underline-offset-4 hover:text-blue-700"
+            className="font-medium text-accent underline decoration-wavy underline-offset-4 hover:text-accent-strong"
           >
             /llms.txt
           </a>{" "}
@@ -119,10 +119,10 @@ export default function AboutPage() {
         <div className="divide-y divide-black/10 rounded-lg border-2 border-black bg-white">
           {FAQ.map((f) => (
             <details key={f.q} className="group px-4 py-3">
-              <summary className="cursor-pointer list-none font-medium text-black marker:hidden transition-colors hover:text-blue-600">
+              <summary className="cursor-pointer list-none font-medium text-black marker:hidden transition-colors hover:text-accent">
                 {f.q}
               </summary>
-              <p className="mt-2 text-black/65">{f.a}</p>
+              <p className="mt-2 text-black/60">{f.a}</p>
             </details>
           ))}
         </div>
@@ -137,7 +137,7 @@ export default function AboutPage() {
               href="https://models.dev"
               target="_blank"
               rel="noreferrer"
-              className="font-medium text-blue-600 underline decoration-wavy underline-offset-4 hover:text-blue-700"
+              className="font-medium text-accent underline decoration-wavy underline-offset-4 hover:text-accent-strong"
             >
               models.dev
             </a>{" "}
@@ -146,7 +146,7 @@ export default function AboutPage() {
               href="https://github.com/anomalyco/models.dev"
               target="_blank"
               rel="noreferrer"
-              className="font-medium text-blue-600 underline decoration-wavy underline-offset-4 hover:text-blue-700"
+              className="font-medium text-accent underline decoration-wavy underline-offset-4 hover:text-accent-strong"
             >
               MIT-licensed open source
             </a>
@@ -156,19 +156,19 @@ export default function AboutPage() {
             <b className="text-black">Benchmark scores</b> — scores are factual results as publicly reported by
             labs; each model page and leaderboard links to the original report, and well-known benchmarks link
             to their official sites (e.g.{" "}
-            <a href="https://www.swebench.com" target="_blank" rel="noreferrer" className="font-medium text-blue-600 hover:text-blue-700">
+            <a href="https://www.swebench.com" target="_blank" rel="noreferrer" className="font-medium text-accent hover:text-accent-strong">
               SWE-Bench
             </a>
             ,{" "}
-            <a href="https://github.com/laude-institute/terminal-bench" target="_blank" rel="noreferrer" className="font-medium text-blue-600 hover:text-blue-700">
+            <a href="https://github.com/laude-institute/terminal-bench" target="_blank" rel="noreferrer" className="font-medium text-accent hover:text-accent-strong">
               Terminal-Bench
             </a>
             ,{" "}
-            <a href="https://arcprize.org" target="_blank" rel="noreferrer" className="font-medium text-blue-600 hover:text-blue-700">
+            <a href="https://arcprize.org" target="_blank" rel="noreferrer" className="font-medium text-accent hover:text-accent-strong">
               ARC Prize
             </a>
             ,{" "}
-            <a href="https://artificialanalysis.ai" target="_blank" rel="noreferrer" className="font-medium text-blue-600 hover:text-blue-700">
+            <a href="https://artificialanalysis.ai" target="_blank" rel="noreferrer" className="font-medium text-accent hover:text-accent-strong">
               Artificial Analysis
             </a>
             ). Benchmark names are trademarks of their respective maintainers; Model Pulse is not affiliated
@@ -189,7 +189,7 @@ export default function AboutPage() {
               href="https://github.com/nranjan2code/modelsdevweb/blob/main/LICENSE"
               target="_blank"
               rel="noreferrer"
-              className="font-medium text-blue-600 underline decoration-wavy underline-offset-4 hover:text-blue-700"
+              className="font-medium text-accent underline decoration-wavy underline-offset-4 hover:text-accent-strong"
             >
               MIT licensed
             </a>

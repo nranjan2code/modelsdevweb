@@ -27,6 +27,12 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      - name: Style gate (brand tokens)
+        run: pnpm check:style
+
+      - name: Lint
+        run: pnpm lint
+
       - run: pnpm test
 
       - run: pnpm sync

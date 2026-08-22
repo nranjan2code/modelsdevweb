@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getCatalog, getNews } from "@/lib/data";
 import { fmtAgo } from "@/lib/format";
+import { Badge, EmptyState } from "@/components/ui";
 
 export const metadata: Metadata = {
   title: "Model news",
@@ -16,23 +17,21 @@ export default async function NewsPage() {
       <header className="space-y-2">
         <p className="mono-label">Daily briefing</p>
         <h1 className="text-3xl font-bold tracking-tight text-black sm:text-4xl">Model news</h1>
-        <p className="max-w-2xl text-sm leading-relaxed text-black/55">
+        <p className="max-w-2xl text-sm leading-relaxed text-black/60">
           Daily headlines around the freshest and most-listed models in the catalog, fetched via Tavily.
           Also available as{" "}
-          <a href="/rss.xml" className="font-medium text-blue-600 underline decoration-wavy underline-offset-4 hover:text-blue-700">
+          <a href="/rss.xml" className="font-medium text-accent underline decoration-wavy underline-offset-4 hover:text-accent-strong">
             RSS
           </a>{" "}
           or{" "}
-          <a href="/api/news.json" className="font-medium text-blue-600 underline decoration-wavy underline-offset-4 hover:text-blue-700">
+          <a href="/api/news.json" className="font-medium text-accent underline decoration-wavy underline-offset-4 hover:text-accent-strong">
             JSON
           </a>
           .
         </p>
       </header>
       {news.length === 0 ? (
-        <p className="card-dashed p-6 text-sm text-black/50">
-          No news fetched yet — the daily Tavily job will populate this after its next run.
-        </p>
+        <EmptyState>No news fetched yet — the daily Tavily job will populate this after its next run.</EmptyState>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
           {news.map((n) => {
@@ -43,11 +42,11 @@ export default async function NewsPage() {
                   href={n.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-medium text-black transition-colors hover:text-blue-600"
+                  className="font-medium text-black transition-colors hover:text-accent"
                 >
                   {n.title}
                 </a>
-                <p className="line-clamp-2 text-xs leading-relaxed text-black/55">{n.snippet}</p>
+                <p className="line-clamp-2 text-xs leading-relaxed text-black/60">{n.snippet}</p>
                 <div className="flex items-center gap-1.5 text-xs text-black/45">
                   {n.favicon && (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -58,11 +57,8 @@ export default async function NewsPage() {
                   {modelId && (
                     <>
                       <span>·</span>
-                      <Link
-                        href={`/m/${modelId}`}
-                        className="shrink-0 rounded-full border border-black/15 bg-blue-50 px-2 py-0.5 text-[11px] font-medium text-blue-700 transition-colors hover:border-blue-600"
-                      >
-                        {catalog.groupById.get(modelId)?.name ?? modelId}
+                      <Link href={`/m/${modelId}`} className="transition-colors hover:opacity-80">
+                        <Badge tone="accent">{catalog.groupById.get(modelId)?.name ?? modelId}</Badge>
                       </Link>
                     </>
                   )}

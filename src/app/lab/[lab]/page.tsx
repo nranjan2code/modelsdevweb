@@ -24,7 +24,7 @@ export default async function LabPage({ params }: { params: Promise<{ lab: strin
   return (
     <div className="space-y-6">
       <nav className="text-sm text-black/45">
-        <Link href="/browse" className="transition-colors hover:text-blue-600">
+        <Link href="/browse" className="transition-colors hover:text-accent">
           Browse
         </Link>
         <span className="mx-1.5">/</span>
@@ -33,11 +33,11 @@ export default async function LabPage({ params }: { params: Promise<{ lab: strin
       <header className="space-y-2">
         <p className="mono-label">Lab</p>
         <h1 className="text-3xl font-bold tracking-tight text-black sm:text-4xl">{lab}</h1>
-        <p className="max-w-2xl text-sm leading-relaxed text-black/55">
+        <p className="max-w-2xl text-sm leading-relaxed text-black/60">
           {groups.length} canonical models tracked ·{" "}
           <a
             href={`/feeds/${lab}/rss.xml`}
-            className="font-medium text-blue-600 underline decoration-wavy underline-offset-4 hover:text-blue-700"
+            className="font-medium text-accent underline decoration-wavy underline-offset-4 hover:text-accent-strong"
           >
             RSS feed for this lab
           </a>
@@ -62,14 +62,14 @@ export default async function LabPage({ params }: { params: Promise<{ lab: strin
               .map((g) => (
                 <tr key={g.id}>
                   <td>
-                    <Link href={`/m/${g.id}`} className="font-medium text-black transition-colors hover:text-blue-600">
+                    <Link href={`/m/${g.id}`} className="font-medium text-black transition-colors hover:text-accent">
                       {g.name}
                     </Link>
                   </td>
                   <td className="text-right font-mono tabular-nums">{fmtPerM(g.best?.input ?? null)}</td>
                   <td className="text-right font-mono tabular-nums">{fmtPerM(g.best?.output ?? null)}</td>
                   <td className="text-right font-mono tabular-nums">{fmtTokens(groupContext(g))}</td>
-                  <td className="text-right tabular-nums text-black/55">{g.listings.length}</td>
+                  <td className="text-right tabular-nums text-black/60">{g.listings.length}</td>
                   <td className="whitespace-nowrap text-xs text-black/45">{fmtDate(groupReleaseDate(g))}</td>
                 </tr>
               ))}

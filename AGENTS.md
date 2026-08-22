@@ -9,6 +9,7 @@ Production: https://modelsdevweb.vercel.app
 pnpm lint          # eslint
 npx tsc --noEmit   # typecheck (no dedicated script)
 pnpm test          # vitest
+pnpm check:style   # brand/style token gate (docs/brand.md §9) — fails CI on raw hexes, palette classes, soft shadows, !important colors
 pnpm build         # pnpm og + pnpm badges + next build (static export) → out/
 pnpm sync          # fetch models.dev, run quality gates, diff, write snapshots/ + events/ (gates fail → nothing written, exit 1)
 pnpm sync-external # fetch HF/GitHub popularity signals → snapshots/latest/external-signals.json (uses GITHUB_TOKEN if set)
@@ -64,6 +65,23 @@ hourly GH Action (sync.yml)
   others fall back to `/og/site.png`. Absolute URLs come from `NEXT_PUBLIC_SITE_URL`.
 - `scripts/badges.ts` renders shields-style SVG price badges into `public/badge/` during
   `pnpm build`; gitignored. Model pages embed them; `/badge/<id>.svg` is public.
+
+## Brand, voice & design tokens
+
+`docs/brand.md` (visual system) and `docs/voice.md` (copy rules) are binding specs.
+
+- All colors are semantic tokens defined in `@theme` in `src/app/globals.css`
+  (`ink`, `paper`, `surface`, `accent`, `pos`, `neg`, `warn`, `special` + `-soft` tints
+  and `*-bright` fills). Never use Tailwind palette classes (`text-blue-600`) or raw
+  hexes in TSX — `pnpm check:style` fails on both.
+- Hue encodes *kind*, fixed site-wide (docs/brand.md §3.2): `pos` = good for the buyer
+  (cuts ▼, launches, Free), `neg` = costly/gone (hikes ▲, deprecations),
+  `special` = repricing machinery, `warn` = attention-neutral, `accent` = links/info.
+- Shared primitives live in `src/components/ui.tsx`: `<Badge tone>`, `<DeltaChip>`,
+  `<SectionHead>`, `<Bar>`, `<EmptyState>` — use them instead of hand-rolling chips,
+  headings, meters or empty states.
+- Money values render ink by default; color is for deltas/winners only.
+- Ink alpha text scale is `/35 · /45 · /60 · /70`; line steps `/5 · /10 · /15`.
 
 ## Pages & client state
 

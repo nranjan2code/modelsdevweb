@@ -17,11 +17,11 @@ export default async function BenchmarksPage() {
       <header className="space-y-2">
         <p className="mono-label">Leaderboards</p>
         <h1 className="text-3xl font-bold tracking-tight text-black sm:text-4xl">Benchmark leaderboards</h1>
-        <p className="max-w-2xl text-sm leading-relaxed text-black/55">
+        <p className="max-w-2xl text-sm leading-relaxed text-black/60">
           {boards.length} benchmarks across {boards.reduce((n, b) => n + b.entries.length, 0)} scored entries —
           each leaderboard pairs scores with current best prices and links back to the official benchmark.
           Also available as{" "}
-          <a href="/api/benchmarks.json" className="font-medium text-blue-600 underline decoration-wavy underline-offset-4 hover:text-blue-700">
+          <a href="/api/benchmarks.json" className="font-medium text-accent underline decoration-wavy underline-offset-4 hover:text-accent-strong">
             JSON
           </a>
           .
@@ -43,7 +43,7 @@ export default async function BenchmarksPage() {
                     target="_blank"
                     rel="noreferrer"
                     title={`Official ${b.name} benchmark`}
-                    className="relative z-20 shrink-0 text-xs font-semibold text-blue-600 transition-colors hover:text-blue-700"
+                    className="relative z-20 shrink-0 text-xs font-semibold text-accent transition-colors hover:text-accent-strong"
                   >
                     official ↗
                   </a>
@@ -51,9 +51,9 @@ export default async function BenchmarksPage() {
               </div>
               <div className="mt-1 flex items-baseline justify-between text-xs text-black/45">
                 <span>{b.entries.length} models scored</span>
-                <span className="font-semibold text-blue-600">view →</span>
+                <span className="font-semibold text-accent">view →</span>
               </div>
-              <div className="mt-2 truncate text-xs text-black/55">
+              <div className="mt-2 truncate text-xs text-black/60">
                 🥇 {b.entries[0]?.groupName} ({b.entries[0]?.score})
               </div>
             </div>

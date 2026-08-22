@@ -50,7 +50,7 @@ export default async function ComparePage() {
       <header className="space-y-2">
         <p className="mono-label">Head to head</p>
         <h1 className="text-3xl font-bold tracking-tight text-black sm:text-4xl">Compare models</h1>
-        <p className="max-w-2xl text-sm leading-relaxed text-black/55">
+        <p className="max-w-2xl text-sm leading-relaxed text-black/60">
           Put two to four models side by side — prices, limits, capabilities and benchmark scores. Green marks
           the winner on each priced or sized row.
         </p>

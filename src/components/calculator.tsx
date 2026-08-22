@@ -42,19 +42,19 @@ export function Calculator({ rows }: { rows: CalcRow[] }) {
           <span className="flex justify-between text-black/60">
             Input tokens / month <b className="font-mono text-black">{inM}M</b>
           </span>
-          <input type="range" min={0.1} max={500} step={0.1} value={inM} onChange={(e) => setInM(Number(e.target.value))} className="w-full accent-blue-600" />
+          <input type="range" min={0.1} max={500} step={0.1} value={inM} onChange={(e) => setInM(Number(e.target.value))} className="w-full accent-accent" />
         </label>
         <label className="space-y-2 text-sm font-medium">
           <span className="flex justify-between text-black/60">
             Output tokens / month <b className="font-mono text-black">{outM}M</b>
           </span>
-          <input type="range" min={0.1} max={100} step={0.1} value={outM} onChange={(e) => setOutM(Number(e.target.value))} className="w-full accent-blue-600" />
+          <input type="range" min={0.1} max={100} step={0.1} value={outM} onChange={(e) => setOutM(Number(e.target.value))} className="w-full accent-accent" />
         </label>
         <label className="space-y-2 text-sm font-medium">
           <span className="flex justify-between text-black/60">
             Cache hit rate <b className="font-mono text-black">{hitPct}%</b>
           </span>
-          <input type="range" min={0} max={95} step={5} value={hitPct} onChange={(e) => setHitPct(Number(e.target.value))} className="w-full accent-blue-600" />
+          <input type="range" min={0} max={95} step={5} value={hitPct} onChange={(e) => setHitPct(Number(e.target.value))} className="w-full accent-accent" />
         </label>
       </div>
 
@@ -74,22 +74,22 @@ export function Calculator({ rows }: { rows: CalcRow[] }) {
           <tbody>
             {priced.slice(0, 30).map((r, i) => (
               <tr key={r.id}>
-                <td className="tabular-nums text-black/40">{i + 1}</td>
+                <td className="tabular-nums text-black/45">{i + 1}</td>
                 <td>
-                  <Link href={`/m/${r.id}`} className="font-medium transition-colors hover:text-blue-600">
+                  <Link href={`/m/${r.id}`} className="font-medium transition-colors hover:text-accent">
                     {r.name}
                   </Link>
                   <span className="ml-2 text-xs text-black/45">{r.lab}</span>
                 </td>
-                <td className="text-right font-mono font-semibold tabular-nums text-blue-700">
+                <td className="text-right font-mono font-semibold tabular-nums text-black">
                   ${r.monthly < 1 ? r.monthly.toFixed(2) : r.monthly.toFixed(0)}
                 </td>
                 <td className="w-40">
-                  <div className="h-2 rounded-sm border border-black bg-white">
-                    <div className="h-full rounded-sm bg-blue-600" style={{ width: `${Math.max(2, (r.monthly / max) * 100)}%` }} />
+                  <div className="h-2 overflow-hidden rounded-sm border border-black bg-white">
+                    <div className="h-full bg-accent" style={{ width: `${Math.max(2, (r.monthly / max) * 100)}%` }} />
                   </div>
                 </td>
-                <td className="whitespace-nowrap text-right font-mono tabular-nums text-black/55">
+                <td className="whitespace-nowrap text-right font-mono tabular-nums text-black/60">
                   {fmtPerM(r.input)} / {fmtPerM(r.output)}
                 </td>
               </tr>

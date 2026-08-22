@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { COMPARE_MAX, compareUrl, peekCompare, readModelsParam, setCompare, toggleCompare, useCompareSelection } from "@/lib/compare";
 import { benchmarkHome } from "@/lib/data/benchmark-links";
 import { fmtPerM, fmtTokens, fmtDate } from "@/lib/format";
+import { Badge } from "@/components/ui";
 
 export interface CompareModel {
   id: string;
@@ -30,16 +31,16 @@ export interface CompareModel {
 
 function BoolCell({ v }: { v: boolean }) {
   return v ? (
-    <span className="font-semibold text-emerald-600">✓</span>
+    <span className="font-semibold text-pos">✓</span>
   ) : (
-    <span className="text-black/20">✗</span>
+    <span className="text-black/35">✗</span>
   );
 }
 
 function Price({ v, best }: { v: number | null; best?: boolean }) {
-  if (v == null) return <span className="text-black/30">—</span>;
+  if (v == null) return <span className="text-black/35">—</span>;
   return (
-    <span className={best ? "font-mono font-bold tabular-nums text-emerald-700" : "font-mono tabular-nums"}>
+    <span className={best ? "font-mono font-bold tabular-nums text-pos" : "font-mono tabular-nums"}>
       {fmtPerM(v)}
     </span>
   );
@@ -102,7 +103,7 @@ export function CompareBoard({ models }: { models: CompareModel[] }) {
       key: "ctx",
       label: "Context window",
       render: (m) => (
-        <span className={`font-mono tabular-nums ${chosen.length > 1 && (m.ctx ?? 0) === maxCtx && maxCtx > 0 ? "font-bold text-emerald-700" : ""}`}>
+        <span className={`font-mono tabular-nums ${chosen.length > 1 && (m.ctx ?? 0) === maxCtx && maxCtx > 0 ? "font-bold text-pos" : ""}`}>
           {fmtTokens(m.ctx)}
         </span>
       ),
@@ -114,7 +115,7 @@ export function CompareBoard({ models }: { models: CompareModel[] }) {
       render: (m) => (
         <span className="tabular-nums text-black/70">
           {m.providers}
-          {m.deprecated > 0 && <span className="text-xs text-red-500"> · {m.deprecated} dep</span>}
+          {m.deprecated > 0 && <span className="text-xs text-neg"> · {m.deprecated} dep</span>}
         </span>
       ),
     },
@@ -124,14 +125,10 @@ export function CompareBoard({ models }: { models: CompareModel[] }) {
       key: "weights",
       label: "Weights",
       render: (m) =>
-        m.open ? (
-          <span className="rounded-full border border-emerald-600/30 bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
-            open
-          </span>
-        ) : (
-          <span className="rounded-full border border-black/10 bg-black/[0.03] px-2 py-0.5 text-[11px] text-black/40">
+        m.open ? <Badge tone="pos">open</Badge> : (
+          <Badge tone="muted" bold={false} className="font-medium">
             closed
-          </span>
+          </Badge>
         ),
     },
     { key: "reasoning", label: "Reasoning", render: (m) => <BoolCell v={m.reasoning} /> },
@@ -150,7 +147,7 @@ export function CompareBoard({ models }: { models: CompareModel[] }) {
               target="_blank"
               rel="noreferrer"
               title={`Official ${name} benchmark`}
-              className="text-[10px] text-blue-600 hover:text-blue-700"
+              className="micro-label normal-case tracking-normal text-accent hover:text-accent-strong"
             >
               ↗
             </a>
@@ -161,7 +158,7 @@ export function CompareBoard({ models }: { models: CompareModel[] }) {
         m.benchmarks[name] != null ? (
           <span className="font-mono font-semibold tabular-nums">{m.benchmarks[name]}</span>
         ) : (
-          <span className="text-black/25">—</span>
+          <span className="text-black/35">—</span>
         ),
     })),
   ];
@@ -199,9 +196,9 @@ export function CompareBoard({ models }: { models: CompareModel[] }) {
       </div>
 
       {chosen.length === 0 ? (
-        <p className="card-dashed p-6 text-sm text-black/50">
+        <p className="card-dashed p-6 text-sm text-black/45">
           Pick models above — or hit “+ compare” on any row in{" "}
-          <Link href="/browse" className="font-medium underline decoration-wavy underline-offset-4 hover:text-blue-600">
+          <Link href="/browse" className="font-medium underline decoration-wavy underline-offset-4 hover:text-accent">
             Browse
           </Link>
           . Deep-link with <code className="font-mono text-xs">/compare?models=lab/model,lab/model2</code>.
@@ -215,14 +212,14 @@ export function CompareBoard({ models }: { models: CompareModel[] }) {
                 {chosen.map((m) => (
                   <th key={m.id}>
                     <div className="flex items-center gap-1.5 whitespace-normal">
-                      <Link href={`/m/${m.id}`} className="text-sm normal-case tracking-normal text-black hover:text-blue-600">
+                      <Link href={`/m/${m.id}`} className="text-sm normal-case tracking-normal text-black hover:text-accent">
                         {m.name}
                       </Link>
-                      <span className="shrink-0 text-[10px] text-black/35">{m.lab}</span>
+                      <span className="shrink-0 text-xs text-black/35">{m.lab}</span>
                       <button
                         onClick={() => remove(m.id)}
                         aria-label={`Remove ${m.name}`}
-                        className="ml-auto shrink-0 rounded border border-black/15 px-1 text-[11px] leading-4 text-black/45 transition-colors hover:border-red-500 hover:text-red-600"
+                        className="ml-auto shrink-0 rounded border border-black/15 px-1 text-xs leading-4 text-black/45 transition-colors hover:border-neg hover:text-neg"
                       >
                         ×
                       </button>

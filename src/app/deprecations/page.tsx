@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getCatalog } from "@/lib/data";
 import { fmtDate, fmtPerM } from "@/lib/format";
+import { Badge } from "@/components/ui";
 
 export const metadata: Metadata = {
   title: "Deprecations",
@@ -28,8 +29,8 @@ export default async function DeprecationsPage() {
       <header className="space-y-2">
         <p className="mono-label">Sunset watch</p>
         <h1 className="text-3xl font-bold tracking-tight text-black sm:text-4xl">Deprecations</h1>
-        <p className="max-w-2xl text-sm leading-relaxed text-black/55">
-          Provider listings marked <span className="font-medium text-red-600">deprecated</span> — the model is no
+        <p className="max-w-2xl text-sm leading-relaxed text-black/60">
+          Provider listings marked <span className="font-medium text-neg">deprecated</span> — the model is no
           longer served on that provider&apos;s public API. Migrate before your pinned endpoint disappears.
         </p>
       </header>
@@ -48,7 +49,7 @@ export default async function DeprecationsPage() {
             {rows.map(({ group, deprecated }) => (
               <tr key={group.id}>
                 <td>
-                  <Link href={`/m/${group.id}`} className="font-medium text-black transition-colors hover:text-blue-600">
+                  <Link href={`/m/${group.id}`} className="font-medium text-black transition-colors hover:text-accent">
                     {group.name}
                   </Link>
                   <span className="ml-2 text-xs text-black/45">{group.labId}</span>
@@ -56,12 +57,9 @@ export default async function DeprecationsPage() {
                 <td>
                   <span className="inline-flex flex-wrap gap-1">
                     {deprecated.map((l) => (
-                      <span
-                        key={l.key}
-                        className="rounded-full border border-red-500/30 bg-red-50 px-2 py-0.5 text-[11px] font-medium text-red-600"
-                      >
+                      <Badge key={l.key} tone="neg">
                         {l.providerName}
-                      </span>
+                      </Badge>
                     ))}
                   </span>
                 </td>
@@ -70,7 +68,7 @@ export default async function DeprecationsPage() {
                 </td>
                 <td className="whitespace-nowrap text-right font-mono tabular-nums">
                   {group.best ? (
-                    <span className="font-semibold text-emerald-600">{fmtPerM(group.best.input)}</span>
+                    <span className="font-semibold text-pos">{fmtPerM(group.best.input)}</span>
                   ) : (
                     <span className="text-black/35">none live</span>
                   )}

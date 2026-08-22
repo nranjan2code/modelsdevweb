@@ -28,62 +28,22 @@ import { benchmarkHome } from "@/lib/data/benchmark-links";
 import { capabilityAdoption, priceBuckets } from "@/lib/data/stats";
 import { EventCard, eventTarget } from "@/components/event-card";
 import { Sparkline } from "@/components/price-history";
+import { Badge, Bar, DeltaChip, EmptyState, SectionHead } from "@/components/ui";
 import { fmtPerM, fmtTokens, fmtAgo, fmtDate } from "@/lib/format";
 import type { Event, NewsItem } from "@/lib/pipeline/types";
 import type { CompositeScore } from "@/lib/pipeline/external-types";
-
-function SectionHead({
-  title,
-  href,
-  label = "View all",
-  external,
-  eyebrow,
-  tone = "",
-}: {
-  title: string;
-  href?: string;
-  label?: string;
-  external?: boolean;
-  eyebrow?: string;
-  tone?: string;
-}) {
-  return (
-    <div className="mb-5">
-      {eyebrow && <p className={`mono-label mb-1 ${tone}`}>{eyebrow}</p>}
-      <div className="flex items-center justify-between gap-4">
-        <h2 className="font-hand text-3xl font-bold tracking-tight text-black sm:text-4xl">{title}</h2>
-        {href &&
-          (external ? (
-            <a
-              href={href}
-              className="shrink-0 rounded-full border border-black/15 bg-white px-3 py-1 text-xs font-medium text-black/60 transition-colors hover:border-black hover:text-black"
-            >
-              {label} →
-            </a>
-          ) : (
-            <Link
-              href={href}
-              className="shrink-0 rounded-full border border-black/15 bg-white px-3 py-1 text-xs font-medium text-black/60 transition-colors hover:border-black hover:text-black"
-            >
-              {label} →
-            </Link>
-          ))}
-      </div>
-    </div>
-  );
-}
 
 function Stat({ value, label, href }: { value: string; label: string; href?: string }) {
   const inner = (
     <>
       <div className="text-xl font-bold tabular-nums text-black">{value}</div>
-      <div className="mono-label mt-0.5 text-[10px]">{label}</div>
+      <div className="micro-label mt-0.5">{label}</div>
     </>
   );
   return href ? (
     <Link
       href={href}
-      className="card-flat lift block px-3 py-2 transition-colors hover:border-blue-600"
+      className="card-flat lift block px-3 py-2 transition-colors hover:border-accent"
     >
       {inner}
     </Link>
@@ -116,10 +76,10 @@ function MarketBrief({ series, cut, launch, hot, moves, syncedAgo }: MarketBrief
 
   return (
     <article className="card relative overflow-hidden p-6 pl-7 sm:p-8 sm:pl-9">
-      <span className="absolute inset-y-0 left-0 w-2 bg-blue-600" aria-hidden="true" />
+      <span className="absolute inset-y-0 left-0 w-2 bg-accent" aria-hidden="true" />
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <p className="mono-label text-blue-700">Market briefing · synced {syncedAgo || "recently"} ago</p>
-        <Link href="/changelog" className="text-xs font-medium text-blue-600 underline decoration-wavy underline-offset-4 hover:text-blue-800">
+        <p className="mono-label text-accent-strong">Market briefing · synced {syncedAgo || "recently"} ago</p>
+        <Link href="/changelog" className="text-xs font-medium text-accent underline decoration-wavy underline-offset-4 hover:text-accent-strong">
           full changelog →
         </Link>
       </div>
@@ -129,49 +89,46 @@ function MarketBrief({ series, cut, launch, hot, moves, syncedAgo }: MarketBrief
           <div>
             <p className="mono-label">Frontier price index</p>
             <div className="mt-1.5 flex flex-wrap items-end gap-3">
-              <span className="font-mono text-4xl font-bold tabular-nums tracking-tight text-black sm:text-[2.75rem]">
+              <span className="font-mono text-4xl font-bold tabular-nums tracking-tight text-black sm:text-5xl">
                 {fmtPerM(last.median)}
               </span>
-              <span
-                className={`mb-1 rounded-full border px-2 py-0.5 font-mono text-xs font-semibold tabular-nums ${
-                  down ? "border-emerald-600/30 bg-emerald-50 text-emerald-700" : "border-red-500/30 bg-red-50 text-red-600"
-                }`}
-              >
-                {down ? "▼" : "▲"} {Math.abs(deltaPct * 100).toFixed(1)}%
+              <span className="mb-1">
+                <DeltaChip down={down} pct={deltaPct} />
               </span>
             </div>
             <div className="mt-3 max-w-sm">
               <Sparkline values={series.map((p) => p.median)} width={320} height={56} />
             </div>
-            <p className="mt-2 text-xs leading-snug text-black/50">
+            <p className="mt-2 text-xs leading-snug text-black/45">
               Median blended /M across {last.models} frontier models · since {fmtDate(first.date)}.
             </p>
           </div>
         )}
 
         <div className={hasIndex ? "" : "lg:col-span-2"}>
-          <p className="mono-label !text-purple-600">Steepest move · 7 days</p>
+          <p className="mono-label text-special">Steepest move · 7 days</p>
           {cut ? (
             <>
               <Link href={`/m/${cut.id ?? ""}`} className="group mt-1.5 block">
-                <span className="block truncate text-lg font-bold text-black transition-colors group-hover:text-blue-700">
+                <span className="block truncate text-lg font-bold text-black transition-colors group-hover:text-accent-strong">
                   {cut.name}
                 </span>
               </Link>
               <div className="mt-1.5 font-mono text-sm tabular-nums text-black/60">
-                {fmtPerM(cut.from)} → <strong className="font-bold text-emerald-700">{fmtPerM(cut.to)}</strong> /M
+                {fmtPerM(cut.from)} →{" "}
+                <strong className="font-bold text-pos">{fmtPerM(cut.to)}</strong> /M
               </div>
               <div className="mt-2 flex items-center gap-2">
-                <span className="rounded-full border border-emerald-600/30 bg-emerald-50 px-2 py-0.5 font-mono text-xs font-bold tabular-nums text-emerald-700">
+                <Badge tone={down ? "pos" : "neg"} mono bold>
                   {(cut.pct * 100).toFixed(0)}%
-                </span>
+                </Badge>
                 {cut.providerId && <span className="text-xs text-black/45">via {cut.providerId}</span>}
               </div>
             </>
           ) : (
-            <p className="mt-2 text-sm leading-snug text-black/50">
+            <p className="mt-2 text-sm leading-snug text-black/45">
               No input-price cuts this week — the tape is quiet. Watch the{" "}
-              <Link href="/changelog?type=repriced&days=14" className="underline decoration-wavy underline-offset-2 hover:text-blue-700">
+              <Link href="/changelog?type=repriced&days=14" className="underline decoration-wavy underline-offset-2 hover:text-accent-strong">
                 repricing feed
               </Link>
               .
@@ -180,11 +137,11 @@ function MarketBrief({ series, cut, launch, hot, moves, syncedAgo }: MarketBrief
         </div>
 
         <div>
-          <p className="mono-label !text-emerald-600">Freshest launch</p>
+          <p className="mono-label text-pos">Freshest launch</p>
           {launch ? (
             <>
               <Link href={`/m/${launch.id}`} className="group mt-1.5 block">
-                <span className="block truncate text-lg font-bold text-black transition-colors group-hover:text-blue-700">
+                <span className="block truncate text-lg font-bold text-black transition-colors group-hover:text-accent-strong">
                   {launch.name}
                 </span>
               </Link>
@@ -195,7 +152,7 @@ function MarketBrief({ series, cut, launch, hot, moves, syncedAgo }: MarketBrief
                     {fmtPerM(launch.best.output)} /M
                   </>
                 ) : launch.free ? (
-                  <strong className="font-bold text-emerald-700">Free</strong>
+                  <strong className="font-bold text-pos">Free</strong>
                 ) : (
                   "pricing TBD"
                 )}
@@ -206,24 +163,24 @@ function MarketBrief({ series, cut, launch, hot, moves, syncedAgo }: MarketBrief
               </div>
             </>
           ) : (
-            <p className="mt-2 text-sm text-black/50">Catalog is stable — no new releases this cycle.</p>
+            <p className="mt-2 text-sm text-black/45">Catalog is stable — no new releases this cycle.</p>
           )}
         </div>
       </div>
 
       <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-black/10 pt-4 text-xs">
-        <Link href="/changelog" className="inline-flex items-center gap-1.5 font-medium text-black transition-colors hover:text-blue-700">
+        <Link href="/changelog" className="inline-flex items-center gap-1.5 font-medium text-black transition-colors hover:text-accent-strong">
           <strong className="font-mono tabular-nums">{moves}</strong> moves tracked
         </Link>
         {hot && (
-          <Link href={`/m/${hot.group.id}`} className="inline-flex items-center gap-1.5 text-black/70 transition-colors hover:text-blue-700">
-            <span className="rounded-full border border-emerald-600/30 bg-emerald-50 px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide text-emerald-700">
+          <Link href={`/m/${hot.group.id}`} className="inline-flex items-center gap-1.5 text-black/70 transition-colors hover:text-accent-strong">
+            <Badge tone="pos" mono bold className="uppercase tracking-wide">
               #1 momentum
-            </span>
+            </Badge>
             {hot.group.name}
           </Link>
         )}
-        <Link href="/trends" className="ml-auto inline-flex items-center gap-1 font-medium text-blue-600 underline decoration-wavy underline-offset-4 hover:text-blue-800">
+        <Link href="/trends" className="ml-auto inline-flex items-center gap-1 font-medium text-accent underline decoration-wavy underline-offset-4 hover:text-accent-strong">
           market trends →
         </Link>
       </div>
@@ -238,16 +195,11 @@ function MoverRow({ m, rank }: { m: Mover; rank: number }) {
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between gap-2">
           <span className="truncate font-medium">{m.name}</span>
-          <span
-            className={`shrink-0 rounded-full border px-1.5 py-0.5 font-mono text-[11px] font-bold tabular-nums ${
-              m.pct < 0 ? "border-emerald-600/30 bg-emerald-50 text-emerald-700" : "border-red-500/30 bg-red-50 text-red-600"
-            }`}
-          >
-            {m.pct > 0 ? "+" : ""}
-            {(m.pct * 100).toFixed(0)}%
+          <span className="shrink-0">
+            <DeltaChip down={m.pct < 0} pct={m.pct} digits={0} />
           </span>
         </div>
-        <div className="mt-0.5 truncate font-mono text-[11px] tabular-nums text-black/45">
+        <div className="mt-0.5 truncate font-mono text-xs tabular-nums text-black/45">
           {fmtPerM(m.from)} → {fmtPerM(m.to)} /M
           {m.providerId && ` · via ${m.providerId}`}
         </div>
@@ -256,7 +208,7 @@ function MoverRow({ m, rank }: { m: Mover; rank: number }) {
   );
   const cls = "flex items-start gap-2 py-2.5";
   return m.id ? (
-    <Link href={`/m/${m.id}`} className={`${cls} transition-colors hover:text-blue-700`}>
+    <Link href={`/m/${m.id}`} className={`${cls} transition-colors hover:text-accent-strong`}>
       {inner}
     </Link>
   ) : (
@@ -269,7 +221,7 @@ function MoversBoard({ title, items, empty }: { title: string; items: Mover[]; e
     <div className="card p-4">
       <h3 className="mb-1 font-hand text-2xl font-bold text-black">{title}</h3>
       {items.length === 0 ? (
-        <p className="py-6 text-center text-sm text-black/40">{empty}</p>
+        <EmptyState>{empty}</EmptyState>
       ) : (
         <ol className="divide-y divide-black/10 text-sm">
           {items.map((m, i) => (
@@ -290,20 +242,14 @@ function PulseCard({ series }: { series: ReturnType<typeof pulseSeries> }) {
   const deltaPct = (last.median - first.median) / first.median;
   const down = deltaPct <= 0;
   return (
-    <Link href="/trends" className="card lift block p-4 transition-colors hover:border-blue-600">
+    <Link href="/trends" className="card lift block p-4 transition-colors hover:border-accent">
       <p className="mono-label">Frontier price index</p>
       <div className="mt-2 flex items-end justify-between gap-2">
         <div className="font-mono text-2xl font-bold tabular-nums text-black">
           {fmtPerM(last.median)}
           <span className="text-xs font-medium text-black/45"> /M</span>
         </div>
-        <span
-          className={`rounded-full border px-2 py-0.5 font-mono text-xs font-semibold tabular-nums ${
-            down ? "border-emerald-600/30 bg-emerald-50 text-emerald-700" : "border-red-500/30 bg-red-50 text-red-600"
-          }`}
-        >
-          {down ? "▼" : "▲"} {Math.abs(deltaPct * 100).toFixed(1)}%
-        </span>
+        <DeltaChip down={down} pct={deltaPct} />
       </div>
       <div className="mt-3">
         <Sparkline values={series.map((p) => p.median)} width={272} height={36} />
@@ -330,14 +276,14 @@ function HeatStrip({ cal }: { cal: ReturnType<typeof activityCalendar> }) {
           const ratio = d.count / max;
           const tone =
             d.count === 0
-              ? "bg-neutral-100"
+              ? "bg-black/5"
               : ratio <= 0.25
-                ? "bg-blue-200"
+                ? "bg-accent/25"
                 : ratio <= 0.5
-                  ? "bg-blue-400"
+                  ? "bg-accent/55"
                   : ratio <= 0.75
-                    ? "bg-blue-600"
-                    : "bg-blue-900";
+                    ? "bg-accent/85"
+                    : "bg-accent";
           return (
             <span
               key={d.date}
@@ -349,7 +295,7 @@ function HeatStrip({ cal }: { cal: ReturnType<typeof activityCalendar> }) {
           );
         })}
       </div>
-      <div className="mt-1.5 flex justify-between font-mono text-[10px] uppercase tracking-wider text-black/35">
+      <div className="micro-label mt-1.5 flex justify-between tracking-wider">
         <span>{fmtShort(cal[0]?.date)}</span>
         <span>today</span>
       </div>
@@ -371,7 +317,7 @@ function MoveChip({
   return (
     <Link
       href={href}
-      className={`inline-flex items-baseline gap-1.5 rounded-full border px-3 py-1 text-xs font-medium shadow-[2px_2px_0_0_rgba(0,0,0,1)] transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none ${tone}`}
+      className={`inline-flex items-baseline gap-1.5 rounded-full border px-3 py-1 text-xs font-medium shadow-hard-sm transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none ${tone}`}
     >
       <strong className="font-mono tabular-nums">{n}</strong> {label}
     </Link>
@@ -403,26 +349,22 @@ function NewsCard({
         href={item.url}
         target="_blank"
         rel="noopener noreferrer"
-        className="line-clamp-2 font-medium leading-snug text-black transition-colors hover:text-blue-600"
+        className="line-clamp-2 font-medium leading-snug text-black transition-colors hover:text-accent"
       >
         {item.title}
       </a>
       {(modelId || priceChip) && (
         <div className="mt-auto flex flex-wrap items-center gap-1.5 pt-1">
           {modelId && (
-            <Link
-              href={`/m/${modelId}`}
-              className="inline-flex items-center rounded-full border border-black/15 bg-blue-50 px-2 py-0.5 text-[11px] font-medium text-blue-700 transition-colors hover:border-blue-600"
-            >
-              {modelName ?? modelId}
+            <Link href={`/m/${modelId}`} className="transition-colors hover:opacity-80">
+              <Badge tone="accent">{modelName ?? modelId}</Badge>
             </Link>
           )}
           {modelId && priceChip && (
-            <Link
-              href={`/m/${modelId}`}
-              className="inline-flex items-center rounded-full border border-emerald-600/30 bg-emerald-50 px-2 py-0.5 font-mono text-[11px] tabular-nums text-emerald-700 transition-colors hover:border-emerald-600"
-            >
-              {priceChip}
+            <Link href={`/m/${modelId}`} className="transition-colors hover:opacity-80">
+              <Badge tone="pos" mono>
+                {priceChip}
+              </Badge>
             </Link>
           )}
         </div>
@@ -439,12 +381,12 @@ function Spotlight({ spot }: { spot: NonNullable<ReturnType<typeof modelOfWeek>>
   ].filter(Boolean) as string[];
   return (
     <article className="card lift relative overflow-hidden p-6">
-      <span className="absolute right-0 top-0 rounded-bl-lg border-b-2 border-l-2 border-black bg-amber-100 px-3 py-1 font-hand text-sm font-bold">
+      <span className="absolute right-0 top-0 rounded-bl-lg border-b-2 border-l-2 border-black bg-warn-fill px-3 py-1 font-hand text-sm font-bold">
         this week’s pick
       </span>
-      <p className="mono-label !text-purple-600">Model of the week</p>
+      <p className="mono-label text-special">Model of the week</p>
       <Link href={`/m/${spot.id}`} className="group block">
-        <h3 className="mt-1.5 text-2xl font-bold tracking-tight text-black transition-colors group-hover:text-blue-700 sm:text-3xl">
+        <h3 className="mt-1.5 text-2xl font-bold tracking-tight text-black transition-colors group-hover:text-accent-strong sm:text-3xl">
           {spot.name}
         </h3>
       </Link>
@@ -452,14 +394,12 @@ function Spotlight({ spot }: { spot: NonNullable<ReturnType<typeof modelOfWeek>>
       {spot.description && <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-black/60">{spot.description}</p>}
       <div className="mt-4 flex flex-wrap gap-1.5">
         {facts.map((f) => (
-          <span key={f} className="rounded-full border border-black/15 bg-white px-2.5 py-1 text-xs text-black/70">
-            {f}
-          </span>
+          <Badge key={f}>{f}</Badge>
         ))}
       </div>
       <Link
         href={`/m/${spot.id}`}
-        className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-blue-600 underline decoration-wavy underline-offset-4 transition-colors hover:text-blue-800"
+        className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-accent underline decoration-wavy underline-offset-4 transition-colors hover:text-accent-strong"
       >
         Open profile →
       </Link>
@@ -471,7 +411,7 @@ function HeadToHeadCard({ h2h }: { h2h: HeadToHead }) {
   const blendL = (h2h.left.input * 3 + h2h.left.output) / 4;
   const blendR = (h2h.right.input * 3 + h2h.right.output) / 4;
   const rowCls = (cheaper: boolean) =>
-    cheaper ? "font-mono font-bold tabular-nums text-emerald-700" : "font-mono tabular-nums text-black/70";
+    cheaper ? "font-mono font-bold tabular-nums text-pos" : "font-mono tabular-nums text-black/70";
   return (
     <div className="card flex flex-col p-4">
       <p className="mono-label">Head to head</p>
@@ -482,7 +422,7 @@ function HeadToHeadCard({ h2h }: { h2h: HeadToHead }) {
             <div key={side.id} className="flex items-center justify-between gap-2">
               <Link
                 href={`/m/${side.id}`}
-                className="min-w-0 truncate font-medium text-black transition-colors hover:text-blue-600"
+                className="min-w-0 truncate font-medium text-black transition-colors hover:text-accent"
               >
                 {side.name}
               </Link>
@@ -495,7 +435,7 @@ function HeadToHeadCard({ h2h }: { h2h: HeadToHead }) {
       </div>
       <Link
         href={`/compare?models=${encodeURIComponent(h2h.left.id)},${encodeURIComponent(h2h.right.id)}`}
-        className="mt-auto pt-3 text-sm font-semibold text-blue-600 underline decoration-wavy underline-offset-4 transition-colors hover:text-blue-800"
+        className="mt-auto pt-3 text-sm font-semibold text-accent underline decoration-wavy underline-offset-4 transition-colors hover:text-accent-strong"
       >
         Compare side by side →
       </Link>
@@ -515,14 +455,6 @@ function windowDigest(events: Event[], days: number) {
   };
 }
 
-function MiniBar({ pct, color = "bg-blue-600" }: { pct: number; color?: string }) {
-  return (
-    <div className="h-1.5 min-w-6 flex-1 overflow-hidden rounded-sm border border-black bg-white">
-      <div className={`h-full ${color}`} style={{ width: `${Math.max(2, Math.min(100, pct * 100))}%` }} />
-    </div>
-  );
-}
-
 const fmtShort = (iso: string | null): string =>
   iso
     ? new Date(`${iso.slice(0, 10)}T00:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" })
@@ -536,25 +468,23 @@ function TrendingRow({ score, rank, name, priceLabel }: { score: CompositeScore;
     <li className="flex items-center gap-3 py-2.5">
       <span className="w-5 shrink-0 tabular-nums text-black/35">{rank}.</span>
       <div className="min-w-0 flex-1">
-        <Link href={`/m/${score.groupId}`} className="block truncate font-medium transition-colors hover:text-blue-600">
+        <Link href={`/m/${score.groupId}`} className="block truncate font-medium transition-colors hover:text-accent">
           {name}
         </Link>
         <span className="mono-label">{priceLabel}</span>
       </div>
       <div className="hidden w-24 shrink-0 sm:block" title={`composite ${score.score.toFixed(2)} of 1.00`}>
-        <MiniBar pct={score.score} color="bg-emerald-500" />
+        <Bar pct={score.score} fill="bg-pos-bright" />
       </div>
-      <span className="w-10 shrink-0 text-right font-mono text-xs font-semibold tabular-nums text-emerald-700">
+      <span className="w-10 shrink-0 text-right font-mono text-xs font-semibold tabular-nums text-pos">
         {score.score.toFixed(2)}
       </span>
       <span className="flex w-[5.5rem] shrink-0 justify-end gap-1">
         {sources.map((s) => (
-          <span
-            key={s}
-            title={s === "hf" ? "Hugging Face signals" : "GitHub signals"}
-            className="rounded-full border border-black/15 bg-white px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wide text-black/50"
-          >
-            {SOURCE_LABELS[s] ?? s}
+          <span key={s} title={s === "hf" ? "Hugging Face signals" : "GitHub signals"}>
+            <Badge tone="muted" mono className="uppercase tracking-wide">
+              {SOURCE_LABELS[s] ?? s}
+            </Badge>
           </span>
         ))}
       </span>
@@ -649,28 +579,28 @@ export default async function HomePage() {
         <div className="mx-auto max-w-3xl pt-4 text-center sm:pt-6">
           <span className="pill mx-auto">
             <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-60" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-pos-bright opacity-60" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-pos-bright" />
             </span>
             Live{syncedAgo ? ` · synced ${syncedAgo}` : ""} · diffed hourly from models.dev
           </span>
           <h1 className="mt-4 text-3xl font-bold leading-[1.08] tracking-tight text-black sm:text-5xl">
             Every AI model. Every provider.{" "}
-            <span className="wavy wavy-blue">Every change.</span>
+            <span className="wavy wavy-accent">Every change.</span>
           </h1>
-          <p className="mx-auto mt-3 max-w-xl text-base font-medium text-black/55">
+          <p className="mx-auto mt-3 max-w-xl text-base font-medium text-black/60">
             The front page of the AI model market — prices, releases and repricings, tracked hourly.
           </p>
           <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
             <Link
               href="/browse"
-              className="rounded-md border-2 border-black bg-black px-4 py-2 text-sm font-semibold text-white shadow-[4px_4px_0_0_rgba(0,0,0,0.25)] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_0_rgba(0,0,0,0.25)]"
+              className="rounded-md border-2 border-black bg-black px-4 py-2 text-sm font-semibold text-white shadow-hard transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-hard-sm"
             >
               Browse models
             </Link>
             <Link
               href="/changelog"
-              className="rounded-md border-2 border-black bg-white px-4 py-2 text-sm font-semibold text-black shadow-[4px_4px_0_0_rgba(0,0,0,1)] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_0_rgba(0,0,0,1)]"
+              className="rounded-md border-2 border-black bg-white px-4 py-2 text-sm font-semibold text-black shadow-hard transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-hard-sm"
             >
               See what changed
             </Link>
@@ -696,8 +626,12 @@ export default async function HomePage() {
 <div>
             <SectionHead title="The tape" href="/changelog" eyebrow="Price moves · last 7 days" label="Full changelog" />
             <p className="mb-3 flex flex-wrap items-center gap-2 text-xs">
-              <span className="inline-flex items-center gap-1 rounded-full border border-emerald-600/30 bg-emerald-50 px-2 py-0.5 text-emerald-700"><span className="font-bold">▼</span> cheaper</span>
-              <span className="inline-flex items-center gap-1 rounded-full border border-red-500/30 bg-red-50 px-2 py-0.5 text-red-600"><span className="font-bold">▲</span> pricier</span>
+              <Badge tone="pos">
+                <span className="font-bold">▼</span> cheaper
+              </Badge>
+              <Badge tone="neg">
+                <span className="font-bold">▲</span> pricier
+              </Badge>
             </p>
             <div className="grid gap-4 md:grid-cols-2">
               <MoversBoard title="Price cuts" items={movers.fallers} empty="No input-price cuts this week." />
@@ -707,9 +641,9 @@ export default async function HomePage() {
           <div>
             <SectionHead title="Latest activity" href="/changelog" eyebrow="The wire" />
             {events.length === 0 ? (
-              <p className="card-dashed p-6 text-sm text-black/50">
+              <EmptyState>
                 Baseline snapshot captured — changes will appear here after the next sync detects a diff.
-              </p>
+              </EmptyState>
             ) : (
               <div className="grid gap-4 sm:grid-cols-2">
                 {events.slice(0, 6).map((e) => (
@@ -731,7 +665,7 @@ export default async function HomePage() {
                 return (
                   <li key={g.id} className="flex items-center gap-2 py-2.5">
                     <div className="min-w-0 flex-1">
-                      <Link href={`/m/${g.id}`} className="block truncate font-medium transition-colors hover:text-blue-600">
+                      <Link href={`/m/${g.id}`} className="block truncate font-medium transition-colors hover:text-accent">
                         {g.name}
                       </Link>
                       <span className="mono-label">{g.best ? `${fmtPerM(g.best.input)}/${fmtPerM(g.best.output)}` : g.free ? "Free" : "—"}</span>
@@ -743,7 +677,7 @@ export default async function HomePage() {
             </ul>
             <Link
               href="/browse"
-              className="mt-3 inline-block text-xs font-medium text-blue-600 underline decoration-wavy underline-offset-4 transition-colors hover:text-blue-800"
+              className="mt-3 inline-block text-xs font-medium text-accent underline decoration-wavy underline-offset-4 transition-colors hover:text-accent-strong"
             >
               browse the catalog →
             </Link>
@@ -764,32 +698,30 @@ export default async function HomePage() {
               n={digest.total}
               label="moves"
               href="/changelog"
-              tone="border-black bg-black text-white hover:bg-black/85"
+              tone="border-black bg-black text-white hover:opacity-90"
             />
             {digest.repriced > 0 && (
-              <MoveChip n={digest.repriced} label="repricings" href="/changelog?type=repriced&days=14" tone="border-purple-600/40 bg-purple-50 text-purple-700" />
+              <MoveChip n={digest.repriced} label="repricings" href="/changelog?type=repriced&days=14" tone="border-special/40 bg-special-soft text-special" />
             )}
             {digest.added > 0 && (
-              <MoveChip n={digest.added} label="launches" href="/changelog?type=model_added&days=14" tone="border-emerald-600/40 bg-emerald-50 text-emerald-700" />
+              <MoveChip n={digest.added} label="launches" href="/changelog?type=model_added&days=14" tone="border-pos/40 bg-pos-soft text-pos" />
             )}
             {digest.deprecated > 0 && (
-              <MoveChip n={digest.deprecated} label="sunsets" href="/deprecations" tone="border-red-500/40 bg-red-50 text-red-600" />
+              <MoveChip n={digest.deprecated} label="sunsets" href="/deprecations" tone="border-neg/40 bg-neg-soft text-neg" />
             )}
           </div>
         )}
       </section>
 
       <section>
-        <SectionHead title="Lab scoreboards" href="/providers" label="All providers" eyebrow="The race" tone="!text-purple-600" />
+        <SectionHead title="Lab scoreboards" href="/providers" label="All providers" eyebrow="The race" eyebrowTone="special" />
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {labCards.map((c: LabScorecard) => (
-            <Link key={c.id} href={`/lab/${c.id}`} className="card-flat lift block p-4 transition-colors hover:border-blue-600">
+            <Link key={c.id} href={`/lab/${c.id}`} className="card-flat lift block p-4 transition-colors hover:border-accent">
               <div className="flex items-baseline justify-between gap-2">
                 <span className="font-semibold text-black">{labName(c.id)}</span>
                 {c.weeklyEvents > 0 && (
-                  <span className="rounded-full border border-purple-600/30 bg-purple-50 px-2 py-0.5 text-[11px] font-semibold text-purple-700">
-                    +{c.weeklyEvents} this wk
-                  </span>
+                  <Badge tone="special">+{c.weeklyEvents} this wk</Badge>
                 )}
               </div>
               <dl className="mt-2 space-y-1 font-mono text-xs tabular-nums text-black/60">
@@ -823,8 +755,8 @@ export default async function HomePage() {
 
       {trending.length > 0 && (
         <section>
-          <SectionHead title="Momentum index" eyebrow="Community & research signals · last 7 days" tone="!text-emerald-600" />
-          <p className="-mt-2 mb-5 max-w-2xl text-sm text-black/55">
+          <SectionHead title="Momentum index" eyebrow="Community & research signals · last 7 days" eyebrowTone="pos" />
+          <p className="-mt-2 mb-5 max-w-2xl text-sm text-black/60">
             Weighted blend of Hugging&nbsp;Face downloads, likes, trending score, GitHub stars/forks and
             recent paper mentions — normalized, freshness-decayed, then ranked.
           </p>
@@ -834,7 +766,7 @@ export default async function HomePage() {
                 <TrendingRow key={t.groupId} score={t} rank={i + 1} name={group.name} priceLabel={priceLabel} />
               ))}
             </ul>
-            <p className="mt-3 font-mono text-[10px] uppercase tracking-wider text-black/35">
+            <p className="micro-label mt-3 tracking-wider">
               sources: huggingface.co hub api · api.github.com — per-signal attribution in /api/signals.json
             </p>
           </div>
@@ -880,7 +812,7 @@ export default async function HomePage() {
       {valueBoards.length > 0 && (
         <section>
           <SectionHead title="Best value right now" href="/benchmarks" eyebrow="Points per dollar" label="All leaderboards" />
-          <p className="-mt-2 mb-5 max-w-2xl text-sm text-black/55">
+          <p className="-mt-2 mb-5 max-w-2xl text-sm text-black/60">
             Benchmark score per blended dollar (3×input + output)⁄4 — what each model actually buys you.
           </p>
           <div className="grid gap-4 md:grid-cols-2">
@@ -894,7 +826,7 @@ export default async function HomePage() {
                         target="_blank"
                         rel="noreferrer"
                         title={`Official ${board.name} benchmark`}
-                        className="underline decoration-wavy decoration-black/25 underline-offset-4 transition-colors hover:text-blue-600 hover:decoration-blue-600"
+                        className="underline decoration-wavy decoration-black/25 underline-offset-4 transition-colors hover:text-accent hover:decoration-accent"
                       >
                         {board.name} ↗
                       </a>
@@ -904,7 +836,7 @@ export default async function HomePage() {
                   </h3>
                   <Link
                     href={`/benchmarks/${board.slug}`}
-                    className="shrink-0 text-xs font-medium text-blue-600 underline decoration-wavy underline-offset-4 hover:text-blue-700"
+                    className="shrink-0 text-xs font-medium text-accent underline decoration-wavy underline-offset-4 hover:text-accent-strong"
                   >
                     board →
                   </Link>
@@ -913,11 +845,11 @@ export default async function HomePage() {
                   {leaders.map((e, i) => (
                     <li key={e.groupId} className="flex items-center gap-2 py-2">
                       <span className="w-4 shrink-0 tabular-nums text-black/35">{i + 1}.</span>
-                      <Link href={`/m/${e.groupId}`} className="min-w-0 flex-1 truncate font-medium transition-colors hover:text-blue-600">
+                      <Link href={`/m/${e.groupId}`} className="min-w-0 flex-1 truncate font-medium transition-colors hover:text-accent">
                         {e.groupName}
                       </Link>
                       <span className="shrink-0 font-mono text-xs tabular-nums text-black/45">{e.score}</span>
-                      <span className="w-16 shrink-0 text-right font-mono text-xs font-semibold tabular-nums text-emerald-700">
+                      <span className="w-16 shrink-0 text-right font-mono text-xs font-semibold tabular-nums text-pos">
                         {Math.round(e.pointsPerDollar!).toLocaleString("en-US")} pts/$
                       </span>
                     </li>
@@ -930,32 +862,32 @@ export default async function HomePage() {
       )}
 
       <section>
-        <SectionHead title="Record watch" eyebrow="Standing superlatives" tone="!text-amber-600" href="/browse" label="Browse all" />
+        <SectionHead title="Record watch" eyebrow="Standing superlatives" eyebrowTone="warn" href="/browse" label="Browse all" />
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {recs.map((r, i) => (
             <Link
               key={r.title}
               href={r.id ? `/m/${r.id}` : "/browse"}
-              className="card p-4 flex flex-col gap-2 transition-colors hover:border-amber-500"
+              className="card p-4 flex flex-col gap-2 transition-colors hover:border-warn"
             >
               <div className="flex items-baseline justify-between gap-2">
                 <span className="text-black/35 font-mono tabular-nums">{i + 1}.</span>
-                <span className="mono-label text-amber-600">{r.title}</span>
+                <span className="mono-label text-warn">{r.title}</span>
               </div>
               <div className="flex-1 min-h-0">
                 {r.id && (
                   <Link
                     href={`/m/${r.id}`}
-                    className="block truncate font-medium text-black transition-colors hover:text-blue-600"
+                    className="block truncate font-medium text-black transition-colors hover:text-accent"
                   >
                     {r.holder}
                   </Link>
                 )}
                 {!r.id && <span className="font-medium text-black">{r.holder}</span>}
               </div>
-              <div className="font-mono text-lg font-semibold tabular-nums text-blue-700">{r.value}</div>
+              <div className="font-mono text-lg font-semibold tabular-nums text-black">{r.value}</div>
               {r.detail && (
-                <div className="text-[11px] text-black/45 font-mono truncate">
+                <div className="text-xs text-black/45 font-mono truncate">
                   {r.detail}
                 </div>
               )}
@@ -973,7 +905,7 @@ export default async function HomePage() {
               {caps.map((c) => (
                 <li key={c.label} className="flex items-center gap-2 text-sm sm:gap-3">
                   <span className="w-28 shrink-0 truncate text-black/60 sm:w-32">{c.label}</span>
-                  <MiniBar pct={c.pct} />
+                  <Bar pct={c.pct} />
                   <span className="w-12 shrink-0 text-right font-mono text-xs tabular-nums text-black/70">
                     {Math.round(c.pct * 100)}%
                   </span>
@@ -987,7 +919,7 @@ export default async function HomePage() {
               {buckets.map((b) => (
                 <li key={b.label} className="flex items-center gap-2 text-sm sm:gap-3">
                   <span className="w-20 shrink-0 font-mono text-xs text-black/60">{b.label}</span>
-                  <MiniBar pct={b.count / bucketMax} color="bg-purple-500" />
+                  <Bar pct={b.count / bucketMax} fill="bg-special-bright" />
                   <span className="w-8 shrink-0 text-right font-mono text-xs tabular-nums text-black/70">{b.count}</span>
                 </li>
               ))}
@@ -1027,7 +959,7 @@ export default async function HomePage() {
                   return (
                     <tr key={g.id}>
                       <td>
-                        <Link href={`/m/${g.id}`} className="font-medium transition-colors hover:text-blue-600">
+                        <Link href={`/m/${g.id}`} className="font-medium transition-colors hover:text-accent">
                           {g.name}
                         </Link>
                         <span className="ml-2 text-xs text-black/45">{g.labId}</span>
@@ -1035,7 +967,7 @@ export default async function HomePage() {
                       <td className="text-right font-mono tabular-nums">{fmtPerM(g.best!.input)}</td>
                       <td className="text-right font-mono tabular-nums">{fmtPerM(g.best!.output)}</td>
                       <td className="text-right font-mono tabular-nums">{fmtTokens(ctx)}</td>
-                      <td className="text-right tabular-nums text-black/55">{g.listings.length}</td>
+                      <td className="text-right tabular-nums text-black/60">{g.listings.length}</td>
                     </tr>
                   );
                 })}

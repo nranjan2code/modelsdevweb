@@ -5,6 +5,7 @@ import { getBenchmarkBoards, getBenchmarkBoard } from "@/lib/data/benchmarks";
 import { benchmarkHome } from "@/lib/data/benchmark-links";
 import { fmtPerM, fmtTokens } from "@/lib/format";
 import { getCatalog, groupContext } from "@/lib/data";
+import { Bar } from "@/components/ui";
 
 export async function generateStaticParams() {
   const boards = await getBenchmarkBoards();
@@ -45,7 +46,7 @@ export default async function BenchmarkPage({ params }: { params: Promise<{ slug
   return (
     <div className="space-y-6">
       <nav className="text-sm text-black/45">
-        <Link href="/benchmarks" className="transition-colors hover:text-blue-600">
+        <Link href="/benchmarks" className="transition-colors hover:text-accent">
           Benchmarks
         </Link>
         <span className="mx-1.5">/</span>
@@ -62,13 +63,13 @@ export default async function BenchmarkPage({ params }: { params: Promise<{ slug
               target="_blank"
               rel="noreferrer"
               title={`Official ${board.name} benchmark`}
-              className="ml-3 align-middle font-sans text-sm font-semibold text-blue-600 hover:text-blue-700"
+              className="ml-3 align-middle font-sans text-sm font-semibold text-accent hover:text-accent-strong"
             >
               official site ↗
             </a>
           )}
         </h1>
-        <p className="max-w-2xl text-sm leading-relaxed text-black/55">
+        <p className="max-w-2xl text-sm leading-relaxed text-black/60">
           {board.entries.length} models scored{board.metric ? ` · metric: ${board.metric}` : ""}. Prices are the
           cheapest listed across all serving providers. Pts/$ = score ÷ blended price (3×input + output) / 4 —
           how much score each dollar buys.
@@ -88,11 +89,11 @@ export default async function BenchmarkPage({ params }: { params: Promise<{ slug
               <li key={e.groupId} className="flex items-baseline justify-between gap-2 text-sm">
                 <span className="truncate">
                   <span className="mr-1.5 tabular-nums text-black/35">{i + 1}.</span>
-                  <Link href={`/m/${e.groupId}`} className="font-medium transition-colors hover:text-blue-600">
+                  <Link href={`/m/${e.groupId}`} className="font-medium transition-colors hover:text-accent">
                     {e.groupName}
                   </Link>
                 </span>
-                <span className="shrink-0 font-mono font-semibold tabular-nums text-emerald-700">
+                <span className="shrink-0 font-mono font-semibold tabular-nums text-pos">
                   {fmtPpd(e.pointsPerDollar)}
                 </span>
               </li>
@@ -121,9 +122,9 @@ export default async function BenchmarkPage({ params }: { params: Promise<{ slug
                 : null;
               return (
                 <tr key={e.groupId}>
-                  <td className="tabular-nums text-black/40">{i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : i + 1}</td>
+                  <td className="tabular-nums text-black/45">{i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : i + 1}</td>
                   <td>
-                    <Link href={`/m/${e.groupId}`} className="font-medium text-black transition-colors hover:text-blue-600">
+                    <Link href={`/m/${e.groupId}`} className="font-medium text-black transition-colors hover:text-accent">
                       {e.groupName}
                     </Link>
                     <span className="ml-2 text-xs text-black/45">{e.labId}</span>
@@ -131,24 +132,19 @@ export default async function BenchmarkPage({ params }: { params: Promise<{ slug
                   <td className="w-48">
                     <div className="flex items-center gap-2">
                       <span className="w-12 shrink-0 font-mono font-semibold tabular-nums text-black">{e.score}</span>
-                      <div className="h-2 flex-1 overflow-hidden rounded-sm border border-black bg-white">
-                        <div
-                          className={`h-full ${i === 0 ? "bg-blue-600" : "bg-blue-600/50"}`}
-                          style={{ width: `${Math.max(2, (e.score / maxScore) * 100)}%` }}
-                        />
-                      </div>
+                      <Bar pct={e.score / maxScore} fill={i === 0 ? "bg-accent" : "bg-accent/50"} />
                     </div>
                   </td>
                   <td className="text-right font-mono tabular-nums">
-                    {e.bestInput != null ? fmtPerM(e.bestInput) : <span className="text-black/30">—</span>}
+                    {e.bestInput != null ? fmtPerM(e.bestInput) : <span className="text-black/35">—</span>}
                   </td>
                   <td className="text-right font-mono tabular-nums">
-                    {e.bestOutput != null ? fmtPerM(e.bestOutput) : <span className="text-black/30">—</span>}
+                    {e.bestOutput != null ? fmtPerM(e.bestOutput) : <span className="text-black/35">—</span>}
                   </td>
-                  <td className="text-right font-mono font-semibold tabular-nums text-emerald-700">
+                  <td className="text-right font-mono font-semibold tabular-nums text-pos">
                     {fmtPpd(e.pointsPerDollar)}
                   </td>
-                  <td className="text-right font-mono tabular-nums text-black/55">{fmtTokens(ctx)}</td>
+                  <td className="text-right font-mono tabular-nums text-black/60">{fmtTokens(ctx)}</td>
                 </tr>
               );
             })}
@@ -166,7 +162,7 @@ export default async function BenchmarkPage({ params }: { params: Promise<{ slug
                 href={src}
                 target="_blank"
                 rel="noreferrer"
-                className="font-medium text-blue-600 underline decoration-wavy underline-offset-4 hover:text-blue-700"
+                className="font-medium text-accent underline decoration-wavy underline-offset-4 hover:text-accent-strong"
               >
                 {host(src)}
               </a>

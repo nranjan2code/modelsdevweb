@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Listing } from "@/lib/pipeline/types";
 import { fmtPerM, fmtTokens, fmtDate } from "@/lib/format";
 import { unlistedPrice } from "@/lib/pipeline/normalize";
+import { Badge } from "@/components/ui";
 
 export function CapabilityBadges({ listing }: { listing: Pick<Listing, "reasoning" | "toolCall" | "structuredOutput" | "attachment"> }) {
   const caps = [
@@ -13,15 +14,10 @@ export function CapabilityBadges({ listing }: { listing: Pick<Listing, "reasonin
   return (
     <span className="inline-flex flex-wrap gap-1">
       {caps.map(([label, on]) => (
-        <span
-          key={label}
-          className={
-            on
-              ? "rounded-full border border-emerald-600/30 bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700"
-              : "rounded-full border border-black/10 bg-black/[0.03] px-2 py-0.5 text-[11px] text-black/35"
-          }
-        >
-          {on ? label : `no ${label}`}
+        <span key={label}>
+          <Badge tone={on ? "pos" : "muted"} bold={Boolean(on)} className={on ? "" : "font-normal"}>
+            {on ? label : `no ${label}`}
+          </Badge>
         </span>
       ))}
     </span>
@@ -30,17 +26,8 @@ export function CapabilityBadges({ listing }: { listing: Pick<Listing, "reasonin
 
 export function StatusBadge({ status }: { status: Listing["status"] }) {
   if (!status) return null;
-  const cls =
-    status === "deprecated"
-      ? "border-red-500/30 bg-red-50 text-red-600"
-      : status === "beta"
-        ? "border-amber-600/40 bg-amber-50 text-amber-700"
-        : "border-blue-600/30 bg-blue-50 text-blue-700";
-  return (
-    <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold ${cls}`}>
-      {status}
-    </span>
-  );
+  const tone = status === "deprecated" ? "neg" : status === "beta" ? "warn" : "accent";
+  return <Badge tone={tone}>{status}</Badge>;
 }
 
 export function PriceTable({ listings }: { listings: Listing[] }) {
@@ -68,17 +55,17 @@ export function PriceTable({ listings }: { listings: Listing[] }) {
                 <td>
                   <Link
                     href={`/provider/${l.providerId}`}
-                    className="font-medium text-black transition-colors hover:text-blue-600"
+                    className="font-medium text-black transition-colors hover:text-accent"
                   >
                     {l.providerName}
                   </Link>
                   <div className="font-mono text-xs text-black/45">{l.modelId}</div>
                 </td>
                 <td className="text-right font-mono tabular-nums">
-                  {unlisted ? <span className="text-black/30">—</span> : fmtPerM(l.cost.input)}
+                  {unlisted ? <span className="text-black/35">—</span> : fmtPerM(l.cost.input)}
                 </td>
                 <td className="text-right font-mono tabular-nums">
-                  {unlisted ? <span className="text-black/30">—</span> : fmtPerM(l.cost.output)}
+                  {unlisted ? <span className="text-black/35">—</span> : fmtPerM(l.cost.output)}
                 </td>
                 <td className="text-right font-mono tabular-nums">{fmtPerM(l.cost.cacheRead)}</td>
                 <td className="text-right font-mono tabular-nums">{fmtPerM(l.cost.cacheWrite)}</td>

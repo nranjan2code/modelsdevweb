@@ -14,6 +14,7 @@ import { EventTypeBadge, changeText } from "@/components/event-card";
 import { StatusBadge } from "@/components/price-table";
 import { CopyField } from "@/components/copy-field";
 import { JsonLd } from "@/components/jsonld";
+import { Badge } from "@/components/ui";
 import { fmtDate, fmtPerM, fmtTokens, fmtAgo } from "@/lib/format";
 
 export async function generateStaticParams() {
@@ -121,11 +122,11 @@ export default async function ModelPage({ params }: { params: Promise<{ model: s
         <JsonLd key={i} data={data} />
       ))}
       <nav className="text-sm text-black/45">
-        <Link href="/browse" className="transition-colors hover:text-blue-600">
+        <Link href="/browse" className="transition-colors hover:text-accent">
           Browse
         </Link>
         <span className="mx-1.5">/</span>
-        <Link href={`/lab/${group.labId}`} className="transition-colors hover:text-blue-600">
+        <Link href={`/lab/${group.labId}`} className="transition-colors hover:text-accent">
           {group.labId}
         </Link>
       </nav>
@@ -134,7 +135,7 @@ export default async function ModelPage({ params }: { params: Promise<{ model: s
         <p className="mono-label">Model</p>
         <h1 className="text-3xl font-bold tracking-tight text-black sm:text-4xl">{group.name}</h1>
         {c?.description && <p className="max-w-3xl leading-relaxed text-black/60">{c.description}</p>}
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-black/50">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-black/45">
           <span>{group.listings.length} providers</span>
           {releaseDate && (
             <span>
@@ -143,23 +144,15 @@ export default async function ModelPage({ params }: { params: Promise<{ model: s
           )}
           {c?.knowledge && <span>knowledge cutoff {c.knowledge}</span>}
           {c?.openWeights != null && (
-            <span
-              className={
-                c.openWeights
-                  ? "rounded-full border border-emerald-600/30 bg-emerald-50 px-2 py-0.5 font-medium text-emerald-700"
-                  : "rounded-full border border-black/10 bg-black/[0.03] px-2 py-0.5 text-black/45"
-              }
-            >
+            <Badge tone={c.openWeights ? "pos" : "muted"} bold={c.openWeights} className={c.openWeights ? "" : "font-normal"}>
               {c.openWeights ? "open weights" : "closed weights"}
-            </span>
+            </Badge>
           )}
           {statuses.map((s) => (
             <StatusBadge key={s} status={s} />
           ))}
           {experimental && (
-            <span className="rounded-full border border-purple-600/30 bg-purple-50 px-2 py-0.5 font-medium text-purple-700">
-              experimental
-            </span>
+            <Badge tone="special">experimental</Badge>
           )}
         </div>
       </header>
@@ -169,17 +162,17 @@ export default async function ModelPage({ params }: { params: Promise<{ model: s
           {group.best ? (
             <>
               <div className="card px-4 py-3">
-                <div className="font-mono text-lg font-bold tabular-nums text-blue-700">{fmtPerM(group.best.input)}</div>
+                <div className="font-mono text-lg font-bold tabular-nums text-black">{fmtPerM(group.best.input)}</div>
                 <div className="mono-label mt-0.5">best input /M · {group.best.providerName}</div>
               </div>
               <div className="card px-4 py-3">
-                <div className="font-mono text-lg font-bold tabular-nums text-blue-700">{fmtPerM(group.best.output)}</div>
+                <div className="font-mono text-lg font-bold tabular-nums text-black">{fmtPerM(group.best.output)}</div>
                 <div className="mono-label mt-0.5">best output /M</div>
               </div>
             </>
           ) : (
             <div className="card px-4 py-3">
-              <div className="font-mono text-lg font-bold tabular-nums text-emerald-700">{group.free ? "Free" : "—"}</div>
+              <div className="font-mono text-lg font-bold tabular-nums text-pos">{group.free ? "Free" : "—"}</div>
               <div className="mono-label mt-0.5">{group.free ? "cheapest listed tier" : "no listed price"}</div>
             </div>
           )}
@@ -276,7 +269,7 @@ export default async function ModelPage({ params }: { params: Promise<{ model: s
                       href={n.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-sm font-medium leading-snug text-black transition-colors hover:text-blue-600"
+                      className="text-sm font-medium leading-snug text-black transition-colors hover:text-accent"
                     >
                       {n.title}
                     </a>
@@ -313,12 +306,12 @@ export default async function ModelPage({ params }: { params: Promise<{ model: s
                             target="_blank"
                             rel="noreferrer"
                             title={`Official ${b.name} benchmark`}
-                            className="font-medium underline decoration-wavy decoration-black/25 underline-offset-4 transition-colors hover:text-blue-600 hover:decoration-blue-600"
+                            className="font-medium underline decoration-wavy decoration-black/25 underline-offset-4 transition-colors hover:text-accent hover:decoration-accent"
                           >
                             {b.name} ↗
                           </a>
                         ) : (
-                          <Link href={`/benchmarks/${slugify(b.name)}`} className="transition-colors hover:text-blue-600">
+                          <Link href={`/benchmarks/${slugify(b.name)}`} className="transition-colors hover:text-accent">
                             {b.name}
                           </Link>
                         )}
@@ -329,7 +322,7 @@ export default async function ModelPage({ params }: { params: Promise<{ model: s
                             target="_blank"
                             rel="noreferrer"
                             title="Score as reported here"
-                            className="ml-1.5 whitespace-nowrap text-[11px] font-medium text-blue-600 hover:text-blue-700"
+                            className="ml-1.5 whitespace-nowrap text-xs font-medium text-accent hover:text-accent-strong"
                           >
                             report ↗
                           </a>
@@ -352,7 +345,7 @@ export default async function ModelPage({ params }: { params: Promise<{ model: s
                       href={w.url}
                       target="_blank"
                       rel="noreferrer"
-                      className="font-medium text-blue-600 underline decoration-wavy underline-offset-4 hover:text-blue-700"
+                      className="font-medium text-accent underline decoration-wavy underline-offset-4 hover:text-accent-strong"
                     >
                       {w.label}
                     </a>
@@ -364,7 +357,7 @@ export default async function ModelPage({ params }: { params: Promise<{ model: s
         </section>
       ) : null}
 
-      <p className="text-xs leading-relaxed text-black/40">
+      <p className="text-xs leading-relaxed text-black/45">
         Prices are per million tokens (USD). “—” means the provider does not publicly list a price for this
         model. Data from models.dev; verify with the provider before purchasing.
       </p>

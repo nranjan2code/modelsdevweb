@@ -1,5 +1,6 @@
 import type { PricePoint } from "@/lib/data/history";
 import { fmtPerM } from "@/lib/format";
+import { DeltaChip } from "@/components/ui";
 
 export function Sparkline({ values, width = 160, height = 40 }: { values: number[]; width?: number; height?: number }) {
   if (values.length < 2) return null;
@@ -8,8 +9,8 @@ export function Sparkline({ values, width = 160, height = 40 }: { values: number
   const span = max - min || 1;
   const step = width / (values.length - 1);
   const pts = values.map((v, i) => `${(i * step).toFixed(1)},${(height - 3 - ((v - min) / span) * (height - 6)).toFixed(1)}`);
-  const falling = values[values.length - 1] <= values[0];
-  const color = falling ? "#059669" : "#dc2626";
+  // Falling is good here — pos/neg per docs/brand.md §3.2.
+  const color = values[values.length - 1] <= values[0] ? "var(--color-pos)" : "var(--color-neg)";
   return (
     <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} className="overflow-visible">
       <polyline points={pts.join(" ")} fill="none" stroke={color} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
@@ -33,14 +34,10 @@ export function PriceHistory({ points }: { points: PricePoint[] }) {
         <div className="space-y-1 text-sm">
           <div className="flex items-center gap-2">
             <span className="font-mono font-semibold tabular-nums text-black">{fmtPerM(last.input)}</span>
-            <span
-              className={`rounded-full border px-2 py-0.5 font-mono text-xs font-semibold tabular-nums ${
-                delta <= 0 ? "border-emerald-600/30 bg-emerald-50 text-emerald-700" : "border-red-500/30 bg-red-50 text-red-600"
-              }`}
-            >
-              {delta <= 0 ? "▼" : "▲"} {Math.abs(pctChange * 100).toFixed(1)}%
+            <span className="scale-90">
+              <DeltaChip down={delta <= 0} pct={pctChange} />
             </span>
-            <span className="text-black/50">best input /M since {first.date}</span>
+            <span className="text-black/45">best input /M since {first.date}</span>
           </div>
           <div className="text-xs text-black/45">
             {first.providers} → {last.providers} live providers · {priced.length} snapshots
