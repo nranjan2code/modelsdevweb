@@ -3,7 +3,8 @@
 import { useMemo, useState, useSyncExternalStore } from "react";
 import type { Event, EventType } from "@/lib/pipeline/types";
 import { EventCard } from "@/components/event-card";
-import { EmptyState } from "@/components/ui";
+import { Badge, EmptyState } from "@/components/ui";
+import { fmtDate } from "@/lib/format";
 
 const TYPES: { value: EventType | "all"; label: string }[] = [
   { value: "all", label: "All" },
@@ -130,42 +131,55 @@ export function ChangelogList({ events }: { events: Event[] }) {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-2">
-        <label htmlFor="changelog-search" className="sr-only">Search changes</label>
-        <input id="changelog-search" type="search" className="input w-56" placeholder="Search changes…" value={q} onChange={(e) => setQ(e.target.value)} />
-        <div className="flex flex-wrap gap-1.5">
-          {TYPES.map((t) => (
-            <button
-              key={t.value}
-              onClick={() => setFilters(makeFilters(t.value, days))}
-              aria-pressed={type === t.value}
-              className={`inline-flex min-h-11 items-center rounded-full border px-3 py-2 text-xs font-medium transition-all ${
-                type === t.value
-                  ? "border-black bg-black text-white shadow-hard-sm"
-                  : "border-black/15 bg-white text-black/60 hover:border-black hover:text-black"
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
+      <div className="card-flat grid gap-4 p-4 xl:grid-cols-[14rem_minmax(0,1fr)_auto] xl:items-end">
+        <div>
+          <label htmlFor="changelog-search" className="mono-label mb-2 block">Find a model or provider</label>
+          <input id="changelog-search" type="search" className="input w-full" placeholder="Search changes…" value={q} onChange={(e) => setQ(e.target.value)} />
         </div>
-        <div className="flex flex-wrap gap-1.5">
-          {WINDOWS.map((w) => (
-            <button
-              key={w.value}
-              onClick={() => setFilters(makeFilters(type, w.value))}
-              aria-pressed={days === w.value}
-              className={`inline-flex min-h-11 items-center rounded-full border px-3 py-2 text-xs font-medium transition-all ${
-                days === w.value
-                  ? "border-black bg-black text-white shadow-hard-sm"
-                  : "border-black/15 bg-white text-black/60 hover:border-black hover:text-black"
-              }`}
-            >
-              {w.label}
-            </button>
-          ))}
+        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
+          <div>
+            <p className="mono-label mb-2">Change type</p>
+            <div className="flex flex-wrap gap-1.5">
+              {TYPES.map((t) => (
+                <button
+                  key={t.value}
+                  onClick={() => setFilters(makeFilters(t.value, days))}
+                  aria-pressed={type === t.value}
+                  className={`inline-flex min-h-11 items-center rounded-full border px-3 py-2 text-xs font-medium transition-colors ${
+                    type === t.value
+                      ? "border-accent/30 bg-accent-soft text-accent-strong"
+                      : "border-black/15 bg-white text-black/60 hover:border-accent hover:text-accent"
+                  }`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <p className="mono-label mb-2">Time range</p>
+            <div className="flex flex-wrap gap-1.5">
+              {WINDOWS.map((w) => (
+                <button
+                  key={w.value}
+                  onClick={() => setFilters(makeFilters(type, w.value))}
+                  aria-pressed={days === w.value}
+                  className={`inline-flex min-h-11 items-center rounded-full border px-3 py-2 text-xs font-medium transition-colors ${
+                    days === w.value
+                      ? "border-accent/30 bg-accent-soft text-accent-strong"
+                      : "border-black/15 bg-white text-black/60 hover:border-accent hover:text-accent"
+                  }`}
+                >
+                  {w.label}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
-        <span className="ml-auto font-mono text-xs tabular-nums text-black/60">{filtered.length} events</span>
+        <div className="pb-3 text-left xl:text-right">
+          <span className="font-mono text-sm font-semibold tabular-nums text-black">{filtered.length}</span>
+          <span className="ml-1 text-xs text-black/60">events</span>
+        </div>
       </div>
 
       {isFiltered && (
@@ -192,16 +206,27 @@ export function ChangelogList({ events }: { events: Event[] }) {
       ) : (
         <div className="space-y-8">
           {grouped.map((group) => (
-            <div key={group.date} className="space-y-3">
-              <h2 className="sticky top-16 z-10 w-fit border border-black/15 bg-warn-fill px-2 py-1 font-hand text-xl font-bold text-black">
-                {group.date}
-              </h2>
-              <div className="border-y border-black/15">
-                {group.events.map((e) => (
-                  <EventCard key={e.id} event={e} />
-                ))}
+            <section key={group.date} className="space-y-3">
+              <div className="flex items-center gap-3">
+                <h2 className="font-hand text-xl font-bold text-black">
+                  <time dateTime={group.date}>{fmtDate(group.date)}</time>
+                </h2>
+                <Badge tone="neutral" mono>{group.events.length} events</Badge>
+                <span className="h-px flex-1 bg-black/10" aria-hidden="true" />
               </div>
-            </div>
+              <div className="overflow-hidden rounded-lg border border-black/15 bg-surface">
+                <div className="mono-label hidden grid-cols-12 gap-4 border-b border-black/15 bg-surface-tint px-4 py-3 lg:grid">
+                  <span className="col-span-4">Model and provider</span>
+                  <span className="col-span-7">What changed</span>
+                  <span className="text-right">Details</span>
+                </div>
+                <div className="divide-y divide-black/10">
+                {group.events.map((e) => (
+                  <EventCard key={e.id} event={e} layout="ledger" />
+                ))}
+                </div>
+              </div>
+            </section>
           ))}
         </div>
       )}
