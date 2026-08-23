@@ -145,7 +145,7 @@ export function ChangelogList({ events }: { events: Event[] }) {
                   key={t.value}
                   onClick={() => setFilters(makeFilters(t.value, days))}
                   aria-pressed={type === t.value}
-                  className={`inline-flex min-h-11 items-center rounded-full border px-3 py-2 text-xs font-medium transition-colors ${
+                  className={`inline-flex min-h-11 items-center rounded-md border px-3 py-2 text-xs font-medium transition-colors ${
                     type === t.value
                       ? "border-accent/30 bg-accent-soft text-accent-strong"
                       : "border-black/15 bg-white text-black/60 hover:border-accent hover:text-accent"
@@ -164,7 +164,7 @@ export function ChangelogList({ events }: { events: Event[] }) {
                   key={w.value}
                   onClick={() => setFilters(makeFilters(type, w.value))}
                   aria-pressed={days === w.value}
-                  className={`inline-flex min-h-11 items-center rounded-full border px-3 py-2 text-xs font-medium transition-colors ${
+                  className={`inline-flex min-h-11 items-center rounded-md border px-3 py-2 text-xs font-medium transition-colors ${
                     days === w.value
                       ? "border-accent/30 bg-accent-soft text-accent-strong"
                       : "border-black/15 bg-white text-black/60 hover:border-accent hover:text-accent"

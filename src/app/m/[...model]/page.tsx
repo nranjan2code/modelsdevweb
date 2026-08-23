@@ -253,7 +253,7 @@ export default async function ModelPage({ params }: { params: Promise<{ model: s
                 <h2 className="font-hand text-3xl font-bold tracking-tight text-black">Recent changes</h2>
                 <Link
                   href="/changelog"
-                  className="inline-flex min-h-11 shrink-0 items-center rounded-full border border-black/15 bg-white px-3 py-2 text-xs font-medium text-black/60 transition-colors hover:border-black hover:text-black"
+                  className="inline-flex min-h-11 shrink-0 items-center rounded-md border border-black/15 bg-white px-3 py-2 text-xs font-medium text-black/60 transition-colors hover:border-black hover:text-black"
                 >
                   Changelog →
                 </Link>
@@ -287,7 +287,7 @@ export default async function ModelPage({ params }: { params: Promise<{ model: s
                 <h2 className="font-hand text-3xl font-bold tracking-tight text-black">In the news</h2>
                 <Link
                   href="/news"
-                  className="inline-flex min-h-11 shrink-0 items-center rounded-full border border-black/15 bg-white px-3 py-2 text-xs font-medium text-black/60 transition-colors hover:border-black hover:text-black"
+                  className="inline-flex min-h-11 shrink-0 items-center rounded-md border border-black/15 bg-white px-3 py-2 text-xs font-medium text-black/60 transition-colors hover:border-black hover:text-black"
                 >
                   All news →
                 </Link>

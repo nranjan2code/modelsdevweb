@@ -83,7 +83,7 @@ export function Calculator({ rows }: { rows: CalcRow[] }) {
                   type="button"
                   aria-pressed={on}
                   onClick={() => { setWorkload(w.id); setPage(1); }}
-                  className={`rounded-full border px-2.5 py-1 text-xs font-semibold transition ${
+                  className={`rounded-md border px-2.5 py-1 text-xs font-semibold transition ${
                     on
                       ? "border-accent bg-accent-soft text-accent-strong"
                       : "border-black/15 bg-white text-black/60 hover:border-black/30 hover:text-black"
@@ -114,7 +114,7 @@ export function Calculator({ rows }: { rows: CalcRow[] }) {
                 type="button"
                 aria-pressed={v === requests}
                 onClick={() => setRequests(v)}
-                className={`rounded-full border px-2.5 py-1 font-mono text-xs font-semibold tabular-nums transition ${
+                className={`rounded-md border px-2.5 py-1 font-mono text-xs font-semibold tabular-nums transition ${
                   v === requests
                     ? "border-accent bg-accent-soft text-accent-strong"
                     : "border-black/15 bg-white text-black/60 hover:border-black/30 hover:text-black"

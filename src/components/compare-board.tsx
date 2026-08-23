@@ -214,7 +214,7 @@ export function CompareBoard({ models: packedModels }: { models: PackedCompareMo
                 <button
                   onClick={() => add(m.id)}
                   disabled={selected.length >= COMPARE_MAX}
-                  className="inline-flex min-h-11 items-center rounded-full border border-black/15 bg-white px-3 py-2 text-xs font-medium text-black/70 transition-all enabled:hover:border-black enabled:hover:text-black disabled:opacity-40"
+                  className="inline-flex min-h-11 items-center rounded-md border border-black/15 bg-white px-3 py-2 text-xs font-medium text-black/70 transition-all enabled:hover:border-black enabled:hover:text-black disabled:opacity-40"
                 >
                   + {m.name} <span className="text-black/60">{m.lab}</span>
                 </button>

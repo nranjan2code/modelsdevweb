@@ -35,8 +35,9 @@ Hard rules:
 2. **Depth is restrained.** Cards are border-led; the named `shadow-hard*`
    compatibility tokens are limited to compact controls and transient menus,
    with an 8px blur ceiling.
-3. **Corners are compact and controlled**: `rounded-md` for controls,
-   `rounded-lg` for cards/search, and `rounded-full` for status chips only.
+3. **Corners are compact and controlled**: `rounded-md` for controls and
+   status tags, `rounded-lg` for cards/search, and `rounded-full` only for
+   circular status dots.
 4. **Daylight canvas.** The working product is light; the dark ink footer is an
    intentional brand anchor, not a second theme.
 5. **Motion is brief and optional**: small lifts at 150ms, with a global
@@ -168,7 +169,7 @@ Use the shared primitives before writing any bespoke markup:
 | `.card-dashed` | globals.css | Ghost/placeholder frame. |
 | `.press` / `.lift` | globals.css | Pressable / hoverable motion. Combine with `.card*`. |
 | `.input` | globals.css | All text inputs, selects, native controls. |
-| `.pill` | globals.css | Status pill with dot (e.g. "Live · synced 12m ago"). |
+| `.pill` | globals.css | Compact status tag with dot (e.g. "Live · synced 12m ago"). |
 | `.mono-label` | globals.css | Eyebrows, field labels, micro-headings. Tone via token class (`text-special`, …). |
 | `.micro-label` | globals.css | Attribution lines, axis captions, fine print. |
 | `.wavy` (+ tone) | globals.css | Compatibility name for the restrained editorial link underline. |

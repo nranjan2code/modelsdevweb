@@ -213,7 +213,7 @@ export function BrowseTable({ rows: packedRows }: { rows: PackedBrowseRow[] }) {
               key={cap}
               onClick={() => toggleCap(cap)}
               aria-pressed={caps.has(cap)}
-              className={`inline-flex min-h-11 items-center rounded-full border px-3 py-2 text-xs font-medium transition-all ${
+              className={`inline-flex min-h-11 items-center rounded-md border px-3 py-2 text-xs font-medium transition-all ${
                 caps.has(cap)
                   ? "border-black bg-black text-white shadow-hard-sm"
                   : "border-black/15 bg-white text-black/60 hover:border-black hover:text-black"
@@ -227,7 +227,7 @@ export function BrowseTable({ rows: packedRows }: { rows: PackedBrowseRow[] }) {
           type="button"
           onClick={() => { setIncludeExtended((value) => !value); setPage(1); }}
           aria-pressed={includeExtended}
-          className={`inline-flex min-h-11 items-center rounded-full border px-3 py-2 text-xs font-medium transition-colors ${
+              className={`inline-flex min-h-11 items-center rounded-md border px-3 py-2 text-xs font-medium transition-colors ${
             includeExtended
               ? "border-special bg-special-soft text-special"
               : "border-black/15 bg-white text-black/60 hover:border-black hover:text-black"
@@ -351,7 +351,7 @@ export function BrowseTable({ rows: packedRows }: { rows: PackedBrowseRow[] }) {
         <div className="sticky bottom-4 z-30 flex justify-center">
           <Link
             href="/compare"
-            className="inline-flex min-h-11 items-center rounded-full border-2 border-black bg-accent px-4 py-2 text-sm font-semibold text-white shadow-hard-sm transition-all hover:-translate-y-px hover:shadow-none"
+            className="inline-flex min-h-11 items-center rounded-md border-2 border-black bg-accent px-4 py-2 text-sm font-semibold text-white shadow-hard-sm transition-all hover:-translate-y-px hover:shadow-none"
           >
             Compare {inCompare.length} models →
           </Link>

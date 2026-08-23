@@ -92,13 +92,13 @@ export default async function DigestPage() {
         <div className="flex flex-wrap gap-3 pt-1 text-xs">
           <Link
             href="/changelog"
-            className="inline-flex min-h-11 items-center rounded-full border border-black bg-white px-3 py-2 font-medium transition-colors hover:bg-surface-tint"
+            className="inline-flex min-h-11 items-center rounded-md border border-black bg-white px-3 py-2 font-medium transition-colors hover:bg-surface-tint"
           >
             Full changelog
           </Link>
           <a
             href="/rss.xml"
-            className="inline-flex min-h-11 items-center rounded-full border border-black bg-white px-3 py-2 font-medium transition-colors hover:bg-surface-tint"
+            className="inline-flex min-h-11 items-center rounded-md border border-black bg-white px-3 py-2 font-medium transition-colors hover:bg-surface-tint"
           >
             Subscribe via RSS
           </a>

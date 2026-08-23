@@ -96,7 +96,7 @@ function Lead({
           <div className="flex flex-wrap items-center gap-x-2.5 gap-y-2">
             <Badge tone={LEDE_TONE[story.kind]} bold>{LEDE_EYEBROW[story.kind]}</Badge>
             <span className="pill bg-white/70">
-              <span className="h-2 w-2 rounded-full bg-pos-bright" aria-hidden="true" />
+              <span className="status-dot bg-pos-bright" aria-hidden="true" />
               Live{syncedAgo ? ` · synced ${syncedAgo}` : ""}
             </span>
             {/* Rule 14: the rule that picked the lede stays next to the claim. */}

@@ -34,7 +34,7 @@ export function Badge({
 }) {
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-semibold leading-snug ${
+      className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[11px] font-semibold leading-none ${
         mono ? "font-mono tabular-nums" : ""
       } ${bold ? "font-bold" : ""} ${BADGE_TONES[tone]} ${className}`}
     >
