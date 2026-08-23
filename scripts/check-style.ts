@@ -69,12 +69,32 @@ for (const file of walk(join(ROOT, "src"))) {
   });
 }
 
+/**
+ * Editorial firewall: nothing that ranks, prices or recommends may know who
+ * pays us. This is enforced here rather than promised in a doc, because a
+ * ranking that *can* read commercial status is untrustworthy even on the days
+ * it does not. See src/lib/monetization/partners.ts.
+ */
+const RANKING_DIRS = ["src/lib/data/", "src/lib/economics/", "src/lib/scoring/", "src/lib/pipeline/"];
+const MONETIZATION_IMPORT = /from\s+["'][^"']*monetization\/[^"']*["']/;
+
+for (const file of walk(join(ROOT, "src"))) {
+  const rel = relative(ROOT, file);
+  if (!RANKING_DIRS.some((d) => rel.startsWith(d))) continue;
+  readFileSync(file, "utf8").split("\n").forEach((text, i) => {
+    if (MONETIZATION_IMPORT.test(text)) {
+      violations.push({ file: rel, line: i + 1, rule: "ranking-reads-monetization", text: text.trim() });
+    }
+  });
+}
+
 if (violations.length > 0) {
   console.error(`✗ style gate failed — ${violations.length} violation(s):\n`);
   for (const v of violations) {
     console.error(`  ${v.file}:${v.line} [${v.rule}] ${v.text.slice(0, 120)}`);
   }
-  console.error("\nSee docs/brand.md §3.3 and §5 for the token contract.");
+  console.error("\nSee docs/brand.md §3.3 and §5 for the token contract,");
+  console.error("and src/lib/monetization/partners.ts for the editorial firewall.");
   process.exit(1);
 }
 

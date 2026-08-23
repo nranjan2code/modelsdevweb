@@ -209,9 +209,10 @@ provider does not publicly list a price — it is **not** necessarily free, and 
 that case as `$0/$0`, which the pipeline excludes from every price calculation. Always verify
 with the provider before purchasing.
 
-Benchmark scores are reported by third parties *and* by the labs themselves. Roughly 60% of the
-rows upstream originate on the model vendor's own site, so every score carries a provenance
-label and only independently measured ones are used to rank. Extreme listings are defended
+Benchmark scores are reported by third parties *and* by the labs themselves. Only about a fifth
+of the rows upstream come from a recognised independent evaluator, so every score carries a
+provenance label and only independently measured ones are used to rank. Sources we cannot place
+are labelled unclassified rather than assumed to be the lab's own. Extreme listings are defended
 against: prices more than 20× from a model's median are dropped as upstream errors, and a price
 no second provider comes within 1.5× of is never recommended.
 

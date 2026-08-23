@@ -132,9 +132,13 @@ over a two-day log is the same class of error as a flat price index.
 - **The lede** (`brief.ts#lede`) picks the day's lead story from ordered rules and returns
   the rule name with it — the homepage prints it. A quiet week must read as a quiet week;
   never manufacture a story. Any new rule must be explainable in one line.
-- **Benchmark provenance** (`src/lib/data/provenance.ts`). ~60% of upstream benchmark rows
-  come from the lab's own site. Rankings use `board.independent` only; self-reported scores
-  are shown on model pages with a `Self-reported` badge and never ranked.
+- **Benchmark provenance** (`src/lib/data/provenance.ts`). Only ~21% of upstream benchmark
+  rows come from a recognised independent evaluator; ~13% are marketplace republications and
+  ~65% carry a source host that is in neither allow-list. Rankings use `board.independent`
+  only. The unrecognised majority is labelled **`Unclassified source`**, *not* `Self-reported`
+  — calling a score the lab's own without evidence is the mirror of the error this module
+  exists to prevent, so `vendor` is reserved for hosts we have actually attributed and
+  currently matches no rows.
 - **"Open weights" is two facts, not one** (`src/lib/data/weights.ts`). A licence class
   (permissive / conditional / non-commercial / unknown) and an access class (open / gated),
   read from Hugging Face model cards. Upstream's `openWeights` boolean put Apache-2.0 in the
@@ -292,12 +296,27 @@ hourly GH Action (sync.yml)
 
 ## Pages & client state
 
-- **Homepage is seven decision-led modules, deliberately.** Daily lede + model lookup → three
-  decision entry points → market pulse (labs | street | wire) → same model different price →
-  independently measured value → self-host or buy → weekly digest. Raw statistics, generic news
-  and machine interfaces stay on their dedicated pages or in the footer. Adding a module needs a
-  question no existing module answers. The previous dashboard-style versions repeated events and
-  made visitors process the database before helping them decide.
+- **Homepage is a publication front page, not a dashboard** (`src/app/page.tsx`). Six modules,
+  in order: **Lead** (the day's story + a standfirst + a live "market at a glance" rail — never
+  vanity stats like a raw model count) → **The gap** (widest credible price spreads, one leaderboard,
+  not a hero-sized restatement of its own top row) → **The wire** (model-linked press next to the
+  price tape — `getNews()` was previously fetched and never rendered on the homepage) →
+  **The boards** (a deck of `DeckCard`s — just-shipped, benchmark value, instrument classes, gateway
+  basis, self-host floors, long context, migration notices, free tier — each a real leaderboard cut
+  with a route to the page that owns it) → **Three answers** (cost / evidence / self-host, each
+  carrying a number computed today) → **Subscribe** (see below). A prior version had three modules
+  restating the top nav verbatim ("Start with a decision") and three separate views of the same
+  event log (labs/street/wire as different sections) in the highest-attention band on the page —
+  duplication, not editing. **A card or section renders only when it has rows**; do not add an
+  `EmptyState` telling the reader nothing happened; the lede already says a quiet week is quiet
+  (`brief.ts#lede`), and one module should not repeat that. Every homepage figure is computed from
+  live data at build time — no hard-coded percentages or counts in prose; if you need a number in
+  a sentence, derive it from the same catalog/board/archive the page already loaded, the way
+  `notIndependentPct` is computed from `boards.flatMap(b => b.entries)` rather than quoted from a doc.
+- **`Subscribe`** (`src/components/subscribe.tsx`) is the return mechanism — the site's only
+  channel before this was RSS in the footer, which rents the audience from whoever last shared a
+  link. Posts to `NEXT_PUBLIC_NEWSLETTER_ACTION`; with that env var unset it degrades to an RSS
+  link rather than rendering a form that silently swallows an email address.
 - **`/self-host` is the decision tool; the homepage module is its headline.** The module states
   the threshold in *dollars of API spend* rather than tokens, because the rent already is the
   break-even and a bill is a unit readers can act on — "2.5B tokens/mo" was arithmetic they had
@@ -327,6 +346,31 @@ hourly GH Action (sync.yml)
   `rankableBoards()` / `valueLeaders()`, never `entries`. See `src/lib/data/benchmarks.ts`.
 - Model pages lead the provider table with `spreadSummary()` — a generated sentence naming
   the cheapest full-context option and the catch when the outright cheapest has one.
+- **The context/price Pareto chart** (`src/components/context-price-chart.tsx`) encodes exactly
+  one categorical fact in hue — open vs. hosted weights — and gives every mark a 2px surface ring
+  so overlapping points at shared context tiers (128K, 1M) stay legible instead of fusing into a
+  solid bar. Price-band boundaries are thin recessive rules with a label, not saturated background
+  fills; a chart's loudest visual element must not be the part carrying no data. Any new chart
+  follows the same procedure: pick the form, assign color by job (categorical/sequential/diverging/
+  status), validate the palette, then mark specs — never colors first.
+
+## Monetization — the editorial firewall
+
+`src/lib/monetization/partners.ts` holds signed referral relationships. The registry is empty by
+design; it exists so the shape of an answer is decided before commercial pressure exists, not
+improvised under it.
+
+- **No module under `src/lib/data/`, `src/lib/economics/`, `src/lib/scoring/` or
+  `src/lib/pipeline/` may import `src/lib/monetization/*`.** `pnpm check:style` hard-fails the
+  build (`ranking-reads-monetization`) if one does — enforced structurally, not by policy, because
+  a ranking that merely *can* read who pays is untrustworthy even on the days it doesn't.
+- A partner link is a presentation-layer decision made after the ranking is already fixed, always
+  with the standing disclosure (`STANDING_DISCLOSURE`). A partner is never promoted into a position
+  it did not earn; a non-partner is never demoted.
+- Prospects, ranked by fit: the subscriber list (via `Subscribe`) and a sponsored digest edition
+  compound and stay editorially clean; the price archive is a licensable asset once it has real
+  depth; a referral programme on `spreadSummary()`'s "buy here" recommendation is high-value and
+  the reason the firewall exists; a single labelled sponsor slot is the least risky if ever added.
 
 ## Deployment (Vercel)
 

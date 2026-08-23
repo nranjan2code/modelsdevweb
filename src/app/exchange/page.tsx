@@ -3,13 +3,12 @@ import Link from "next/link";
 import { getCatalog, getEvents } from "@/lib/data";
 import { getPriceArchive } from "@/lib/data/archive";
 import { coverage, windowLabel } from "@/lib/data/coverage";
-import { getWeights } from "@/lib/data/weights";
-import { isFreelyUsable } from "@/lib/data/weights";
+import { getWeights, isFreelyUsable } from "@/lib/data/weights";
 import { buildBaskets, MIN_CONSTITUENTS } from "@/lib/economics/instruments";
-import { bestDiscounts, widestMarkups, MIN_QUOTES } from "@/lib/economics/basis";
+import { bestDiscounts, widestMarkups, MIN_QUOTES, type BasisReport } from "@/lib/economics/basis";
 import { MIN_OBSERVATION_DAYS } from "@/lib/economics/volatility";
 import { DEFAULT_WORKLOAD } from "@/lib/economics/workload";
-import { Badge, Bar, EmptyState, SectionHead } from "@/components/ui";
+import { Badge, Bar, SectionHead } from "@/components/ui";
 
 export const metadata: Metadata = {
   title: "Exchange",
@@ -21,6 +20,51 @@ export const metadata: Metadata = {
 const pct = (v: number) => `${v > 0 ? "+" : ""}${(v * 100).toFixed(1)}%`;
 const perM = (v: number) => (v >= 1 ? `$${v.toFixed(2)}` : `$${v.toFixed(3)}`);
 
+const BASIS_TONE = { pos: "text-pos", neg: "text-neg", special: "text-special" } as const;
+
+/**
+ * A section renders only when it has rows. A bordered box announcing that
+ * nothing qualified costs the reader attention and returns nothing — the
+ * coverage panel at the foot of the page is where absence gets explained, once.
+ */
+function BasisList({
+  reports,
+  tone,
+  subtitle,
+}: {
+  reports: BasisReport[];
+  tone: keyof typeof BASIS_TONE;
+  subtitle: (r: BasisReport) => string;
+}) {
+  return (
+    <ul className="card divide-y divide-black/10">
+      {reports.map((r) => (
+        <li key={r.groupId} className="flex items-center justify-between gap-3 px-4 py-2.5 text-sm">
+          <span className="min-w-0">
+            <Link href={`/m/${r.groupId}`} className="truncate font-medium transition-colors hover:text-accent">
+              {r.name}
+            </Link>
+            <span className="mt-0.5 block truncate text-xs text-black/60">{subtitle(r)}</span>
+          </span>
+          <span className={`shrink-0 font-mono text-sm font-semibold tabular-nums ${BASIS_TONE[tone]}`}>
+            {pct(tone === "neg" ? r.medianBasis : r.bestBasis)}
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function Stat({ label, value, note }: { label: string; value: string; note: string }) {
+  return (
+    <div>
+      <dt className="micro-label">{label}</dt>
+      <dd className="mt-1 font-mono text-2xl font-bold tabular-nums text-black">{value}</dd>
+      <dd className="text-xs text-black/60">{note}</dd>
+    </div>
+  );
+}
+
 export default async function ExchangePage() {
   const [catalog, events, archive, weights] = await Promise.all([
     getCatalog(),
@@ -30,9 +74,7 @@ export default async function ExchangePage() {
   ]);
 
   const freelyUsable = new Set(
-    Object.values(weights.models)
-      .filter(isFreelyUsable)
-      .map((f) => f.groupId),
+    Object.values(weights.models).filter(isFreelyUsable).map((f) => f.groupId),
   );
 
   const w = DEFAULT_WORKLOAD;
@@ -42,6 +84,8 @@ export default async function ExchangePage() {
   const markups = widestMarkups(catalog.tracked, w, 6);
   const cov = coverage(events, archive);
   const canIndex = cov.archiveDays >= MIN_OBSERVATION_DAYS;
+  const hasBasis = discounts.length > 0 || markups.length > 0 || openDiscounts.length > 0;
+  const twoCol = discounts.length > 0 && markups.length > 0;
 
   return (
     <div className="space-y-8">
@@ -56,32 +100,26 @@ export default async function ExchangePage() {
         </p>
       </header>
 
-      <section className="space-y-3">
-        <SectionHead
-          title="Instruments"
-          eyebrow={`${baskets.length} classes · median rate per class`}
-        />
-        <p className="max-w-3xl text-sm leading-relaxed text-black/60">
-          Tracking 3,000 listings gives you no index, because most of them are the same weights sold
-          twice. A basket is a class of purchase. Membership comes from verified facts — lab
-          attribution, effective price, context window, licence — never from a model&apos;s name, and
-          a class needs {MIN_CONSTITUENTS} constituents before it gets a median.
-        </p>
-        {baskets.length === 0 ? (
-          <EmptyState>No class has enough priced constituents yet.</EmptyState>
-        ) : (
+      {baskets.length > 0 && (
+        <section className="space-y-3">
+          <SectionHead title="Instruments" eyebrow={`${baskets.length} classes · median rate per class`} />
+          <p className="max-w-3xl text-sm leading-relaxed text-black/60">
+            Tracking {catalog.stats.listings.toLocaleString("en-US")} listings gives you no index,
+            because most of them are the same weights sold twice — they collapse to{" "}
+            {catalog.stats.activeModels.toLocaleString("en-US")} models anyone actually serves. A
+            basket is a class of purchase. Membership comes from verified facts — lab attribution,
+            effective price, context window, licence — never from a model&apos;s name, and a class
+            needs {MIN_CONSTITUENTS} constituents before it gets a median.
+          </p>
           <div className="grid gap-4 md:grid-cols-2">
             {baskets.map((b) => {
-              const span = b.dearest && b.cheapest && b.cheapest.rate > 0
-                ? b.dearest.rate / b.cheapest.rate
-                : null;
+              const span =
+                b.dearest && b.cheapest && b.cheapest.rate > 0 ? b.dearest.rate / b.cheapest.rate : null;
               return (
                 <article key={b.instrument.id} className="card space-y-3 p-5">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <h3 className="text-lg font-bold tracking-tight text-black">
-                        {b.instrument.name}
-                      </h3>
+                      <h3 className="text-lg font-bold tracking-tight text-black">{b.instrument.name}</h3>
                       <p className="micro-label mt-1">{b.constituents.length} constituents</p>
                     </div>
                     <div className="text-right">
@@ -117,124 +155,79 @@ export default async function ExchangePage() {
                     </div>
                   </dl>
                   {span != null && span >= 2 && (
-                    <p className="micro-label">
-                      {span.toFixed(1)}× between the ends of this class
-                    </p>
+                    <p className="micro-label">{span.toFixed(1)}× between the ends of this class</p>
                   )}
                 </article>
               );
             })}
           </div>
-        )}
-      </section>
+        </section>
+      )}
 
-      <section className="space-y-3">
-        <SectionHead
-          title="Basis"
-          eyebrow="Gateway quotes vs the lab's own counter"
-          eyebrowTone="warn"
-        />
-        <p className="max-w-3xl text-sm leading-relaxed text-black/60">
-          When a lab sells its own model, every gateway listing is a quote on identical weights, so
-          the gap is pure markup — or a subsidy. Only models with a first-party reference and at
-          least {MIN_QUOTES} gateway quotes appear; without a lab counter there is no basis to
-          measure, and the cheapest reseller is not a substitute for one. A quote no second venue
-          comes close to is treated as a feed error and kept out of the headline figures.
-        </p>
-        <p className="max-w-3xl text-sm leading-relaxed text-black/60">
-          Open-weight models are listed separately below. When the weights are public the
-          lab&apos;s API is one host among many, so a host undercutting it is ordinary competition —
-          quite unlike a gateway undercutting the only company that has the weights.
-        </p>
-        <div className="grid gap-6 md:grid-cols-2">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Badge tone="pos">Below the lab</Badge>
-              <h3 className="text-sm font-bold text-black">Proprietary models, undercut</h3>
+      {hasBasis && (
+        <section className="space-y-3">
+          <SectionHead title="Basis" eyebrow="Gateway quotes vs the lab's own counter" eyebrowTone="warn" />
+          <p className="max-w-3xl text-sm leading-relaxed text-black/60">
+            When a lab sells its own model, every gateway listing is a quote on identical weights, so
+            the gap is pure markup — or a subsidy. Only models with a first-party reference and at
+            least {MIN_QUOTES} gateway quotes appear; without a lab counter there is no basis to
+            measure, and the cheapest reseller is not a substitute for one. A quote no second venue
+            comes close to is treated as a feed error and kept out of the headline figures.
+          </p>
+
+          {(discounts.length > 0 || markups.length > 0) && (
+            <div className={`grid gap-6 ${twoCol ? "md:grid-cols-2" : ""}`}>
+              {discounts.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Badge tone="pos">Below the lab</Badge>
+                    <h3 className="text-sm font-bold text-black">Proprietary models, undercut</h3>
+                  </div>
+                  <BasisList
+                    reports={discounts}
+                    tone="pos"
+                    subtitle={(r) => `${r.quotes[0].providerName} vs ${r.referenceProvider}`}
+                  />
+                </div>
+              )}
+              {markups.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Badge tone="neg">Above the lab</Badge>
+                    <h3 className="text-sm font-bold text-black">Fattest typical markups</h3>
+                  </div>
+                  <BasisList
+                    reports={markups}
+                    tone="neg"
+                    subtitle={(r) => `median of ${r.quotes.length} quotes vs ${r.referenceProvider}`}
+                  />
+                </div>
+              )}
             </div>
-            {discounts.length === 0 ? (
-              <EmptyState>No gateway is corroborated as undercutting a first-party price.</EmptyState>
-            ) : (
-              <ul className="card divide-y divide-black/10">
-                {discounts.map((r) => (
-                  <li key={r.groupId} className="flex items-center justify-between gap-3 px-4 py-2.5 text-sm">
-                    <span className="min-w-0">
-                      <Link href={`/m/${r.groupId}`} className="truncate font-medium transition-colors hover:text-accent">
-                        {r.name}
-                      </Link>
-                      <span className="mt-0.5 block truncate text-xs text-black/60">
-                        {r.quotes[0].providerName} vs {r.referenceProvider}
-                      </span>
-                    </span>
-                    <span className="shrink-0 font-mono text-sm font-semibold tabular-nums text-pos">
-                      {pct(r.bestBasis)}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Badge tone="neg">Above the lab</Badge>
-              <h3 className="text-sm font-bold text-black">Fattest typical markups</h3>
+          )}
+
+          {openDiscounts.length > 0 && (
+            <div className="space-y-2 pt-2">
+              <div className="flex items-center gap-2">
+                <Badge tone="special">Open weights</Badge>
+                <h3 className="text-sm font-bold text-black">Hosts undercutting the lab that trained it</h3>
+              </div>
+              <BasisList
+                reports={openDiscounts}
+                tone="special"
+                subtitle={(r) => `${r.quotes[0].providerName} vs ${r.referenceProvider}`}
+              />
+              <p className="max-w-3xl text-xs leading-relaxed text-black/60">
+                These are not markups being competed away — they are the gap between a lab&apos;s
+                managed service and a commodity host running the same public weights. When the
+                weights are public the lab&apos;s API is one host among many, so this is ordinary
+                competition, quite unlike a gateway undercutting the only company that has the
+                weights. Read it as a self-host signal, not as evidence the lab is overcharging.
+              </p>
             </div>
-            {markups.length === 0 ? (
-              <EmptyState>No model carries a positive median markup right now.</EmptyState>
-            ) : (
-              <ul className="card divide-y divide-black/10">
-                {markups.map((r) => (
-                  <li key={r.groupId} className="flex items-center justify-between gap-3 px-4 py-2.5 text-sm">
-                    <span className="min-w-0">
-                      <Link href={`/m/${r.groupId}`} className="truncate font-medium transition-colors hover:text-accent">
-                        {r.name}
-                      </Link>
-                      <span className="mt-0.5 block truncate text-xs text-black/60">
-                        median of {r.quotes.length} quotes vs {r.referenceProvider}
-                      </span>
-                    </span>
-                    <span className="shrink-0 font-mono text-sm font-semibold tabular-nums text-neg">
-                      {pct(r.medianBasis)}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </div>
-        {openDiscounts.length > 0 && (
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Badge tone="special">Open weights</Badge>
-              <h3 className="text-sm font-bold text-black">
-                Hosts undercutting the lab that trained it
-              </h3>
-            </div>
-            <ul className="card grid divide-y divide-black/10 sm:grid-cols-2 sm:divide-y-0">
-              {openDiscounts.map((r) => (
-                <li key={r.groupId} className="flex items-center justify-between gap-3 px-4 py-2.5 text-sm">
-                  <span className="min-w-0">
-                    <Link href={`/m/${r.groupId}`} className="truncate font-medium transition-colors hover:text-accent">
-                      {r.name}
-                    </Link>
-                    <span className="mt-0.5 block truncate text-xs text-black/60">
-                      {r.quotes[0].providerName} vs {r.referenceProvider}
-                    </span>
-                  </span>
-                  <span className="shrink-0 font-mono text-sm font-semibold tabular-nums text-special">
-                    {pct(r.bestBasis)}
-                  </span>
-                </li>
-              ))}
-            </ul>
-            <p className="max-w-3xl text-xs leading-relaxed text-black/60">
-              These are not markups being competed away — they are the gap between a lab&apos;s
-              managed service and a commodity host running the same public weights. Read them as a
-              self-host signal, not as evidence the lab is overcharging.
-            </p>
-          </div>
-        )}
-      </section>
+          )}
+        </section>
+      )}
 
       <section className="space-y-3">
         <SectionHead title="What we can honestly measure" eyebrow="Coverage" eyebrowTone="accent" />
@@ -251,7 +244,7 @@ export default async function ExchangePage() {
           </dl>
           <div className="space-y-2 border-t border-black/10 pt-4">
             <div className="flex items-center gap-3 text-sm">
-              <span className="w-28 shrink-0 micro-label">index readiness</span>
+              <span className="micro-label w-28 shrink-0">index readiness</span>
               <Bar
                 pct={Math.min(1, cov.archiveDays / MIN_OBSERVATION_DAYS)}
                 tone={canIndex ? "pos" : "neutral"}
@@ -274,16 +267,6 @@ export default async function ExchangePage() {
           </div>
         </div>
       </section>
-    </div>
-  );
-}
-
-function Stat({ label, value, note }: { label: string; value: string; note: string }) {
-  return (
-    <div>
-      <dt className="micro-label">{label}</dt>
-      <dd className="mt-1 font-mono text-2xl font-bold tabular-nums text-black">{value}</dd>
-      <dd className="text-xs text-black/60">{note}</dd>
     </div>
   );
 }

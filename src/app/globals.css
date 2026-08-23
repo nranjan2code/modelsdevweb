@@ -488,6 +488,28 @@ body {
     background: var(--color-special);
   }
 
+  .chart-key-ring {
+    background: transparent;
+    border: 2px solid var(--color-warn);
+  }
+
+  /*
+   * Filters repaint the scatter on every change. Without a transition the plot
+   * jumps and the reader loses track of which mark was which; easing the
+   * position makes a filter read as the same population moving, not a new one.
+   */
+  .pareto-dot,
+  .pareto-halo {
+    transition: cx 220ms ease, cy 220ms ease, r 140ms ease, opacity 140ms ease;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pareto-dot,
+    .pareto-halo {
+      transition: none;
+    }
+  }
+
   /* Editorial links */
   .wavy {
     text-decoration-line: underline;

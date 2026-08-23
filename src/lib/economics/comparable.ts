@@ -17,9 +17,17 @@
 import type { ModelGroup } from "../data/index";
 
 /**
- * Text in, text out, no audio. Multimodal *input* (vision) is allowed — those
- * models bill image input as text tokens on a published ratio — but audio is
- * not, because its token is a unit of time rather than of text.
+ * Text in, text out, and nothing but text coming out.
+ *
+ * Multimodal *input* is fine and deliberately so: Gemini 2.5 Flash accepts
+ * audio and video, but a text request to it is billed in text tokens like any
+ * other. Gating on input modality excluded 64 of 346 tracked models — Gemini
+ * Flash and Qwen3.5 among them — which is far worse than the mis-comparison it
+ * was trying to prevent.
+ *
+ * What actually breaks the unit is the *output* side: Whisper takes audio and
+ * has no text input to price, and an image generator's output charge is a
+ * picture, not a token. Those are the cases to exclude.
  */
 export function isTokenComparable(g: ModelGroup): boolean {
   const canonical = g.canonical?.modalities;
@@ -34,8 +42,6 @@ export function isTokenComparable(g: ModelGroup): boolean {
 
 function comparable(input: string[], output: string[]): boolean {
   if (!input.includes("text") || !output.includes("text")) return false;
-  if (input.includes("audio") || output.includes("audio")) return false;
-  // An image-generating model's output charge is not a text token.
-  if (output.includes("image") || output.includes("video")) return false;
-  return true;
+  // Anything non-text on the output side means the bill is not a text token.
+  return !output.some((m) => m === "audio" || m === "image" || m === "video");
 }

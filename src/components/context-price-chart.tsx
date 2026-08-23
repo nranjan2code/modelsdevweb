@@ -173,15 +173,19 @@ export function ContextPriceChart({ points }: { points: ContextPricePoint[] }) {
               <title id="pareto-title">Interactive model price and context Pareto chart</title>
               <desc id="pareto-desc">Dots farther left are cheaper and dots higher up have more context. The ochre line connects models not dominated on both price and context for the active filters.</desc>
               <defs><clipPath id="pareto-plot"><rect x={ML} y={MT} width={W - ML - MR} height={H - MT - MB} /></clipPath></defs>
+              {/*
+                Price bands were three saturated background fills. They made the
+                chart's loudest element the part carrying no data, while 300
+                identical blue dots carried all of it. Boundaries are now thin
+                rules with a label; colour belongs to the marks.
+              */}
               <g clipPath="url(#pareto-plot)">
-                <rect x={sx(PRICE_FLOOR)} y={MT} width={Math.max(0, sx(0.25) - sx(PRICE_FLOOR))} height={H - MT - MB} fill="var(--color-pos-soft)" opacity="0.55" />
-                <rect x={sx(0.25)} y={MT} width={Math.max(0, sx(3) - sx(0.25))} height={H - MT - MB} fill="var(--color-accent-soft)" opacity="0.42" />
-                <rect x={sx(3)} y={MT} width={Math.max(0, sx(dataMaxPrice) - sx(3))} height={H - MT - MB} fill="var(--color-warn-soft)" opacity="0.5" />
-                {[128_000, 1_048_576].map((value) => <line key={value} x1={ML} y1={sy(value)} x2={W - MR} y2={sy(value)} stroke="var(--color-ink)" strokeOpacity="0.18" strokeDasharray="5 5" />)}
+                {[128_000, 1_048_576].map((value) => <line key={value} x1={ML} y1={sy(value)} x2={W - MR} y2={sy(value)} stroke="var(--color-ink)" strokeOpacity="0.12" strokeDasharray="4 6" />)}
+                {[0.25, 3].map((value) => <line key={value} x1={sx(value)} y1={MT} x2={sx(value)} y2={H - MB} stroke="var(--color-ink)" strokeOpacity="0.16" strokeDasharray="4 6" />)}
               </g>
-              <text x={Math.max(ML + 32, sx(0.03))} y={MT + 18} textAnchor="middle" fontSize="10.5" fill="var(--color-pos)" fontFamily="var(--font-mono)">budget</text>
-              <text x={sx(1)} y={MT + 18} textAnchor="middle" fontSize="10.5" fill="var(--color-accent-strong)" fontFamily="var(--font-mono)">mainstream</text>
-              <text x={Math.min(W - MR - 30, sx(30))} y={MT + 18} textAnchor="middle" fontSize="10.5" fill="var(--color-warn)" fontFamily="var(--font-mono)">premium</text>
+              <text x={Math.max(ML + 32, sx(0.03))} y={MT + 16} textAnchor="middle" fontSize="10" fill="rgba(0,0,0,0.5)" fontFamily="var(--font-mono)">budget</text>
+              <text x={sx(1)} y={MT + 16} textAnchor="middle" fontSize="10" fill="rgba(0,0,0,0.5)" fontFamily="var(--font-mono)">mainstream</text>
+              <text x={Math.min(W - MR - 30, sx(30))} y={MT + 16} textAnchor="middle" fontSize="10" fill="rgba(0,0,0,0.5)" fontFamily="var(--font-mono)">premium</text>
               <text x={W - MR - 8} y={clamp(sy(1_500_000), MT + 35, H - MB - 12)} textAnchor="end" fontSize="10" fill="rgba(0,0,0,0.56)" fontFamily="var(--font-mono)">ultra context · ≥ 1M</text>
               <text x={W - MR - 8} y={clamp(sy(350_000), MT + 35, H - MB - 12)} textAnchor="end" fontSize="10" fill="rgba(0,0,0,0.56)" fontFamily="var(--font-mono)">long context · 128K–1M</text>
               <text x={W - MR - 8} y={clamp(sy(32_000), MT + 35, H - MB - 12)} textAnchor="end" fontSize="10" fill="rgba(0,0,0,0.56)" fontFamily="var(--font-mono)">standard context · &lt; 128K</text>
@@ -191,15 +195,30 @@ export function ContextPriceChart({ points }: { points: ContextPricePoint[] }) {
               <text x={(W + ML) / 2} y={H - 9} textAnchor="middle" fontSize="12" fill="rgba(0,0,0,0.72)" fontFamily="var(--font-sans)">cheaper ← {basisLabel(basis).toLowerCase()} per 1M tokens → pricier</text>
               <text x={15} y={H / 2} textAnchor="middle" fontSize="12" fill="rgba(0,0,0,0.72)" fontFamily="var(--font-sans)" transform={`rotate(-90 15 ${H / 2})`}>larger context window →</text>
               <g clipPath="url(#pareto-plot)">
-                {frontierLine && <polyline points={frontierLine} fill="none" stroke="var(--color-warn)" strokeWidth="2" strokeLinejoin="round" strokeDasharray="5 4" />}
+                {frontierLine && <polyline points={frontierLine} fill="none" stroke="var(--color-warn)" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" strokeDasharray="6 5" opacity="0.9" />}
                 {visible.map((point) => {
                   const x = sx(paretoPrice(point, basis));
                   const y = sy(point.context);
                   const isFrontier = frontierIds.has(point.id);
                   const isSelected = point.id === selected?.id;
                   return <g key={point.id} role="button" tabIndex={0} aria-label={`${point.name}, ${fmtPerM(paretoPrice(point, basis))} per million, ${fmtTokens(point.context)} context`} onClick={() => setSelectedId(point.id)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setSelectedId(point.id); } }} onMouseEnter={() => setHoveredId(point.id)} onMouseLeave={() => setHoveredId(null)} onFocus={() => setHoveredId(point.id)} onBlur={() => setHoveredId(null)} className="cursor-pointer outline-none">
-                    {(isFrontier || isSelected) && <circle cx={x} cy={y} r={isSelected ? 9 : 7} fill={isSelected ? "var(--color-accent-soft)" : "var(--color-warn-soft)"} stroke={isSelected ? "var(--color-accent)" : "var(--color-warn)"} strokeWidth={isSelected ? 2 : 1.25} />}
-                    <circle cx={x} cy={y} r={isSelected ? 5 : 4} fill={point.open ? "var(--color-surface)" : "var(--color-accent)"} stroke="var(--color-accent)" strokeWidth={point.open ? 1.75 : 0} opacity={isFrontier || isSelected ? 1 : 0.62} />
+                    {(isFrontier || isSelected) && <circle cx={x} cy={y} r={isSelected ? 10 : 8} fill="none" stroke={isSelected ? "var(--color-accent)" : "var(--color-warn)"} strokeWidth={isSelected ? 2 : 1.5} className="pareto-halo" />}
+                    {/*
+                      Hundreds of models share the 128K and 1M context lines, so
+                      raw dots fuse into a solid bar. A 2px surface ring on every
+                      mark keeps neighbours legible at full density; hue carries
+                      the one categorical fact worth encoding here.
+                    */}
+                    <circle
+                      cx={x}
+                      cy={y}
+                      r={isSelected ? 6 : 4.5}
+                      fill={point.open ? "var(--color-special)" : "var(--color-accent)"}
+                      stroke="var(--color-surface)"
+                      strokeWidth="2"
+                      opacity={isFrontier || isSelected ? 1 : 0.78}
+                      className="pareto-dot"
+                    />
                   </g>;
                 })}
                 {activePoint && <ChartTooltip point={activePoint} x={sx(paretoPrice(activePoint, basis))} y={sy(activePoint.context)} basis={basis} />}
@@ -209,10 +228,10 @@ export function ContextPriceChart({ points }: { points: ContextPricePoint[] }) {
         )}
 
         <div className="chart-legend">
-          <span className="inline-flex items-center gap-2"><span className="chart-key" />Hosted / closed weights</span>
-          <span className="inline-flex items-center gap-2"><span className="chart-key chart-key-hollow" />Open weights</span>
-          <span className="inline-flex items-center gap-2"><span className="chart-key border border-warn bg-warn-soft" />Pareto frontier</span>
-          <span>Regions: budget ≤ $0.25 · mainstream $0.25–$3 · premium ≥ $3</span>
+          <span className="inline-flex items-center gap-2"><span className="chart-key" />Hosted weights</span>
+          <span className="inline-flex items-center gap-2"><span className="chart-key chart-key-special" />Open weights</span>
+          <span className="inline-flex items-center gap-2"><span className="chart-key chart-key-ring" />Pareto frontier</span>
+          <span>Bands: budget ≤ $0.25 · mainstream $0.25–$3 · premium ≥ $3</span>
         </div>
 
         {selected ? (

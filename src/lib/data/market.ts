@@ -1,4 +1,5 @@
 import { groupContext, pricedProviderCount, providerCount, type ModelGroup } from "./index";
+import { isTokenComparable } from "../economics/comparable";
 import { DEFAULT_WORKLOAD, ratePerMillion, type Workload } from "../economics/workload";
 import { unlistedPrice } from "../pipeline/normalize";
 import type { Listing } from "../pipeline/types";
@@ -129,6 +130,10 @@ function withoutPriceOutliers(ranked: Listing[], rate: (l: Listing) => number): 
 }
 
 export function priceSpread(g: ModelGroup, w: Workload = DEFAULT_WORKLOAD): PriceSpread | null {
+  // Providers disagree on what a token *is* for image and audio models — some
+  // fold a per-image charge into the token field — so a "spread" across them
+  // measures units rather than price.
+  if (!isTokenComparable(g)) return null;
   const priced = g.listings.filter(hasRealPrice);
   if (priced.length < MIN_SPREAD_LISTINGS) return null;
 

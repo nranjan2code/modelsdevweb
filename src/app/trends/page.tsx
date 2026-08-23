@@ -7,6 +7,9 @@ import { EventTypeBadge } from "@/components/event-card";
 import { Bar } from "@/components/ui";
 import { fmtPerM, fmtTokens } from "@/lib/format";
 import { ContextPriceChart, type ContextPricePoint } from "@/components/context-price-chart";
+import { getPriceArchive } from "@/lib/data/archive";
+import { coverage, observedEvents, windowLabel } from "@/lib/data/coverage";
+import { DEFAULT_WORKLOAD } from "@/lib/economics/workload";
 
 export const metadata: Metadata = {
   title: "Market trends",
@@ -63,11 +66,16 @@ export default async function TrendsPage() {
       textInput: (g.canonical?.modalities?.input.includes("text") ?? false) || g.listings.some((listing) => listing.modalities.input.includes("text")),
       textOutput: (g.canonical?.modalities?.output.includes("text") ?? false) || g.listings.some((listing) => listing.modalities.output.includes("text")),
     }));
-  const blendedMedian = median(priced.map((g) => groupRate(g)).filter(Number.isFinite));
+  const medianRate = median(priced.map((g) => groupRate(g)).filter(Number.isFinite));
   const contextMedian = median(groups.map((g) => groupContext(g)).filter((value): value is number => value != null));
-  const latestEventDate = Math.max(...events.map((event) => Date.parse(`${event.date}T00:00:00Z`)), 0);
+  // The window we can actually cover, with the first sync's cold-start diff
+  // excluded — a fixed "seven-day tape" over a three-day log counted the
+  // catalog's initial import as a week of market activity.
+  const cov = coverage(events, await getPriceArchive());
+  const observed = observedEvents(events, cov);
+  const latestEventDate = Math.max(...observed.map((event) => Date.parse(`${event.date}T00:00:00Z`)), 0);
   const recentCutoff = latestEventDate - 6 * 86_400_000;
-  const recentEvents = events.filter((event) => Date.parse(`${event.date}T00:00:00Z`) >= recentCutoff).length;
+  const recentEvents = observed.filter((event) => Date.parse(`${event.date}T00:00:00Z`) >= recentCutoff).length;
 
   const byType = new Map<string, number>();
   for (const e of events) byType.set(e.type, (byType.get(e.type) ?? 0) + 1);
@@ -100,9 +108,9 @@ export default async function TrendsPage() {
 
       <dl className="metric-strip grid grid-cols-2 lg:grid-cols-4">
         <div className="metric-cell"><dt className="micro-label">Canonical market</dt><dd className="mt-1 font-mono text-2xl font-bold tabular-nums">{groups.length}</dd><dd className="text-xs text-black/60">tracked models</dd></div>
-        <div className="metric-cell"><dt className="micro-label">Median blended price</dt><dd className="mt-1 font-mono text-2xl font-bold tabular-nums">{blendedMedian == null ? "—" : fmtPerM(blendedMedian)}</dd><dd className="text-xs text-black/60">per 1M tokens</dd></div>
+        <div className="metric-cell"><dt className="micro-label">Median rate · {DEFAULT_WORKLOAD.name.toLowerCase()}</dt><dd className="mt-1 font-mono text-2xl font-bold tabular-nums">{medianRate == null ? "—" : fmtPerM(medianRate)}</dd><dd className="text-xs text-black/60">per 1M billable tokens</dd></div>
         <div className="metric-cell"><dt className="micro-label">Median context</dt><dd className="mt-1 font-mono text-2xl font-bold tabular-nums">{fmtTokens(contextMedian)}</dd><dd className="text-xs text-black/60">known windows</dd></div>
-        <div className="metric-cell"><dt className="micro-label">Seven-day tape</dt><dd className="mt-1 font-mono text-2xl font-bold tabular-nums">{recentEvents}</dd><dd className="text-xs text-black/60">catalog changes</dd></div>
+        <div className="metric-cell"><dt className="micro-label">Tape · {windowLabel(cov).replace(/^the /, "")}</dt><dd className="mt-1 font-mono text-2xl font-bold tabular-nums">{recentEvents}</dd><dd className="text-xs text-black/60">catalog changes</dd></div>
       </dl>
 
       <section className="grid gap-6 lg:grid-cols-2">
@@ -124,7 +132,7 @@ export default async function TrendsPage() {
         <div className="space-y-3">
           <h2 className="font-hand text-2xl font-bold tracking-tight text-black">Price distribution</h2>
           <div className="card p-4">
-            <div className="mono-label mb-3">blended price /M · {priced.length} priced models</div>
+            <div className="mono-label mb-3">{DEFAULT_WORKLOAD.name.toLowerCase()} rate /M · {priced.length} priced models</div>
             <ul className="space-y-2.5">
               {buckets.map((b) => (
                 <li key={b.label} className="flex items-center gap-2 text-sm sm:gap-3">
