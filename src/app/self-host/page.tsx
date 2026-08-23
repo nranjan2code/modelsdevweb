@@ -48,7 +48,7 @@ export default async function SelfHostPage() {
 
   return (
     <div className="space-y-12">
-      <header className="space-y-3">
+      <header className="page-intro">
         <p className="mono-label text-special">The other half of the price question</p>
         <h1 className="text-3xl font-bold tracking-tight text-black sm:text-4xl">Self-host or buy?</h1>
         <p className="max-w-2xl text-sm leading-relaxed text-black/60">
@@ -99,7 +99,7 @@ export default async function SelfHostPage() {
                   <Link href={`/m/${c.groupId}`} className="truncate font-medium transition-colors hover:text-accent">
                     {c.name}
                   </Link>
-                  <span className="shrink-0 font-mono text-xs tabular-nums text-black/45">
+                  <span className="shrink-0 font-mono text-xs tabular-nums text-black/60">
                     {Math.round((c.parameters ?? 0) / 1e9)}B · ~
                     {Math.round(memoryRequiredGb(c.parameters ?? 0))} GB
                   </span>

@@ -131,14 +131,15 @@ export function ChangelogList({ events }: { events: Event[] }) {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
-        <input className="input w-56" placeholder="Search…" value={q} onChange={(e) => setQ(e.target.value)} />
+        <label htmlFor="changelog-search" className="sr-only">Search changes</label>
+        <input id="changelog-search" type="search" className="input w-56" placeholder="Search changes…" value={q} onChange={(e) => setQ(e.target.value)} />
         <div className="flex flex-wrap gap-1.5">
           {TYPES.map((t) => (
             <button
               key={t.value}
               onClick={() => setFilters(makeFilters(t.value, days))}
               aria-pressed={type === t.value}
-              className={`rounded-full border px-2.5 py-1 text-xs font-medium transition-all ${
+              className={`inline-flex min-h-11 items-center rounded-full border px-3 py-2 text-xs font-medium transition-all ${
                 type === t.value
                   ? "border-black bg-black text-white shadow-hard-sm"
                   : "border-black/15 bg-white text-black/60 hover:border-black hover:text-black"
@@ -154,7 +155,7 @@ export function ChangelogList({ events }: { events: Event[] }) {
               key={w.value}
               onClick={() => setFilters(makeFilters(type, w.value))}
               aria-pressed={days === w.value}
-              className={`rounded-full border px-2.5 py-1 text-xs font-medium transition-all ${
+              className={`inline-flex min-h-11 items-center rounded-full border px-3 py-2 text-xs font-medium transition-all ${
                 days === w.value
                   ? "border-black bg-black text-white shadow-hard-sm"
                   : "border-black/15 bg-white text-black/60 hover:border-black hover:text-black"
@@ -164,7 +165,7 @@ export function ChangelogList({ events }: { events: Event[] }) {
             </button>
           ))}
         </div>
-        <span className="ml-auto font-mono text-xs tabular-nums text-black/45">{filtered.length} events</span>
+        <span className="ml-auto font-mono text-xs tabular-nums text-black/60">{filtered.length} events</span>
       </div>
 
       {isFiltered && (
@@ -175,7 +176,7 @@ export function ChangelogList({ events }: { events: Event[] }) {
           </span>
           <button
             onClick={() => setFilters(DEFAULT_FILTERS)}
-            className="ml-auto rounded border border-accent/40 px-1.5 py-0.5 font-semibold transition-colors hover:border-accent hover:bg-white"
+            className="ml-auto inline-flex min-h-11 items-center rounded border border-accent/40 px-3 py-2 font-semibold transition-colors hover:border-accent hover:bg-white"
           >
             clear ×
           </button>
@@ -192,12 +193,14 @@ export function ChangelogList({ events }: { events: Event[] }) {
         <div className="space-y-8">
           {grouped.map((group) => (
             <div key={group.date} className="space-y-3">
-              <h2 className="sticky top-16 z-10 -rotate-1 bg-warn-fill px-2 py-0.5 font-hand text-xl font-bold text-black shadow-hard-sm w-fit">
+              <h2 className="sticky top-16 z-10 w-fit border border-black/15 bg-warn-fill px-2 py-1 font-hand text-xl font-bold text-black">
                 {group.date}
               </h2>
-              {group.events.map((e) => (
-                <EventCard key={e.id} event={e} />
-              ))}
+              <div className="border-y border-black/15">
+                {group.events.map((e) => (
+                  <EventCard key={e.id} event={e} />
+                ))}
+              </div>
             </div>
           ))}
         </div>

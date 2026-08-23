@@ -62,7 +62,7 @@ export function EventCard({ event, href }: { event: Event; href?: string | null 
         ) : (
           <span className="font-medium text-black">{event.modelName}</span>
         )}
-        <span className="text-xs text-black/45">
+        <span className="text-xs text-black/60">
           {event.providerId ? `via ${event.providerId} · ` : ""}
           <time dateTime={event.date}>{fmtDate(event.date)}</time>
         </span>
@@ -77,7 +77,7 @@ export function EventCard({ event, href }: { event: Event; href?: string | null 
       )}
     </>
   );
-  const cls = "card lift group flex flex-col gap-1.5 p-4";
+  const cls = "group flex min-h-20 flex-col justify-center gap-1.5 border-b border-black/10 py-4 last:border-b-0";
   return target ? (
     <Link href={target} className={`${cls} transition-colors hover:border-accent`}>
       {body}

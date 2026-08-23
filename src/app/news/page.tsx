@@ -21,7 +21,7 @@ export default async function NewsPage() {
     .filter((item) => item.modelId != null);
   return (
     <div className="space-y-6">
-      <header className="space-y-2">
+      <header className="page-intro">
         <p className="mono-label">Daily briefing</p>
         <h1 className="text-3xl font-bold tracking-tight text-black sm:text-4xl">Model news</h1>
         <p className="max-w-2xl text-sm leading-relaxed text-black/60">
@@ -40,11 +40,11 @@ export default async function NewsPage() {
       {stories.length === 0 ? (
         <EmptyState>No model-linked stories passed today&rsquo;s relevance checks — the feed will try again on the next daily run.</EmptyState>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="divide-y divide-black/10 border-y border-black/15">
           {stories.map(({ story, modelId }) => {
             const n = story.lead;
             return (
-              <article key={n.id} className="card lift flex flex-col gap-1.5 p-4">
+              <article key={n.id} className="flex flex-col gap-2 py-5">
                 <a
                   href={n.url}
                   target="_blank"
@@ -54,7 +54,7 @@ export default async function NewsPage() {
                   {n.title}
                 </a>
                 <p className="line-clamp-2 text-xs leading-relaxed text-black/60">{n.snippet}</p>
-                <div className="flex items-center gap-1.5 text-xs text-black/45">
+                <div className="flex items-center gap-1.5 text-xs text-black/60">
                   {n.favicon && (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={n.favicon} alt="" width={12} height={12} className="h-3 w-3 rounded-sm" />

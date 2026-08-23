@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { fmtPerM } from "@/lib/format";
 import { Badge } from "@/components/ui";
+import { EmptyTableRow, SortableTh, TablePager, type SortDirection } from "@/components/data-table";
 
 export interface HostRow {
   id: string;
@@ -36,6 +37,10 @@ const tokens = (n: number) =>
 export function SelfHostTable({ rows }: { rows: HostRow[] }) {
   const [monthly, setMonthly] = useState(100_000_000);
   const [q, setQ] = useState("");
+  const [sort, setSort] = useState<"name" | "apiCost" | "rentPerMonth" | "savings">("savings");
+  const [direction, setDirection] = useState<SortDirection>("desc");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
 
   const scored = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -45,10 +50,22 @@ export function SelfHostTable({ rows }: { rows: HostRow[] }) {
         return { ...r, apiCost, savings: apiCost - r.rentPerMonth };
       })
       .filter((r) => !needle || `${r.name} ${r.labName}`.toLowerCase().includes(needle))
-      .sort((a, b) => b.savings - a.savings);
-  }, [rows, monthly, q]);
+      .sort((a, b) => {
+        const value = sort === "name" ? a.name.localeCompare(b.name) : a[sort] - b[sort];
+        return direction === "asc" ? value : -value;
+      });
+  }, [rows, monthly, q, sort, direction]);
 
   const flipped = scored.filter((r) => r.savings > 0).length;
+  const totalPages = Math.max(1, Math.ceil(scored.length / pageSize));
+  const current = Math.min(page, totalPages);
+  const paged = scored.slice((current - 1) * pageSize, current * pageSize);
+
+  function changeSort(next: typeof sort) {
+    setDirection((value) => next === sort ? (value === "asc" ? "desc" : "asc") : next === "name" ? "asc" : "desc");
+    setSort(next);
+    setPage(1);
+  }
 
   return (
     <div className="space-y-5">
@@ -71,7 +88,7 @@ export function SelfHostTable({ rows }: { rows: HostRow[] }) {
             />
             <output id="volume-value" className="font-mono text-2xl font-bold tabular-nums text-black">
               {tokens(monthly)}
-              <span className="text-sm font-medium text-black/45"> tokens/mo</span>
+              <span className="text-sm font-medium text-black/60"> tokens/mo</span>
             </output>
           </div>
           <div className="mt-3 flex flex-wrap gap-2">
@@ -81,7 +98,7 @@ export function SelfHostTable({ rows }: { rows: HostRow[] }) {
                 type="button"
                 onClick={() => setMonthly(p.tokens)}
                 aria-pressed={monthly === p.tokens}
-                className={`rounded-full border px-3 py-1 text-xs font-medium transition-all ${
+                className={`inline-flex min-h-11 items-center rounded-full border px-3 py-2 text-xs font-medium transition-all ${
                   monthly === p.tokens
                     ? "border-black bg-black text-white"
                     : "border-black/15 bg-white text-black/60 hover:border-black hover:text-black"
@@ -110,28 +127,24 @@ export function SelfHostTable({ rows }: { rows: HostRow[] }) {
         </p>
       </div>
 
-      <input
-        type="search"
-        value={q}
-        onChange={(e) => setQ(e.target.value)}
-        placeholder="Filter models…"
-        aria-label="Filter models"
-        className="input w-full sm:max-w-xs"
-      />
-
-      <div className="card overflow-x-auto">
+      <div className="data-table-shell">
+        <div className="data-table-toolbar">
+          <input type="search" value={q} onChange={(e) => { setQ(e.target.value); setPage(1); }} placeholder="Filter models…" aria-label="Filter models" className="input w-full sm:max-w-xs" />
+          <span className="ml-auto font-mono text-xs tabular-nums text-black/60">{scored.length} models</span>
+        </div>
+      <div className="data-table-viewport">
         <table className="table-base min-w-[720px]">
           <thead>
             <tr>
-              <th>Model</th>
-              <th className="text-right">API at your volume</th>
-              <th className="text-right">Cheapest GPU that fits</th>
-              <th className="text-right">Difference</th>
+              <SortableTh label="model" active={sort === "name"} direction={direction} onSort={() => changeSort("name")}>Model</SortableTh>
+              <SortableTh label="API cost" active={sort === "apiCost"} direction={direction} onSort={() => changeSort("apiCost")} align="right">API at your volume</SortableTh>
+              <SortableTh label="GPU rent" active={sort === "rentPerMonth"} direction={direction} onSort={() => changeSort("rentPerMonth")} align="right">Cheapest GPU that fits</SortableTh>
+              <SortableTh label="cost difference" active={sort === "savings"} direction={direction} onSort={() => changeSort("savings")} align="right">Difference</SortableTh>
               <th>Verdict</th>
             </tr>
           </thead>
           <tbody>
-            {scored.map((r) => (
+            {paged.map((r) => (
               <tr key={r.id}>
                 <td>
                   <Link href={`/m/${r.id}`} className="font-medium transition-colors hover:text-accent">
@@ -150,7 +163,7 @@ export function SelfHostTable({ rows }: { rows: HostRow[] }) {
                 </td>
                 <td
                   className={`text-right font-mono font-semibold tabular-nums ${
-                    r.savings > 0 ? "text-pos" : "text-black/45"
+                    r.savings > 0 ? "text-pos" : "text-black/60"
                   }`}
                 >
                   {r.savings > 0 ? `+${usd(r.savings)}` : `−${usd(Math.abs(r.savings))}`}
@@ -164,12 +177,12 @@ export function SelfHostTable({ rows }: { rows: HostRow[] }) {
                 </td>
               </tr>
             ))}
+            {scored.length === 0 && <EmptyTableRow colSpan={5}>No models match that filter.</EmptyTableRow>}
           </tbody>
         </table>
       </div>
-      {scored.length === 0 && (
-        <p className="text-sm text-black/45">No models match that filter.</p>
-      )}
+      <TablePager page={current} pageSize={pageSize} total={scored.length} onPageChange={setPage} onPageSizeChange={(size) => { setPageSize(size); setPage(1); }} noun="models" />
+      </div>
     </div>
   );
 }

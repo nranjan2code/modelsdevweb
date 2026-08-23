@@ -28,15 +28,6 @@ const LEDE_TONE: Record<Lede["kind"], "pos" | "neg" | "accent" | "warn" | "speci
   quiet: "accent",
 };
 
-const LEDE_RAIL: Record<Lede["kind"], string> = {
-  cut: "bg-pos",
-  launch: "bg-pos",
-  hike: "bg-neg",
-  sunset: "bg-neg",
-  street: "bg-special",
-  quiet: "bg-accent",
-};
-
 const LEDE_EYEBROW: Record<Lede["kind"], string> = {
   cut: "Price cut",
   launch: "New release",
@@ -47,9 +38,9 @@ const LEDE_EYEBROW: Record<Lede["kind"], string> = {
 };
 
 const DECISIONS = [
-  { number: "01", title: "Find the right model", body: "Price, context, capability and evidence.", href: "/browse", cta: "Explore models" },
-  { number: "02", title: "Compare a shortlist", body: "Two to four models, row by row.", href: "/compare", cta: "Start comparing" },
-  { number: "03", title: "Price a workload", body: "Tokens in, tokens out, monthly bill.", href: "/calculator", cta: "Run the numbers" },
+  { title: "Find the right model", body: "Price, context, capability and evidence.", href: "/browse", cta: "Explore models" },
+  { title: "Compare a shortlist", body: "Two to four models, row by row.", href: "/compare", cta: "Start comparing" },
+  { title: "Price a workload", body: "Tokens in, tokens out, monthly bill.", href: "/calculator", cta: "Run the numbers" },
 ] as const;
 
 function DailyBrief({
@@ -64,11 +55,8 @@ function DailyBrief({
 }) {
   return (
     <section className="hero-shell" aria-labelledby="daily-lede">
-      <div className="hero-grid" aria-hidden="true" />
-      <span className={`absolute inset-y-0 left-0 w-1.5 ${LEDE_RAIL[story.kind]}`} aria-hidden="true" />
-
-      <div className="relative grid gap-8 lg:grid-cols-[minmax(0,1.2fr)_minmax(20rem,0.8fr)] lg:items-center">
-        <div>
+      <div className="relative grid lg:grid-cols-[minmax(0,1.25fr)_minmax(20rem,0.75fr)]">
+        <div className="p-6 sm:p-9 lg:p-12">
           <div className="flex flex-wrap items-center gap-2">
             <Badge tone={LEDE_TONE[story.kind]} bold>{LEDE_EYEBROW[story.kind]}</Badge>
             <span className="pill bg-white/70">
@@ -76,8 +64,8 @@ function DailyBrief({
               Live{syncedAgo ? ` · synced ${syncedAgo}` : ""}
             </span>
           </div>
-          <p className="mono-label mt-6 text-accent">What the AI model market did today</p>
-          <h1 id="daily-lede" className="mt-2 max-w-3xl text-3xl font-bold leading-[1.08] tracking-tight text-black sm:text-5xl">
+          <p className="mono-label mt-8 text-accent">Today&rsquo;s market brief</p>
+          <h1 id="daily-lede" className="mt-2 max-w-3xl text-3xl font-bold leading-[1.06] tracking-[-0.035em] text-black sm:text-5xl">
             {story.headline}
           </h1>
           <p className="mt-4 max-w-2xl text-base leading-relaxed text-black/70 sm:text-lg">{story.body}</p>
@@ -88,7 +76,7 @@ function DailyBrief({
           <p className="micro-label mt-4">selected by: {story.rule}</p>
         </div>
 
-        <aside className="card-flat bg-white/80 p-5 sm:p-6" aria-label="Model lookup and market coverage">
+        <aside className="border-t border-black/15 bg-surface-tint p-6 sm:p-9 lg:border-l lg:border-t-0 lg:p-10" aria-label="Model lookup and market coverage">
           <p className="mono-label text-accent">Check before you choose</p>
           <h2 className="mt-2 text-xl font-bold tracking-tight text-black">One model. Every provider.</h2>
           <p className="mt-2 text-sm leading-relaxed text-black/60">Published prices, context catches, evidence and recent changes in one place.</p>
@@ -97,17 +85,17 @@ function DailyBrief({
             <div className="pr-3">
               <dt className="micro-label">tracked</dt>
               <dd className="mt-1 font-mono text-xl font-bold tabular-nums text-black">{trackedModels}</dd>
-              <dd className="text-xs text-black/45">models</dd>
+              <dd className="text-xs text-black/60">models</dd>
             </div>
             <div className="px-3">
               <dt className="micro-label">coverage</dt>
               <dd className="mt-1 font-mono text-xl font-bold tabular-nums text-black">{providers}</dd>
-              <dd className="text-xs text-black/45">providers</dd>
+              <dd className="text-xs text-black/60">providers</dd>
             </div>
             <div className="pl-3">
               <dt className="micro-label">7-day tape</dt>
               <dd className="mt-1 font-mono text-xl font-bold tabular-nums text-black">{weekEvents}</dd>
-              <dd className="text-xs text-black/45">changes</dd>
+              <dd className="text-xs text-black/60">changes</dd>
             </div>
           </dl>
           <p className="micro-label mt-4 leading-relaxed">A dash means unlisted, not free · verify before purchasing</p>
@@ -121,17 +109,16 @@ function DecisionStrip() {
   return (
     <section aria-labelledby="decision-heading">
       <h2 id="decision-heading" className="sr-only">Start with a decision</h2>
-      <div className="card-flat grid overflow-hidden md:grid-cols-3">
+      <div className="grid overflow-hidden rounded-lg border border-black/15 bg-surface md:grid-cols-3">
         {DECISIONS.map((decision, index) => (
           <Link
-            key={decision.number}
+            key={decision.href}
             href={decision.href}
-            className={`group flex items-center gap-4 p-4 transition-colors hover:bg-accent-soft sm:p-5 ${index > 0 ? "border-t border-black/10 md:border-l md:border-t-0" : ""}`}
+            className={`group flex min-h-24 items-center gap-4 p-4 transition-colors hover:bg-accent-soft sm:p-5 ${index > 0 ? "border-t border-black/10 md:border-l md:border-t-0" : ""}`}
           >
-            <span className="font-mono text-sm font-bold tabular-nums text-accent">{decision.number}</span>
             <span className="min-w-0 flex-1">
               <span className="block font-bold text-black group-hover:text-accent">{decision.title}</span>
-              <span className="mt-0.5 block text-xs text-black/45">{decision.body}</span>
+              <span className="mt-0.5 block text-xs text-black/60">{decision.body}</span>
             </span>
             <span className="shrink-0 text-sm font-semibold text-accent" aria-hidden="true">→</span>
             <span className="sr-only">{decision.cta}</span>
@@ -149,10 +136,10 @@ function MoveList({ items, empty }: { items: CollapsedMove[]; empty: string }) {
       {items.slice(0, 3).map((move, index) => (
         <li key={`${move.id}-${move.providerId}-${index}`}>
           <Link href={move.id ? `/m/${move.id}` : "/changelog"} className="flex items-center gap-3 py-3 transition-colors hover:text-accent">
-            <span className="w-5 shrink-0 font-mono text-xs tabular-nums text-black/35">{index + 1}.</span>
+            <span className="w-5 shrink-0 font-mono text-xs tabular-nums text-black/60">{index + 1}.</span>
             <span className="min-w-0 flex-1">
               <span className="block truncate font-medium">{move.name}</span>
-              <span className="block truncate font-mono text-xs tabular-nums text-black/45">
+              <span className="block truncate font-mono text-xs tabular-nums text-black/60">
                 {fmtPerM(move.from)} → {fmtPerM(move.to)} /M
                 {move.venues > 1 ? ` · ${move.venues} venues` : move.providerName ? ` · ${move.providerName}` : ""}
               </span>
@@ -176,9 +163,9 @@ function WireList({ events, eventHref }: { events: Event[]; eventHref: (event: E
             <div className="flex flex-wrap items-center gap-2">
               <EventTypeBadge type={event.type} />
               <span className="min-w-0 flex-1 truncate text-sm font-medium text-black group-hover:text-accent">{event.modelName}</span>
-              <time className="font-mono text-xs tabular-nums text-black/35" dateTime={event.date}>{event.date.slice(5)}</time>
+              <time className="font-mono text-xs tabular-nums text-black/60" dateTime={event.date}>{event.date.slice(5)}</time>
             </div>
-            {event.changes[0] && <p className="mt-1 truncate font-mono text-xs text-black/45">{changeText(event.changes[0])}</p>}
+            {event.changes[0] && <p className="mt-1 truncate font-mono text-xs text-black/60">{changeText(event.changes[0])}</p>}
           </div>
         );
         return <li key={event.id}>{href ? <Link href={href}>{content}</Link> : content}</li>;
@@ -199,17 +186,17 @@ function MarketBoard({ labMoves, streetMoves, events, eventHref }: {
       <div className="card grid overflow-hidden lg:grid-cols-3">
         <article className="p-5 sm:p-6">
           <div className="flex items-center justify-between gap-3"><h3 className="text-lg font-bold text-black">The labs</h3><Badge tone="pos">First party</Badge></div>
-          <p className="mt-1 text-xs text-black/45">The model itself got cheaper or dearer.</p>
+          <p className="mt-1 text-xs text-black/60">The model itself got cheaper or dearer.</p>
           <div className="mt-3"><MoveList items={labMoves} empty="No lab changed its own pricing this week — the tape is quiet." /></div>
         </article>
         <article className="border-t border-black/10 bg-special-soft p-5 sm:p-6 lg:border-l lg:border-t-0">
           <div className="flex items-center justify-between gap-3"><h3 className="text-lg font-bold text-black">The street</h3><Badge tone="special">Resellers</Badge></div>
-          <p className="mt-1 text-xs text-black/45">Gateway markup moved. The model&rsquo;s price did not.</p>
+          <p className="mt-1 text-xs text-black/60">Gateway markup moved. The model&rsquo;s price did not.</p>
           <div className="mt-3"><MoveList items={streetMoves} empty="No reseller changed its listing this week." /></div>
         </article>
         <article className="border-t border-black/10 p-5 sm:p-6 lg:border-l lg:border-t-0">
           <div className="flex items-center justify-between gap-3"><h3 className="text-lg font-bold text-black">The wire</h3><Badge tone="accent">Latest</Badge></div>
-          <p className="mt-1 text-xs text-black/45">The newest changes across the catalog.</p>
+          <p className="mt-1 text-xs text-black/60">The newest changes across the catalog.</p>
           <div className="mt-3"><WireList events={events} eventHref={eventHref} /></div>
         </article>
       </div>
@@ -239,9 +226,9 @@ function SpreadFeature({ row }: { row: SpreadRow }) {
       <div className="p-5 sm:p-7">
         <p className="text-sm leading-relaxed text-black/60">{spreadSummary(row.group, row.spread)}</p>
         <dl className="mt-5 grid grid-cols-[1fr_auto_1fr] items-end gap-3 border-t border-black/10 pt-5 font-mono tabular-nums">
-          <div><dt className="micro-label">lowest full-context</dt><dd className="mt-1 text-xl font-bold text-black">{fmtPerM(low)}</dd><dd className="truncate text-xs text-black/45">{pick.providerName}</dd></div>
-          <div className="pb-4 text-black/35">→</div>
-          <div className="text-right"><dt className="micro-label">highest in range</dt><dd className="mt-1 text-xl font-bold text-black">{fmtPerM(high)}</dd><dd className="truncate text-xs text-black/45">{row.spread.dearest.providerName}</dd></div>
+          <div><dt className="micro-label">lowest full-context</dt><dd className="mt-1 text-xl font-bold text-black">{fmtPerM(low)}</dd><dd className="truncate text-xs text-black/60">{pick.providerName}</dd></div>
+          <div className="pb-4 text-black/60">→</div>
+          <div className="text-right"><dt className="micro-label">highest in range</dt><dd className="mt-1 text-xl font-bold text-black">{fmtPerM(high)}</dd><dd className="truncate text-xs text-black/60">{row.spread.dearest.providerName}</dd></div>
         </dl>
         <span className="mt-5 block text-sm font-semibold text-accent group-hover:text-accent-strong">Compare providers →</span>
       </div>
@@ -259,8 +246,8 @@ function SpreadShortlist({ rows }: { rows: SpreadRow[] }) {
           return (
             <li key={row.group.id}>
               <Link href={`/m/${row.group.id}`} className="group block p-5 transition-colors hover:bg-accent-soft">
-                <div className="flex items-center gap-3"><span className="font-mono text-xs tabular-nums text-black/35">0{index + 2}</span><span className="min-w-0 flex-1 truncate font-bold text-black group-hover:text-accent">{row.group.name}</span><Badge tone="warn" mono bold>{row.spread.ratio.toFixed(1)}×</Badge></div>
-                <div className="mt-3 flex items-center justify-between gap-3 font-mono text-xs tabular-nums text-black/45"><span className="truncate">{pick.providerName}</span><span className="shrink-0 text-black">{fmtPerM(low)} → {fmtPerM(high)}</span></div>
+                <div className="flex items-center gap-3"><span className="font-mono text-xs tabular-nums text-black/60">0{index + 2}</span><span className="min-w-0 flex-1 truncate font-bold text-black group-hover:text-accent">{row.group.name}</span><Badge tone="warn" mono bold>{row.spread.ratio.toFixed(1)}×</Badge></div>
+                <div className="mt-3 flex items-center justify-between gap-3 font-mono text-xs tabular-nums text-black/60"><span className="truncate">{pick.providerName}</span><span className="shrink-0 text-black">{fmtPerM(low)} → {fmtPerM(high)}</span></div>
               </Link>
             </li>
           );
@@ -288,8 +275,8 @@ function ValueSpotlight({ board }: { board: ReturnType<typeof rankableBoards>[nu
           <ol className="divide-y divide-black/10">
             {leaders.map((entry, index) => (
               <li key={entry.groupId} className="grid grid-cols-[2rem_minmax(0,1fr)_auto] items-center gap-3 px-5 py-4 sm:px-7">
-                <span className="font-mono text-xs font-bold tabular-nums text-black/35">0{index + 1}</span>
-                <span className="min-w-0"><Link href={`/m/${entry.groupId}`} className="block truncate font-bold text-black hover:text-accent">{entry.groupName}</Link><span className="font-mono text-xs tabular-nums text-black/45">score {entry.score}</span></span>
+                <span className="font-mono text-xs font-bold tabular-nums text-black/60">0{index + 1}</span>
+                <span className="min-w-0"><Link href={`/m/${entry.groupId}`} className="block truncate font-bold text-black hover:text-accent">{entry.groupName}</Link><span className="font-mono text-xs tabular-nums text-black/60">score {entry.score}</span></span>
                 <strong className="font-mono text-lg tabular-nums text-pos">{Math.round(entry.pointsPerDollar!).toLocaleString("en-US")} pts/$</strong>
               </li>
             ))}
@@ -354,8 +341,7 @@ export default async function HomePage() {
       </section>
 
       <section>
-        <div className="card relative overflow-hidden p-5 sm:p-7">
-          <div className="absolute inset-y-0 left-0 w-1.5 bg-accent" aria-hidden="true" />
+        <div className="card relative overflow-hidden border-t-4 border-t-accent p-5 sm:p-7">
           <div className="grid items-center gap-6 lg:grid-cols-[1fr_auto]">
             <div><Badge tone="accent">Weekly edition</Badge><h2 className="mt-3 text-2xl font-bold tracking-tight text-black">The consequential changes, once a week.</h2><p className="mt-2 max-w-3xl text-sm leading-relaxed text-black/60">{weekEvents} catalog changes landed in the last 7 days. The digest separates launches, lab price moves and retirements from reseller noise—and says when the week was quiet.</p><p className="micro-label mt-3">Auto-written from the auditable diff log · no manufactured story</p></div>
             <div className="flex flex-wrap gap-x-5 gap-y-2 lg:justify-end"><Link href="/digest" className="text-sm font-semibold text-accent hover:text-accent-strong">Read the digest →</Link><a href="/rss.xml" className="text-sm font-semibold text-black/60 hover:text-black">Subscribe via RSS →</a></div>

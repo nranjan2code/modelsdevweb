@@ -8,7 +8,7 @@ import {
   providerCount,
 } from "@/lib/data";
 import type { Modality } from "@/lib/pipeline/types";
-import { BrowseTable, type BrowseRow } from "@/components/browse-table";
+import { BrowseTable, type BrowseRow, type PackedBrowseRow } from "@/components/browse-table";
 
 export const metadata: Metadata = {
   title: "Browse models",
@@ -62,10 +62,32 @@ export default async function BrowsePage() {
       tracked: trackedIds.has(g.id),
     };
   });
+  const packedRows: PackedBrowseRow[] = rows.map((row) => [
+    row.id,
+    row.name,
+    row.lab,
+    row.input,
+    row.output,
+    row.free,
+    row.ctx,
+    (row.reasoning ? 1 : 0) |
+      (row.tools ? 2 : 0) |
+      (row.structured ? 4 : 0) |
+      (row.vision ? 8 : 0) |
+      (row.audio ? 16 : 0) |
+      (row.video ? 32 : 0) |
+      (row.pdf ? 64 : 0) |
+      (row.open ? 128 : 0),
+    row.released,
+    row.providers,
+    row.swe,
+    row.flags,
+    row.tracked,
+  ]);
 
   return (
     <div className="space-y-6">
-      <header className="space-y-2">
+      <header className="page-intro">
         <p className="mono-label">Catalog</p>
         <h1 className="text-3xl font-bold tracking-tight text-black sm:text-4xl">Browse models</h1>
         <p className="max-w-2xl text-sm leading-relaxed text-black/60">
@@ -75,7 +97,7 @@ export default async function BrowsePage() {
           published.
         </p>
       </header>
-      <BrowseTable rows={rows} />
+      <BrowseTable rows={packedRows} />
     </div>
   );
 }

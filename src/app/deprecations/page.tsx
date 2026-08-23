@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { getCatalog } from "@/lib/data";
-import { fmtDate, fmtPerM } from "@/lib/format";
-import { Badge } from "@/components/ui";
+import { DeprecationsTable } from "@/components/catalog-tables";
 
 export const metadata: Metadata = {
   title: "Deprecations",
@@ -26,7 +24,7 @@ export default async function DeprecationsPage() {
 
   return (
     <div className="space-y-6">
-      <header className="space-y-2">
+      <header className="page-intro">
         <p className="mono-label">Sunset watch</p>
         <h1 className="text-3xl font-bold tracking-tight text-black sm:text-4xl">Deprecations</h1>
         <p className="max-w-2xl text-sm leading-relaxed text-black/60">
@@ -35,56 +33,7 @@ export default async function DeprecationsPage() {
         </p>
       </header>
 
-      <div className="card overflow-x-auto">
-        <table className="table-base min-w-[720px]">
-          <thead>
-            <tr>
-              <th>Model</th>
-              <th>Deprecated on</th>
-              <th className="text-right">Last updated</th>
-              <th className="text-right">Cheapest live price</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map(({ group, deprecated }) => (
-              <tr key={group.id}>
-                <td>
-                  <Link href={`/m/${group.id}`} className="font-medium text-black transition-colors hover:text-accent">
-                    {group.name}
-                  </Link>
-                  <span className="ml-2 text-xs text-black/45">{group.labId}</span>
-                </td>
-                <td>
-                  <span className="inline-flex flex-wrap gap-1">
-                    {deprecated.map((l) => (
-                      <Badge key={l.key} tone="neg">
-                        {l.providerName}
-                      </Badge>
-                    ))}
-                  </span>
-                </td>
-                <td className="whitespace-nowrap text-right text-xs text-black/45">
-                  {fmtDate(deprecated[0]?.lastUpdated)}
-                </td>
-                <td className="whitespace-nowrap text-right font-mono tabular-nums">
-                  {group.best ? (
-                    <span className="font-semibold text-pos">{fmtPerM(group.best.input)}</span>
-                  ) : (
-                    <span className="text-black/35">none live</span>
-                  )}
-                </td>
-              </tr>
-            ))}
-            {rows.length === 0 && (
-              <tr>
-                <td colSpan={4} className="py-10 text-center text-sm text-black/45">
-                  No deprecated listings in the current snapshot.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      <DeprecationsTable rows={rows.map(({ group, deprecated }) => ({ id: group.id, name: group.name, lab: group.labId, providers: deprecated.map((listing) => listing.providerName), lastUpdated: deprecated[0]?.lastUpdated ?? null, bestInput: group.best?.input ?? null }))} />
     </div>
   );
 }

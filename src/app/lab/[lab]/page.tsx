@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getCatalog, groupContext, groupReleaseDate } from "@/lib/data";
-import { fmtPerM, fmtTokens, fmtDate } from "@/lib/format";
+import { LabModelsTable } from "@/components/catalog-tables";
 
 export async function generateStaticParams() {
   const catalog = await getCatalog();
@@ -23,14 +23,14 @@ export default async function LabPage({ params }: { params: Promise<{ lab: strin
 
   return (
     <div className="space-y-6">
-      <nav className="text-sm text-black/45">
+      <nav className="text-sm text-black/60">
         <Link href="/browse" className="transition-colors hover:text-accent">
           Browse
         </Link>
         <span className="mx-1.5">/</span>
         <span className="font-medium text-black">{lab}</span>
       </nav>
-      <header className="space-y-2">
+      <header className="page-intro">
         <p className="mono-label">Lab</p>
         <h1 className="text-3xl font-bold tracking-tight text-black sm:text-4xl">{lab}</h1>
         <p className="max-w-2xl text-sm leading-relaxed text-black/60">
@@ -44,38 +44,7 @@ export default async function LabPage({ params }: { params: Promise<{ lab: strin
         </p>
       </header>
 
-      <div className="card overflow-x-auto">
-        <table className="table-base min-w-[680px]">
-          <thead>
-            <tr>
-              <th>Model</th>
-              <th className="text-right">Best in /M</th>
-              <th className="text-right">Best out /M</th>
-              <th className="text-right">Context</th>
-              <th className="text-right">Providers</th>
-              <th>Released</th>
-            </tr>
-          </thead>
-          <tbody>
-            {groups
-              .sort((a, b) => (groupReleaseDate(b) ?? "").localeCompare(groupReleaseDate(a) ?? ""))
-              .map((g) => (
-                <tr key={g.id}>
-                  <td>
-                    <Link href={`/m/${g.id}`} className="font-medium text-black transition-colors hover:text-accent">
-                      {g.name}
-                    </Link>
-                  </td>
-                  <td className="text-right font-mono tabular-nums">{fmtPerM(g.best?.input ?? null)}</td>
-                  <td className="text-right font-mono tabular-nums">{fmtPerM(g.best?.output ?? null)}</td>
-                  <td className="text-right font-mono tabular-nums">{fmtTokens(groupContext(g))}</td>
-                  <td className="text-right tabular-nums text-black/60">{g.listings.length}</td>
-                  <td className="whitespace-nowrap text-xs text-black/45">{fmtDate(groupReleaseDate(g))}</td>
-                </tr>
-              ))}
-          </tbody>
-        </table>
-      </div>
+      <LabModelsTable rows={groups.map((group) => ({ id: group.id, name: group.name, input: group.best?.input ?? null, output: group.best?.output ?? null, context: groupContext(group), providers: group.listings.length, released: groupReleaseDate(group) }))} />
     </div>
   );
 }

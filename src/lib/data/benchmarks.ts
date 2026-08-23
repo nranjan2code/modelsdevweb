@@ -37,19 +37,45 @@ export function slugify(name: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
+function entryPriority(entry: BenchmarkEntry): number {
+  return entry.provenance === "independent" ? 1 : 0;
+}
+
+/**
+ * Upstream sometimes repeats a benchmark under punctuation variants and can
+ * publish several runs for one canonical model. A board is a model ranking,
+ * so it has one stable route and one row per model. Prefer independently
+ * measured observations, then the strongest recorded result within the same
+ * provenance class.
+ */
+function collapseBoardEntries(entries: BenchmarkEntry[]): BenchmarkEntry[] {
+  const byGroup = new Map<string, BenchmarkEntry>();
+  for (const entry of entries) {
+    const current = byGroup.get(entry.groupId);
+    if (
+      !current ||
+      entryPriority(entry) > entryPriority(current) ||
+      (entryPriority(entry) === entryPriority(current) && entry.score > current.score)
+    ) {
+      byGroup.set(entry.groupId, entry);
+    }
+  }
+  return [...byGroup.values()].sort((a, b) => b.score - a.score);
+}
+
 let cache: BenchmarkBoard[] | null = null;
 
 export async function getBenchmarkBoards(): Promise<BenchmarkBoard[]> {
   if (cache) return cache;
   const catalog = await getCatalog();
-  const byName = new Map<string, BenchmarkEntry[]>();
-  const metrics = new Map<string, string | null>();
+  const bySlug = new Map<string, { name: string; entries: BenchmarkEntry[]; metric: string | null }>();
   for (const g of catalog.groups) {
     const c = g.canonical;
     if (!c) continue;
     const best = g.best;
     for (const b of c.benchmarks as Benchmark[]) {
-      const arr = byName.get(b.name);
+      const slug = slugify(b.name);
+      const board = bySlug.get(slug) ?? { name: b.name, entries: [], metric: b.metric };
       let pointsPerDollar: number | null = null;
       if (best && best.input != null) {
         const blend = blendPrice(best.input, best.output);
@@ -67,19 +93,18 @@ export async function getBenchmarkBoards(): Promise<BenchmarkBoard[]> {
         bestOutput: best?.output ?? null,
         pointsPerDollar,
       };
-      if (arr) arr.push(entry);
-      else byName.set(b.name, [entry]);
-      if (!metrics.has(b.name)) metrics.set(b.name, b.metric);
+      board.entries.push(entry);
+      bySlug.set(slug, board);
     }
   }
-  cache = [...byName.entries()]
-    .map(([name, entries]) => {
-      const sorted = entries.sort((a, b) => b.score - a.score);
+  cache = [...bySlug.entries()]
+    .map(([slug, board]) => {
+      const sorted = collapseBoardEntries(board.entries);
       const independent = sorted.filter((e) => e.provenance === "independent");
       return {
-        name,
-        slug: slugify(name),
-        metric: metrics.get(name) ?? null,
+        name: board.name,
+        slug,
+        metric: board.metric,
         entries: sorted,
         independent,
         fullyIndependent: independent.length === sorted.length && sorted.length > 0,

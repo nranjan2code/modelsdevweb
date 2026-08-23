@@ -32,7 +32,7 @@ function badge(label: string, value: string, valueColor: string, valueTextColor 
   <linearGradient id="s" x2="0" y2="100%"><stop offset="0" stop-color="#bbb" stop-opacity=".1"/><stop offset="1" stop-opacity=".1"/></linearGradient>
   <clipPath id="r"><rect width="${w}" height="${h}" rx="3" fill="#fff"/></clipPath>
   <g clip-path="url(#r)">
-    <rect width="${lw}" height="${h}" fill="#0a0a0a"/>
+    <rect width="${lw}" height="${h}" fill="#111827"/>
     <rect x="${lw}" width="${vw}" height="${h}" fill="${valueColor}"/>
     <rect width="${w}" height="${h}" fill="url(#s)"/>
   </g>
@@ -59,7 +59,7 @@ async function main(): Promise<void> {
         "#2563eb",
       );
     } else {
-      svg = badge("Model Pulse", "price unlisted", "#737373");
+      svg = badge("Model Pulse", "price unlisted", "#596275");
     }
     const file = path.join(OUT_DIR, `${g.id}.svg`);
     await mkdir(path.dirname(file), { recursive: true });

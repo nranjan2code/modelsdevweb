@@ -146,7 +146,7 @@ export default async function ModelPage({ params }: { params: Promise<{ model: s
       {jsonLd.map((data, i) => (
         <JsonLd key={i} data={data} />
       ))}
-      <nav className="text-sm text-black/45">
+      <nav className="text-sm text-black/60">
         <Link href="/browse" className="transition-colors hover:text-accent">
           Browse
         </Link>
@@ -156,11 +156,11 @@ export default async function ModelPage({ params }: { params: Promise<{ model: s
         </Link>
       </nav>
 
-      <header className="space-y-2">
+      <header className="page-intro">
         <p className="mono-label">Model</p>
         <h1 className="text-3xl font-bold tracking-tight text-black sm:text-4xl">{group.name}</h1>
         {c?.description && <p className="max-w-3xl leading-relaxed text-black/60">{c.description}</p>}
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-black/45">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-black/60">
           <span>{providers} providers · {liveListings.length} listings</span>
           {releaseDate && (
             <span>
@@ -183,29 +183,29 @@ export default async function ModelPage({ params }: { params: Promise<{ model: s
       </header>
 
       {(lowestInput || lowestOutput || group.free || ctx) && (
-        <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <section className="metric-strip grid grid-cols-2 sm:grid-cols-4" aria-label="Model summary">
           {lowestInput && lowestOutput ? (
             <>
-              <div className="card px-4 py-3">
+              <div className="metric-cell">
                 <div className="font-mono text-lg font-bold tabular-nums text-black">{fmtPerM(lowestInput.cost.input)}</div>
                 <div className="mono-label mt-0.5">lowest input /M · {lowestInput.providerName}</div>
               </div>
-              <div className="card px-4 py-3">
+              <div className="metric-cell">
                 <div className="font-mono text-lg font-bold tabular-nums text-black">{fmtPerM(lowestOutput.cost.output)}</div>
                 <div className="mono-label mt-0.5">lowest output /M · {lowestOutput.providerName}</div>
               </div>
             </>
           ) : (
-            <div className="card px-4 py-3">
+            <div className="metric-cell">
               <div className="font-mono text-lg font-bold tabular-nums text-pos">{group.free ? "Free" : "—"}</div>
               <div className="mono-label mt-0.5">{group.free ? "cheapest listed tier" : "no listed price"}</div>
             </div>
           )}
-          <div className="card-flat px-4 py-3">
+          <div className="metric-cell">
             <div className="font-mono text-lg font-bold tabular-nums text-black">{fmtTokens(ctx)}</div>
             <div className="mono-label mt-0.5">context window</div>
           </div>
-          <div className="card-flat px-4 py-3">
+          <div className="metric-cell">
             <div className="font-mono text-lg font-bold tabular-nums text-black">{fmtTokens(maxOut)}</div>
             <div className="mono-label mt-0.5">max output</div>
           </div>
@@ -215,7 +215,7 @@ export default async function ModelPage({ params }: { params: Promise<{ model: s
       <section className="space-y-4">
         <h2 className="font-hand text-3xl font-bold tracking-tight text-black">
           Compare providers{" "}
-          <span className="align-middle font-sans text-sm font-normal text-black/45">
+          <span className="align-middle font-sans text-sm font-normal text-black/60">
             (sorted by listed input price)
           </span>
         </h2>
@@ -237,7 +237,7 @@ export default async function ModelPage({ params }: { params: Promise<{ model: s
             <img src={`/badge/${group.id}.svg`} alt={`Current price badge for ${group.name}`} className="h-5 w-auto" />
             <CopyField label="markdown" value={`![${group.name} price](${SITE_URL}/badge/${group.id}.svg)`} />
             <CopyField label="url" value={`${SITE_URL}/badge/${group.id}.svg`} />
-            <p className="text-xs leading-relaxed text-black/45">
+            <p className="text-xs leading-relaxed text-black/60">
               Live SVG, regenerated on every hourly sync — paste it into a README to always show the current
               cheapest listed price. Updates when prices change; no build step needed on your side.
             </p>
@@ -253,7 +253,7 @@ export default async function ModelPage({ params }: { params: Promise<{ model: s
                 <h2 className="font-hand text-3xl font-bold tracking-tight text-black">Recent changes</h2>
                 <Link
                   href="/changelog"
-                  className="shrink-0 rounded-full border border-black/15 bg-white px-3 py-1 text-xs font-medium text-black/60 transition-colors hover:border-black hover:text-black"
+                  className="inline-flex min-h-11 shrink-0 items-center rounded-full border border-black/15 bg-white px-3 py-2 text-xs font-medium text-black/60 transition-colors hover:border-black hover:text-black"
                 >
                   Changelog →
                 </Link>
@@ -263,7 +263,7 @@ export default async function ModelPage({ params }: { params: Promise<{ model: s
                   <li key={e.id} className="card-flat flex flex-col gap-1 p-3">
                     <div className="flex flex-wrap items-center gap-2">
                       <EventTypeBadge type={e.type} />
-                      <span className="text-xs text-black/45">
+                      <span className="text-xs text-black/60">
                         {e.providerId ? `via ${e.providerId} · ` : ""}
                         {fmtDate(e.date)}
                       </span>
@@ -287,7 +287,7 @@ export default async function ModelPage({ params }: { params: Promise<{ model: s
                 <h2 className="font-hand text-3xl font-bold tracking-tight text-black">In the news</h2>
                 <Link
                   href="/news"
-                  className="shrink-0 rounded-full border border-black/15 bg-white px-3 py-1 text-xs font-medium text-black/60 transition-colors hover:border-black hover:text-black"
+                  className="inline-flex min-h-11 shrink-0 items-center rounded-full border border-black/15 bg-white px-3 py-2 text-xs font-medium text-black/60 transition-colors hover:border-black hover:text-black"
                 >
                   All news →
                 </Link>
@@ -303,7 +303,7 @@ export default async function ModelPage({ params }: { params: Promise<{ model: s
                     >
                       {n.title}
                     </a>
-                    <div className="mt-0.5 flex items-center gap-1.5 text-xs text-black/45">
+                    <div className="mt-0.5 flex items-center gap-1.5 text-xs text-black/60">
                       {n.favicon && (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={n.favicon} alt="" width={12} height={12} className="h-3 w-3 rounded-sm" />
@@ -345,7 +345,7 @@ export default async function ModelPage({ params }: { params: Promise<{ model: s
                             {b.name}
                           </Link>
                         )}
-                        {b.metric ? <span className="ml-1 text-xs text-black/45">({b.metric})</span> : null}
+                        {b.metric ? <span className="ml-1 text-xs text-black/60">({b.metric})</span> : null}
                         {b.source && (
                           <a
                             href={b.source}
@@ -370,7 +370,7 @@ export default async function ModelPage({ params }: { params: Promise<{ model: s
                   );
                 })}
               </ul>
-              <p className="text-xs leading-relaxed text-black/45">
+              <p className="text-xs leading-relaxed text-black/60">
                 Scores a lab published about its own model are claims, not measurements. Rankings
                 elsewhere on this site use independently measured scores only.
               </p>
@@ -407,7 +407,7 @@ export default async function ModelPage({ params }: { params: Promise<{ model: s
                     {facts.access === "gated" ? ACCESS_NOTE.gated : ACCESS_NOTE.open}
                   </p>
                   {facts.baseModel && (
-                    <p className="text-xs text-black/45">
+                    <p className="text-xs text-black/60">
                       Derived from <span className="font-mono">{facts.baseModel}</span>.
                     </p>
                   )}
@@ -446,7 +446,7 @@ export default async function ModelPage({ params }: { params: Promise<{ model: s
         </section>
       ) : null}
 
-      <p className="text-xs leading-relaxed text-black/45">
+      <p className="text-xs leading-relaxed text-black/60">
         Prices are per million tokens (USD). “—” means the provider does not publicly list a price for this
         model. Data from models.dev; verify with the provider before purchasing.
       </p>

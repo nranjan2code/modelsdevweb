@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { getCatalog } from "@/lib/data";
 import type { Modality } from "@/lib/pipeline/types";
-import { CompareBoard, type CompareModel } from "@/components/compare-board";
+import { CompareBoard, type CompareModel, type PackedCompareModel } from "@/components/compare-board";
 
 export const metadata: Metadata = {
   title: "Compare models",
@@ -44,10 +44,31 @@ export default async function ComparePage() {
       benchmarks,
     };
   });
+  const packedModels: PackedCompareModel[] = models.map((model) => [
+    model.id,
+    model.name,
+    model.lab,
+    model.input,
+    model.output,
+    model.cacheRead,
+    model.ctx,
+    model.maxOut,
+    (model.reasoning ? 1 : 0) |
+      (model.tools ? 2 : 0) |
+      (model.structured ? 4 : 0) |
+      (model.vision ? 8 : 0) |
+      (model.audioIn ? 16 : 0),
+    model.open,
+    model.released,
+    model.knowledge,
+    model.providers,
+    model.deprecated,
+    model.benchmarks,
+  ]);
 
   return (
     <div className="space-y-6">
-      <header className="space-y-2">
+      <header className="page-intro">
         <p className="mono-label">Head to head</p>
         <h1 className="text-3xl font-bold tracking-tight text-black sm:text-4xl">Compare models</h1>
         <p className="max-w-2xl text-sm leading-relaxed text-black/60">
@@ -55,7 +76,7 @@ export default async function ComparePage() {
           the winner on each priced or sized row.
         </p>
       </header>
-      <CompareBoard models={models} />
+      <CompareBoard models={packedModels} />
     </div>
   );
 }

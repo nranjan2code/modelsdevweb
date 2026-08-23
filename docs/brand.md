@@ -14,25 +14,31 @@ sound; this document covers how we look. Enforced by `pnpm check:style`.
 | **Tagline** | "Every AI model. Every provider. Every change." |
 | **One-liner** | The front page of the AI model market — prices, releases and repricings, tracked hourly. |
 | **Data source credit** | Always "Built on open data from models.dev" (linked). |
-| **Personality** | A modern market terminal with an editorial pulse. Precise numbers, human voice, zero corporate gloss. |
+| **Personality** | A trusted market desk for AI infrastructure. Precise, current and editorial without becoming a newspaper pastiche or a trading-terminal costume. |
 
-## 2. Design language — editorial market terminal
+## 2. Design language — the AI market desk
 
-Model Pulse is a **modern editorial data product**: quiet surfaces, precise
-hairlines, compact controls, strong typography and restrained depth. The
-interface should feel current and trustworthy before it feels decorative.
-Colour and motion explain state; they do not compete with the numbers.
+Model Pulse is a **daylight market desk** for people choosing and buying AI
+infrastructure. It combines the scan speed of a price ledger with the hierarchy
+of a concise market brief. Surfaces are neutral, type is compact and sturdy,
+and signal blue identifies navigation and action. It should feel useful at
+9:30am on a work laptop: dense enough to compare, calm enough to read daily.
+
+The visual strategy is restrained: blue occupies less than 10% of most product
+surfaces, while semantic colors appear only when the market meaning requires
+them. The homepage lede and dark footer provide the stronger brand moments.
 
 Hard rules:
 
 1. **Borders are quiet hairlines** (`black/10`–`black/15`). Strong 2px borders
    are reserved for the primary call to action and exceptional focus states.
-2. **Depth is restrained** through the named `shadow-hard*` compatibility
-   tokens. Despite their historical names, they now resolve to soft editorial
-   elevation; raw Tailwind shadows remain forbidden so depth stays consistent.
-3. **Corners are generous but controlled**: `rounded-lg` for compact controls,
-   `rounded-xl` for cards/search, and `rounded-full` for status chips only.
-4. **No dark mode.** The site is paper-on-light by design; `color-scheme: light`.
+2. **Depth is restrained.** Cards are border-led; the named `shadow-hard*`
+   compatibility tokens are limited to compact controls and transient menus,
+   with an 8px blur ceiling.
+3. **Corners are compact and controlled**: `rounded-md` for controls,
+   `rounded-lg` for cards/search, and `rounded-full` for status chips only.
+4. **Daylight canvas.** The working product is light; the dark ink footer is an
+   intentional brand anchor, not a second theme.
 5. **Motion is brief and optional**: small lifts at 150ms, with a global
    `prefers-reduced-motion` fallback.
 
@@ -46,25 +52,25 @@ classes (`text-emerald-700`, `bg-blue-50`, …) and never raw hex codes in TSX.
 
 | Token | Value | Role |
 |---|---|---|
-| `ink` | `#101828` | Text and structural emphasis. The default ink of the site. |
-| `paper` | `#f6f7fb` | Page background (body). |
-| `surface` | `#ffffff` | Cards, inputs, nav dropdowns. |
-| `surface-tint` | `#f0f2f7` | Table headers, footer and quiet controls. |
-| `accent` | `#4f46e5` | Brand indigo: links, interactive affordances, primary chart color, focus accents. |
-| `pos` | `#047857` | Good for the buyer: price cuts ▼, savings, launches, first-party moves, independently measured scores, pts/$ wins, "Free". |
-| `neg` | `#dc2626` | Costly or gone: price hikes ▲, deprecations, errors. |
-| `warn` | `#d97706` | Attention, not judgment: capability changes, price-spread multiples, records/superlatives. |
-| `special` | `#9333ea` | Market machinery: repricing events/chips, reseller ("street") moves, secondary chart series. |
+| `ink` | `oklch(0.22 0.035 255)` | Blue-black text, footer and structural emphasis. |
+| `paper` | `oklch(0.975 0.006 250)` | Near-neutral daylight canvas. |
+| `surface` | `oklch(1 0 0)` | Tables, panels, inputs and menus. |
+| `surface-tint` | `oklch(0.947 0.014 250)` | Table headers, toolbars and quiet panels. |
+| `accent` | `oklch(0.52 0.2 258)` | Signal blue: links, selection, primary action and first chart series. |
+| `pos` | `oklch(0.47 0.13 155)` | Good for the buyer: price cuts, savings and independently measured value. |
+| `neg` | `oklch(0.52 0.19 25)` | Costly or gone: price hikes, errors and deprecations. |
+| `warn` | `oklch(0.48 0.12 70)` | Attention without judgment: spreads, records and capability shifts. |
+| `special` | `oklch(0.48 0.14 306)` | Market machinery: repricings and reseller moves. |
 
 Soft backgrounds (`-soft`, the 50-level tints) and border alphas exist per hue:
 
 | Hue | base | soft bg | border alpha |
 |---|---|---|---|
-| accent | `#2563eb` | `bg-accent-soft` (#eff6ff) | `border-accent/30` |
-| pos | `#047857` | `bg-pos-soft` (#ecfdf5) | `border-pos/30` |
-| neg | `#dc2626` | `bg-neg-soft` (#fef2f2) | `border-neg/30` |
-| warn | `#d97706` | `bg-warn-soft` (#fffbeb) | `border-warn/30` |
-| special | `#9333ea` | `bg-special-soft` (#faf5ff) | `border-special/30` |
+| accent | signal blue | `bg-accent-soft` | `border-accent/30` |
+| pos | buyer green | `bg-pos-soft` | `border-pos/30` |
+| neg | cost red | `bg-neg-soft` | `border-neg/30` |
+| warn | evidence ochre | `bg-warn-soft` | `border-warn/30` |
+| special | market violet | `bg-special-soft` | `border-special/30` |
 
 ### 3.2 Meaning is fixed — hue encodes kind, never identity
 
@@ -94,9 +100,9 @@ Rules that follow:
 - **Charts use one ramp, not competing hues.** Intensity ramps derive from the
   token via alpha (`bg-accent/20 … bg-accent/90`). Two-series charts pair
   `accent` + `special`. Green in a chart always means the buyer won.
-- **Ink alpha scale is fixed** to `/35 faint · /45 muted · /60 secondary ·
-  /70 strong-secondary` for text, `/10 hairlines · /15 quiet borders · /5
-  footer rules` for lines. No other steps.
+- **Readable text starts at `/60`.** `/35` and `/45` are restricted to
+  non-text decoration. Lines use `/5` footer rules, `/10` hairlines and `/15`
+  quiet borders.
 - **Who moved is encoded, not just written.** First-party boards render on
   `card` (elevated, full weight); reseller boards render on `card-flat` (quiet).
   The hierarchy is structural so it survives being skimmed — a reader
@@ -116,16 +122,11 @@ new hues without amending this doc first.
 
 ## 4. Logo & marks
 
-The lockup is `<BrandMark />` + wordmark ("Model Pulse", `font-bold tracking-tight`,
-ink). The mark itself uses exactly three brand inks:
-
-- glyph strokes: `ink`
-- top bar: `warn` (the amber strike)
-- backdrop glow: `accent` at low opacity
-
-Never recolor, outline, rotate or place the mark on busy backgrounds. Clear
-space = the height of the amber bar on all sides. The favicon (`/icon.svg`)
-mirrors the same construction.
+The lockup is `<BrandMark />` + wordmark ("Model Pulse", IBM Plex Sans bold).
+The mark is an ink tile containing a white market pulse with a signal-blue peak
+and buyer-green terminal point. It represents movement plus a decision, not a
+generic analytics chart. Never recolor, outline or rotate it. The favicon
+(`/icon.svg`) uses the same geometry.
 
 OG images, badges and feeds reuse the same three inks; see
 `scripts/og.tsx` / `scripts/badges.ts`.
@@ -136,26 +137,25 @@ Three fonts, three jobs — nothing else ships:
 
 | Font | Variable | Job |
 |---|---|---|
-| Inter | `--font-sans` | All body/UI text. |
-| JetBrains Mono | `--font-mono` | Numbers, prices, IDs, code, table headers, `.mono-label`. Always with `tabular-nums` when numeric. |
-| Inter display | `--font-hand` compatibility alias | Display headings. The alias remains so existing components inherit the modern display treatment. |
+| IBM Plex Sans | `--font-sans` | Body, navigation, controls and headings. |
+| IBM Plex Mono | `--font-mono` | Prices, IDs, dates, table headers and `.mono-label`. Always use `tabular-nums` for numeric data. |
+| IBM Plex Sans | `--font-hand` compatibility alias | Keeps existing display hooks on the same product family. |
 
 Scale (binding):
 
 | Role | Spec |
 |---|---|
-| Page title (h1) | `text-3xl font-bold tracking-tight sm:text-5xl` (hero may go `leading-[1.08]`) |
-| Section head (h2) | `font-hand text-2xl font-bold tracking-tight sm:text-3xl` via `<SectionHead>` |
+| Page title (h1) | `text-3xl font-bold tracking-tight sm:text-4xl` (homepage lede may reach `sm:text-5xl`) |
+| Section head (h2) | `font-hand text-2xl font-bold tracking-[-0.025em] sm:text-3xl` via `<SectionHead>` |
 | Card/board title (h3) | `font-hand text-2xl font-bold` |
 | Body | `text-sm` (dense contexts) / `text-base` (prose) |
 | Stat value | `font-mono font-bold tabular-nums text-xl`–`4xl` |
-| Label / eyebrow | `.mono-label` (11px mono uppercase, tracking `0.08em`, `black/45`) |
-| Fine print / attribution | `.micro-label` (10px mono uppercase, tracking `0.05em`, `black/35`) |
+| Label / market metadata | `.mono-label` (12px IBM Plex Mono, sentence case, `black/60`) |
+| Fine print / attribution | `.micro-label` (12px IBM Plex Sans, sentence case, `black/60`) |
 | Chip/badge | `<Badge>` internals only — no ad-hoc `text-[Npx]` anywhere else (`check:style` enforces) |
 
-Case rules: headings sentence case; `.mono-label` eyebrows lowercase source
-text (CSS uppercases them); buttons sentence case; never ALL CAPS by typing
-caps.
+Case rules: headings, labels and buttons use sentence case; never ALL CAPS by
+typing caps.
 
 ## 6. Component vocabulary
 
@@ -163,7 +163,7 @@ Use the shared primitives before writing any bespoke markup:
 
 | Primitive | File | Use for |
 |---|---|---|
-| `.card` | globals.css | Elevated white panel with quiet border and restrained depth. |
+| `.card` | globals.css | Border-led white panel with no decorative shadow. |
 | `.card-flat` | globals.css | Framed panel without shadow (tables, stat tiles, menus). |
 | `.card-dashed` | globals.css | Ghost/placeholder frame. |
 | `.press` / `.lift` | globals.css | Pressable / hoverable motion. Combine with `.card*`. |
@@ -171,12 +171,13 @@ Use the shared primitives before writing any bespoke markup:
 | `.pill` | globals.css | Status pill with dot (e.g. "Live · synced 12m ago"). |
 | `.mono-label` | globals.css | Eyebrows, field labels, micro-headings. Tone via token class (`text-special`, …). |
 | `.micro-label` | globals.css | Attribution lines, axis captions, fine print. |
-| `.wavy` (+ tone) | globals.css | Decorative underline on display text. |
+| `.wavy` (+ tone) | globals.css | Compatibility name for the restrained editorial link underline. |
 | `.table-base` | globals.css | Every data table. |
+| `<SortableTh>` / `<TablePager>` | components/data-table.tsx | Shared sortable headers, result ranges, page sizes and paging controls. |
 | `<Badge tone>` | components/ui.tsx | Every chip/tag/count pill. Tones: `neutral·accent·pos·neg·warn·special·muted`. |
 | `<DeltaChip>` | components/ui.tsx | Any ▼/▲ percentage delta. |
 | `<SectionHead>` | components/ui.tsx | Every section heading + "view all" link. |
-| `<Bar>` | components/ui.tsx | Every horizontal meter/mini-bar. |
+| `<Bar>` | components/ui.tsx | Every horizontal meter/mini-bar, with semantic tone and an accessible label. |
 | `<EmptyState>` | components/ui.tsx | Every empty list/table/message. |
 
 New primitives require an entry here first. If a page needs something none of
@@ -187,9 +188,9 @@ these do, extend a primitive — don't fork styling locally.
 The homepage's lead story is the hero and the one place the site makes a claim
 rather than reporting a number, so its form is fixed:
 
-- A `.card` with a full-height colour rail on the left edge, keyed to the
-  story kind — `pos` for cuts and launches, `neg` for rises and sunsets,
-  `special` for reseller moves, `accent` for a quiet week.
+- A quiet bordered surface with no decorative rail, grid or gradient. Story
+  kind is carried by the badge — `pos` for cuts and launches, `neg` for rises
+  and sunsets, `special` for reseller moves, `accent` for a quiet week.
 - Kind badge and sync stamp above; headline at display size; body at
   `text-base`/`sm:text-lg` and never more than two sentences.
 - Exactly one story CTA, one changelog link, then the rule disclosure in
@@ -206,12 +207,26 @@ missing, when it arrives, and how much has accumulated. Never render the live
 component with degenerate values (a flat sparkline, `▼ 0.0%`, a zeroed bar).
 This is a visual rule with a data cause — see `AGENTS.md`, editorial rules.
 
+### 6.3 Navigation exposes the product
+
+- The header shows every user-facing product page directly. Never put core tools
+  behind a generic “More” menu or an unlabeled overflow control.
+- Links are grouped by user intent: Explore (Models, Compare), Decide
+  (Calculator, Self-host), Market (Market pulse, Changes, Deprecations), Evidence
+  (Benchmarks, Providers, Methodology), and Follow (Digest, News).
+- The brand and model search occupy the utility row; the grouped product map has
+  its own quieter navigation band. On narrow screens that complete map scrolls
+  horizontally as one continuous, labeled navigation region.
+- `aria-current="page"` and the accent-soft active state identify location. Group
+  labels organize links but are never interactive controls.
+
 Buttons have exactly two idioms:
 
-- **Primary CTA** (max one per view): ink fill, surface text, restrained elevation.
+- **Primary CTA** (max one per view): signal-blue fill, surface text, no decorative shadow.
 - **Secondary CTA**: surface fill, quiet border, ink text.
 - Everything else is a link: inline links are `text-accent` (hover `accent-strong`)
-  optionally wavy-underlined; trailing-arrow links end in `→`; external in `↗`.
+  and may use the restrained editorial underline; trailing-arrow links end in
+  `→`; external links end in `↗`.
 
 ## 7. Data formatting (visual contract)
 
@@ -228,11 +243,48 @@ Numbers are part of the brand. Always:
 - Missing data is an em dash `—`, never "N/A", never blank.
 - All numerals in tables/stat blocks: `font-mono tabular-nums`.
 
+### 7.1 Tables are bounded decision tools
+
+- Every dataset table uses `.data-table-shell`: toolbar, `.data-table-viewport`,
+  then the shared `<TablePager>`. Headers remain visible while rows scroll.
+- Default to 20 rows and offer 20 / 50 / 100. Never silently slice a dataset or
+  render an unbounded catalog. The footer always states the visible range and total.
+- Search applies to the row's identifying fields. Columns people compare or rank
+  by use `<SortableTh>` with an announced direction; numeric columns align right.
+- Empty filters render a full-width explicit message. Mobile tables keep readable
+  column widths, scroll horizontally and announce that more columns are available.
+- A deliberately small comparison matrix (2–4 models) is the sole pagination
+  exception; it still uses the standard shell and bounded viewport.
+
+### 7.2 Charts explain a decision
+
+- Every chart states its measure, time basis and scale. A log scale is named in
+  adjacent prose and in accessible chart text; printed values remain the source
+  of truth.
+- Legends sit with the chart and use both words and marks. Solid versus hollow
+  distinguishes weight access; hue alone never carries that distinction.
+- Dense SVGs keep a minimum canvas width and scroll horizontally on small
+  screens rather than shrinking labels below legibility.
+- Price history starts at zero, shows input and output as separate named series,
+  and prints current values plus deltas above the plot.
+- Scatter plots may highlight a computed efficient frontier, but must also list
+  those models as links outside the graphic so the insight is keyboard- and
+  screen-reader-accessible.
+- The context-price explorer recomputes its Pareto frontier after every basis
+  change and slice. It exposes input, output and the documented 75/25 blend;
+  every selected dot prints all three prices, context, lab and provider count.
+- Text generation is the default workload because transcription, embedding and
+  generation context windows are not interchangeable. An explicit “all
+  token-priced” slice remains available for expert exploration.
+- Market regions are named and bounded in the legend: budget ≤ $0.25/M,
+  mainstream $0.25–$3/M and premium ≥ $3/M. They are navigation aids, not
+  quality judgments.
+
 ## 8. Accessibility floor
 
 - Focus: `:focus-visible` global outline (2px ink, offset 2) — never remove.
-- Contrast: `black/45` is the lightest text allowed on `surface`; lighter steps
-  (`/35`) only for decorative/redundant info.
+- Contrast: `black/60` is the lightest text allowed on `surface`; lighter steps
+  are restricted to non-text decoration.
 - Interactive targets ≥ 28px tall; every icon-only control has `aria-label`.
 - Color never carries meaning alone — deltas also carry ▼/▲, removals say "removed".
 

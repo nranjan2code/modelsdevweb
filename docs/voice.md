@@ -28,9 +28,8 @@ Three traits, always on:
 
 ## 2. The rules
 
-1. **Sentence case everything.** Headings, buttons, nav, eyebrows — sentence
-   case. Never Title Case, never ALL CAPS (`.mono-label` uppercases via CSS;
-   you still type it lowercase).
+1. **Sentence case everything.** Headings, buttons, nav and labels use sentence
+   case. Never Title Case or ALL CAPS.
 2. **Numbers are nouns.** Lead with the number, keep the unit tight: `$1.25/M`,
    `▼ 4.2%`, `200K context`. No "approximately", no "around" — we track exact
    diffs or we say nothing.

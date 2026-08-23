@@ -3,9 +3,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getBenchmarkBoards, getBenchmarkBoard } from "@/lib/data/benchmarks";
 import { benchmarkHome } from "@/lib/data/benchmark-links";
-import { fmtPerM, fmtTokens } from "@/lib/format";
+import { fmtPerM } from "@/lib/format";
 import { getCatalog, groupContext } from "@/lib/data";
-import { Bar } from "@/components/ui";
+import { BenchmarkEntriesTable } from "@/components/catalog-tables";
 
 export async function generateStaticParams() {
   const boards = await getBenchmarkBoards();
@@ -45,7 +45,7 @@ export default async function BenchmarkPage({ params }: { params: Promise<{ slug
 
   return (
     <div className="space-y-6">
-      <nav className="text-sm text-black/45">
+      <nav className="text-sm text-black/60">
         <Link href="/benchmarks" className="transition-colors hover:text-accent">
           Benchmarks
         </Link>
@@ -53,7 +53,7 @@ export default async function BenchmarkPage({ params }: { params: Promise<{ slug
         <span className="font-medium text-black">{board.name}</span>
       </nav>
 
-      <header className="space-y-2">
+      <header className="page-intro">
         <p className="mono-label">Leaderboard</p>
         <h1 className="text-3xl font-bold tracking-tight text-black sm:text-4xl">
           {board.name}
@@ -74,7 +74,7 @@ export default async function BenchmarkPage({ params }: { params: Promise<{ slug
           cheapest listed across all serving providers. Pts/$ = score ÷ blended price (3×input + output) / 4 —
           how much score each dollar buys.
         </p>
-        <p className="max-w-2xl text-xs leading-relaxed text-black/45">
+        <p className="max-w-2xl text-xs leading-relaxed text-black/60">
           Scores are facts as publicly reported by labs (see report links below and on each model page) and
           aggregated via models.dev. {board.name} is maintained by its own project — Model Pulse is not
           affiliated with or endorsed by it.
@@ -88,7 +88,7 @@ export default async function BenchmarkPage({ params }: { params: Promise<{ slug
             {valueLeaders.map((e, i) => (
               <li key={e.groupId} className="flex items-baseline justify-between gap-2 text-sm">
                 <span className="truncate">
-                  <span className="mr-1.5 tabular-nums text-black/35">{i + 1}.</span>
+                  <span className="mr-1.5 tabular-nums text-black/60">{i + 1}.</span>
                   <Link href={`/m/${e.groupId}`} className="font-medium transition-colors hover:text-accent">
                     {e.groupName}
                   </Link>
@@ -102,58 +102,10 @@ export default async function BenchmarkPage({ params }: { params: Promise<{ slug
         </section>
       )}
 
-      <div className="card overflow-x-auto">
-        <table className="table-base min-w-[880px]">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Model</th>
-              <th>Score</th>
-              <th className="text-right">Best in /M</th>
-              <th className="text-right">Best out /M</th>
-              <th className="text-right">Pts / $</th>
-              <th className="text-right">Context</th>
-            </tr>
-          </thead>
-          <tbody>
-            {board.entries.map((e, i) => {
-              const ctx = catalog.groupById.get(e.groupId)
-                ? groupContext(catalog.groupById.get(e.groupId)!)
-                : null;
-              return (
-                <tr key={e.groupId}>
-                  <td className="tabular-nums text-black/45">{i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : i + 1}</td>
-                  <td>
-                    <Link href={`/m/${e.groupId}`} className="font-medium text-black transition-colors hover:text-accent">
-                      {e.groupName}
-                    </Link>
-                    <span className="ml-2 text-xs text-black/45">{e.labId}</span>
-                  </td>
-                  <td className="w-48">
-                    <div className="flex items-center gap-2">
-                      <span className="w-12 shrink-0 font-mono font-semibold tabular-nums text-black">{e.score}</span>
-                      <Bar pct={e.score / maxScore} fill={i === 0 ? "bg-accent" : "bg-accent/50"} />
-                    </div>
-                  </td>
-                  <td className="text-right font-mono tabular-nums">
-                    {e.bestInput != null ? fmtPerM(e.bestInput) : <span className="text-black/35">—</span>}
-                  </td>
-                  <td className="text-right font-mono tabular-nums">
-                    {e.bestOutput != null ? fmtPerM(e.bestOutput) : <span className="text-black/35">—</span>}
-                  </td>
-                  <td className="text-right font-mono font-semibold tabular-nums text-pos">
-                    {fmtPpd(e.pointsPerDollar)}
-                  </td>
-                  <td className="text-right font-mono tabular-nums text-black/60">{fmtTokens(ctx)}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+      <BenchmarkEntriesTable maxScore={maxScore} rows={board.entries.map((entry) => ({ groupId: entry.groupId, groupName: entry.groupName, labId: entry.labId, score: entry.score, bestInput: entry.bestInput, bestOutput: entry.bestOutput, pointsPerDollar: entry.pointsPerDollar, context: catalog.groupById.get(entry.groupId) ? groupContext(catalog.groupById.get(entry.groupId)!) : null }))} />
 
       {reportSources.length > 0 && (
-        <p className="text-xs leading-relaxed text-black/45">
+        <p className="text-xs leading-relaxed text-black/60">
           Score reports:{" "}
           {reportSources.map((src, i) => (
             <span key={src}>
@@ -173,7 +125,7 @@ export default async function BenchmarkPage({ params }: { params: Promise<{ slug
       )}
 
       {priced.length > 0 && (
-        <p className="text-xs leading-relaxed text-black/45">
+        <p className="text-xs leading-relaxed text-black/60">
           Cheapest scorer: <span className="font-medium text-black/70">{priced.reduce((a, b) => (b.bestInput! < a.bestInput!) ? b : a).groupName}</span>{" "}
           at {fmtPerM(priced.reduce((a, b) => (b.bestInput! < a.bestInput!) ? b : a).bestInput)} input /M.
         </p>

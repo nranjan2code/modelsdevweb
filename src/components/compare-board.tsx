@@ -29,16 +29,46 @@ export interface CompareModel {
   benchmarks: Record<string, number>;
 }
 
+export type PackedCompareModel = [
+  id: string,
+  name: string,
+  lab: string,
+  input: number | null,
+  output: number | null,
+  cacheRead: number | null,
+  ctx: number | null,
+  maxOut: number | null,
+  capabilities: number,
+  open: boolean | null,
+  released: string | null,
+  knowledge: string | null,
+  providers: number,
+  deprecated: number,
+  benchmarks: Record<string, number>,
+];
+
+function unpackModel(model: PackedCompareModel): CompareModel {
+  const [id, name, lab, input, output, cacheRead, ctx, maxOut, capabilities, open, released, knowledge, providers, deprecated, benchmarks] = model;
+  return {
+    id, name, lab, input, output, cacheRead, ctx, maxOut, open, released, knowledge, providers, deprecated, benchmarks,
+    reasoning: Boolean(capabilities & 1),
+    tools: Boolean(capabilities & 2),
+    structured: Boolean(capabilities & 4),
+    vision: Boolean(capabilities & 8),
+    audioIn: Boolean(capabilities & 16),
+  };
+}
+
 function BoolCell({ v }: { v: boolean }) {
   return v ? (
     <span className="font-semibold text-pos">✓</span>
   ) : (
-    <span className="text-black/35">✗</span>
+    <span className="text-black/60">✗</span>
   );
 }
 
 function Price({ v, best }: { v: number | null; best?: boolean }) {
-  if (v == null) return <span className="text-black/35">—</span>;
+  if (v == null) return <span className="text-black/60">—</span>;
   return (
     <span className={best ? "font-mono font-bold tabular-nums text-pos" : "font-mono tabular-nums"}>
       {fmtPerM(v)}
@@ -46,7 +76,8 @@ function Price({ v, best }: { v: number | null; best?: boolean }) {
   );
 }
 
-export function CompareBoard({ models }: { models: CompareModel[] }) {
+export function CompareBoard({ models: packedModels }: { models: PackedCompareModel[] }) {
+  const models = useMemo(() => packedModels.map(unpackModel), [packedModels]);
   const byId = useMemo(() => new Map(models.map((m) => [m.id, m])), [models]);
   const selected = useCompareSelection();
   const [q, setQ] = useState("");
@@ -158,7 +189,7 @@ export function CompareBoard({ models }: { models: CompareModel[] }) {
         m.benchmarks[name] != null ? (
           <span className="font-mono font-semibold tabular-nums">{m.benchmarks[name]}</span>
         ) : (
-          <span className="text-black/35">—</span>
+          <span className="text-black/60">—</span>
         ),
     })),
   ];
@@ -183,21 +214,21 @@ export function CompareBoard({ models }: { models: CompareModel[] }) {
                 <button
                   onClick={() => add(m.id)}
                   disabled={selected.length >= COMPARE_MAX}
-                  className="rounded-full border border-black/15 bg-white px-3 py-1 text-xs font-medium text-black/70 transition-all enabled:hover:border-black enabled:hover:text-black disabled:opacity-40"
+                  className="inline-flex min-h-11 items-center rounded-full border border-black/15 bg-white px-3 py-2 text-xs font-medium text-black/70 transition-all enabled:hover:border-black enabled:hover:text-black disabled:opacity-40"
                 >
-                  + {m.name} <span className="text-black/35">{m.lab}</span>
+                  + {m.name} <span className="text-black/60">{m.lab}</span>
                 </button>
               </li>
             ))}
           </ul>
         )}
         {suggestions.length === 0 && (
-          <p className="mt-3 text-sm text-black/45">{needle ? "No models match." : "All models selected."}</p>
+          <p className="mt-3 text-sm text-black/60">{needle ? "No models match." : "All models selected."}</p>
         )}
       </div>
 
       {chosen.length === 0 ? (
-        <p className="card-dashed p-6 text-sm text-black/45">
+        <p className="card-dashed p-6 text-sm text-black/60">
           Pick models above — or hit “+ compare” on any row in{" "}
           <Link href="/browse" className="font-medium underline decoration-wavy underline-offset-4 hover:text-accent">
             Browse
@@ -205,7 +236,8 @@ export function CompareBoard({ models }: { models: CompareModel[] }) {
           . Deep-link with <code className="font-mono text-xs">/compare?models=lab/model,lab/model2</code>.
         </p>
       ) : (
-        <div className="card overflow-x-auto">
+        <div className="data-table-shell">
+          <div className="data-table-viewport">
           <table className="table-base w-full min-w-[720px]">
             <thead>
               <tr>
@@ -216,11 +248,11 @@ export function CompareBoard({ models }: { models: CompareModel[] }) {
                       <Link href={`/m/${m.id}`} className="text-sm normal-case tracking-normal text-black hover:text-accent">
                         {m.name}
                       </Link>
-                      <span className="shrink-0 text-xs text-black/35">{m.lab}</span>
+                      <span className="shrink-0 text-xs text-black/60">{m.lab}</span>
                       <button
                         onClick={() => remove(m.id)}
                         aria-label={`Remove ${m.name}`}
-                        className="ml-auto shrink-0 rounded border border-black/15 px-1 text-xs leading-4 text-black/45 transition-colors hover:border-neg hover:text-neg"
+                        className="ml-auto inline-flex h-11 w-11 shrink-0 items-center justify-center rounded border border-black/15 text-base text-black/60 transition-colors hover:border-neg hover:text-neg"
                       >
                         ×
                       </button>
@@ -232,7 +264,7 @@ export function CompareBoard({ models }: { models: CompareModel[] }) {
             <tbody>
               {rows.map((row) => (
                 <tr key={row.key}>
-                  <td className="text-xs font-medium text-black/45">{row.label}</td>
+                  <td className="text-xs font-medium text-black/60">{row.label}</td>
                   {chosen.map((m) => (
                     <td key={m.id}>{row.render(m)}</td>
                   ))}
@@ -240,6 +272,7 @@ export function CompareBoard({ models }: { models: CompareModel[] }) {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       )}
     </div>

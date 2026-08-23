@@ -2,8 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getCatalog, getProvider } from "@/lib/data";
-import { fmtDate, fmtPerM, fmtTokens } from "@/lib/format";
-import { StatusBadge } from "@/components/price-table";
+import { ProviderListingsTable } from "@/components/catalog-tables";
 
 export async function generateStaticParams() {
   const catalog = await getCatalog();
@@ -24,7 +23,7 @@ export default async function ProviderPage({ params }: { params: Promise<{ id: s
 
   return (
     <div className="space-y-6">
-      <nav className="text-sm text-black/45">
+      <nav className="text-sm text-black/60">
         <Link href="/browse" className="transition-colors hover:text-accent">
           Browse
         </Link>
@@ -32,10 +31,10 @@ export default async function ProviderPage({ params }: { params: Promise<{ id: s
         <span className="font-medium text-black">{provider.name}</span>
       </nav>
 
-      <header className="space-y-2">
+      <header className="page-intro">
         <p className="mono-label">Provider</p>
         <h1 className="text-3xl font-bold tracking-tight text-black sm:text-4xl">{provider.name}</h1>
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-black/45">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-black/60">
           <span>{rows.length} listings ({live} live)</span>
           {provider.npm && <span className="font-mono">{provider.npm}</span>}
           {provider.env.length > 0 && (
@@ -56,43 +55,7 @@ export default async function ProviderPage({ params }: { params: Promise<{ id: s
         </div>
       </header>
 
-      <div className="card overflow-x-auto">
-          <table className="table-base min-w-[880px]">
-            <thead>
-              <tr>
-                <th>Model</th>
-                <th className="text-right">Input /M</th>
-                <th className="text-right">Output /M</th>
-                <th className="text-right">Cache read /M</th>
-                <th className="text-right">Cache write /M</th>
-                <th className="text-right">Context</th>
-                <th>Status</th>
-                <th>Updated</th>
-              </tr>
-            </thead>
-          <tbody>
-            {rows.map(({ listing: l, groupId, groupName }) => (
-              <tr key={l.key}>
-                <td>
-                  <Link href={`/m/${groupId}`} className="font-medium text-black transition-colors hover:text-accent">
-                    {groupName}
-                  </Link>
-                  {l.modelId !== groupId && <span className="ml-2 font-mono text-xs text-black/45">{l.modelId}</span>}
-                </td>
-                <td className="text-right font-mono tabular-nums">{fmtPerM(l.cost.input)}</td>
-                <td className="text-right font-mono tabular-nums">{fmtPerM(l.cost.output)}</td>
-                <td className="text-right font-mono tabular-nums">{fmtPerM(l.cost.cacheRead)}</td>
-                <td className="text-right font-mono tabular-nums">{fmtPerM(l.cost.cacheWrite)}</td>
-                <td className="text-right font-mono tabular-nums">{fmtTokens(l.limit.context)}</td>
-                <td>
-                  <StatusBadge status={l.status} />
-                </td>
-                <td className="whitespace-nowrap text-xs text-black/45">{fmtDate(l.lastUpdated)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <ProviderListingsTable rows={rows.map(({ listing, groupId, groupName }) => ({ key: listing.key, groupId, groupName, modelId: listing.modelId, input: listing.cost.input, output: listing.cost.output, cacheRead: listing.cost.cacheRead, cacheWrite: listing.cost.cacheWrite, context: listing.limit.context, status: listing.status ?? null, lastUpdated: listing.lastUpdated ?? null }))} />
     </div>
   );
 }

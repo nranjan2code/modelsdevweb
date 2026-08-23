@@ -11,7 +11,7 @@ export type Tone = "neutral" | "muted" | "accent" | "pos" | "neg" | "warn" | "sp
 
 const BADGE_TONES: Record<Tone, string> = {
   neutral: "border-black/15 bg-white text-black/70",
-  muted: "border-black/15 bg-black/5 text-black/45",
+  muted: "border-black/15 bg-black/5 text-black/60",
   accent: "border-accent/30 bg-accent-soft text-accent-strong",
   pos: "border-pos/30 bg-pos-soft text-pos",
   neg: "border-neg/30 bg-neg-soft text-neg",
@@ -76,14 +76,16 @@ export function SectionHead({
   eyebrowTone?: keyof typeof EYEBROW_TONES;
 }) {
   const linkCls =
-    "shrink-0 rounded-lg border border-black/10 bg-white px-3 py-1.5 text-xs font-semibold text-black/60 shadow-hard-sm transition-colors hover:border-accent/30 hover:text-accent";
+    "inline-flex min-h-11 shrink-0 items-center border-b border-black/20 px-1 py-2 text-xs font-semibold text-black/60 transition-colors hover:border-accent hover:text-accent";
   return (
     <div className="mb-5">
-      {eyebrow && (
-        <p className={`mono-label mb-1 ${eyebrowTone ? EYEBROW_TONES[eyebrowTone] : ""}`}>{eyebrow}</p>
-      )}
-      <div className="flex items-center justify-between gap-4">
-        <h2 className="font-hand text-2xl font-bold tracking-tight text-black sm:text-3xl">{title}</h2>
+      <div className="flex items-end justify-between gap-4 border-b border-black/15 pb-3">
+        <div>
+          <h2 className="font-hand text-2xl font-bold tracking-[-0.025em] text-black sm:text-3xl">{title}</h2>
+          {eyebrow && (
+            <p className={`mono-label mt-1 ${eyebrowTone ? EYEBROW_TONES[eyebrowTone] : ""}`}>{eyebrow}</p>
+          )}
+        </div>
         {href &&
           (external ? (
             <a href={href} target="_blank" rel="noreferrer" className={linkCls}>
@@ -99,17 +101,41 @@ export function SectionHead({
   );
 }
 
-export function Bar({ pct, fill = "bg-accent" }: { pct: number; fill?: string }) {
+const BAR_TONES = {
+  accent: "bg-accent",
+  accentMuted: "bg-accent/45",
+  special: "bg-special",
+  neutral: "bg-ink/55",
+  pos: "bg-pos",
+} as const;
+
+export function Bar({
+  pct,
+  tone = "accent",
+  label,
+}: {
+  pct: number;
+  tone?: keyof typeof BAR_TONES;
+  label?: string;
+}) {
+  const value = Math.max(0, Math.min(1, pct));
   return (
-    <div className="h-2 min-w-6 flex-1 overflow-hidden rounded-sm border border-black bg-white">
+    <div
+      className="h-2 min-w-6 flex-1 overflow-hidden rounded-sm bg-surface-tint"
+      role={label ? "meter" : undefined}
+      aria-label={label}
+      aria-valuemin={label ? 0 : undefined}
+      aria-valuemax={label ? 100 : undefined}
+      aria-valuenow={label ? Math.round(value * 100) : undefined}
+    >
       <div
-        className={`h-full ${fill}`}
-        style={{ width: `${Math.max(2, Math.min(100, pct * 100))}%` }}
+        className={`h-full rounded-sm ${BAR_TONES[tone]}`}
+        style={{ width: `${value === 0 ? 0 : Math.max(2, value * 100)}%` }}
       />
     </div>
   );
 }
 
 export function EmptyState({ children }: { children: ReactNode }) {
-  return <div className="card-dashed p-6 text-sm text-black/45">{children}</div>;
+  return <div className="card-dashed p-6 text-sm text-black/60">{children}</div>;
 }

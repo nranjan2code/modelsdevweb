@@ -85,20 +85,20 @@ export default async function DigestPage() {
 
   return (
     <div className="space-y-10">
-      <header className="space-y-3">
+      <header className="page-intro">
         <p className="mono-label text-special">Weekly recap · auto-written from the diff log</p>
         <h1 className="text-3xl font-bold tracking-tight text-black sm:text-4xl">This week in AI pricing</h1>
         <p className="max-w-2xl text-sm leading-relaxed text-black/60">{intro}</p>
         <div className="flex flex-wrap gap-3 pt-1 text-xs">
           <Link
             href="/changelog"
-            className="rounded-full border border-black bg-white px-3 py-1 font-medium shadow-hard-sm transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none"
+            className="inline-flex min-h-11 items-center rounded-full border border-black bg-white px-3 py-2 font-medium transition-colors hover:bg-surface-tint"
           >
             Full changelog
           </Link>
           <a
             href="/rss.xml"
-            className="rounded-full border border-black bg-white px-3 py-1 font-medium shadow-hard-sm transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none"
+            className="inline-flex min-h-11 items-center rounded-full border border-black bg-white px-3 py-2 font-medium transition-colors hover:bg-surface-tint"
           >
             Subscribe via RSS
           </a>
@@ -121,20 +121,20 @@ export default async function DigestPage() {
       )}
 
       <section className="grid gap-4 md:grid-cols-2">
-        <div className="card p-4">
-          <div className="flex items-baseline justify-between gap-2">
+        <div className="card min-w-0 p-4">
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-2">
             <h2 className="font-hand text-2xl font-bold text-black">The labs moved</h2>
             <p className="mono-label">first-party pricing</p>
           </div>
           {labMoves.length === 0 ? (
-            <p className="py-6 text-center text-sm text-black/45">No lab changed its own pricing this week.</p>
+            <p className="py-6 text-center text-sm text-black/60">No lab changed its own pricing this week.</p>
           ) : (
             <ol className="divide-y divide-black/10 text-sm">
               {labMoves.map((m, i) => (
                 <li key={`${m.id}-${i}`} className="flex items-center gap-2 py-2.5">
-                  <span className="w-5 shrink-0 tabular-nums text-black/35">{i + 1}.</span>
+                  <span className="w-5 shrink-0 tabular-nums text-black/60">{i + 1}.</span>
                   <span className="min-w-0 flex-1 truncate">{m.name}</span>
-                  <span className="font-mono text-xs tabular-nums text-black/45">
+                  <span className="font-mono text-xs tabular-nums text-black/60">
                     {fmtPerM(m.from)}→{fmtPerM(m.to)}
                   </span>
                   <span className={`w-12 shrink-0 text-right font-mono font-bold tabular-nums ${m.pct < 0 ? "text-pos" : "text-neg"}`}>
@@ -145,20 +145,20 @@ export default async function DigestPage() {
             </ol>
           )}
         </div>
-        <div className="card p-4">
-          <div className="flex items-baseline justify-between gap-2">
+        <div className="card min-w-0 p-4">
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-2">
             <h2 className="font-hand text-2xl font-bold text-black">The street moved</h2>
             <p className="mono-label">gateway markup</p>
           </div>
           {streetMoves.length === 0 ? (
-            <p className="py-6 text-center text-sm text-black/45">No reseller changed its listing this week.</p>
+            <p className="py-6 text-center text-sm text-black/60">No reseller changed its listing this week.</p>
           ) : (
             <ol className="divide-y divide-black/10 text-sm">
               {streetMoves.slice(0, 8).map((m, i) => (
                 <li key={`${m.id}-${i}`} className="flex items-center gap-2 py-2.5">
-                  <span className="w-5 shrink-0 tabular-nums text-black/35">{i + 1}.</span>
+                  <span className="w-5 shrink-0 tabular-nums text-black/60">{i + 1}.</span>
                   <span className="min-w-0 flex-1 truncate">{m.name}</span>
-                  <span className="font-mono text-xs tabular-nums text-black/45">
+                  <span className="font-mono text-xs tabular-nums text-black/60">
                     {fmtPerM(m.from)}→{fmtPerM(m.to)}
                   </span>
                   <span className={`w-12 shrink-0 text-right font-mono font-bold tabular-nums ${m.pct < 0 ? "text-pos" : "text-neg"}`}>
@@ -176,7 +176,7 @@ export default async function DigestPage() {
           <h2 className="mb-4 font-hand text-3xl font-bold tracking-tight text-black">
             Launches <span className="mono-label align-middle">{launches.length}</span>
           </h2>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="border-y border-black/15">
             {launches.slice(0, 9).map((e) => (
               <EventCard key={e.id} event={e} />
             ))}
@@ -194,7 +194,7 @@ export default async function DigestPage() {
               <li key={e.id} className="flex flex-wrap items-center gap-2 px-4 py-2.5">
                 <EventTypeBadge type={e.type} />
                 <span className="font-medium">{e.modelName}</span>
-                {e.providerId && <span className="text-xs text-black/45">via {e.providerId}</span>}
+                {e.providerId && <span className="text-xs text-black/60">via {e.providerId}</span>}
               </li>
             ))}
           </ul>
@@ -204,7 +204,7 @@ export default async function DigestPage() {
       {contextMoves.length > 0 && (
         <section>
           <h2 className="mb-4 font-hand text-3xl font-bold tracking-tight text-black">Spec shifts</h2>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="border-y border-black/15">
             {contextMoves.slice(0, 6).map((e) => (
               <EventCard key={e.id} event={e} />
             ))}
@@ -221,7 +221,7 @@ export default async function DigestPage() {
               <li key={e.id} className="flex items-center gap-2">
                 <EventTypeBadge type={e.type} />
                 <span>{e.modelName}</span>
-                <span className="text-xs text-black/45">{e.date}</span>
+                <span className="text-xs text-black/60">{e.date}</span>
               </li>
             ))}
           </ul>

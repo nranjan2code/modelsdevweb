@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 export interface SearchModel {
@@ -18,13 +19,16 @@ export function ModelSearch({
 }) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
   const root = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLInputElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
   const hero = variant === "hero";
+  const router = useRouter();
 
   const openSearch = useCallback(() => {
     setOpen(true);
+    setActiveIndex(0);
     window.requestAnimationFrame(() => input.current?.focus());
   }, []);
 
@@ -67,6 +71,28 @@ export function ModelSearch({
       .slice(0, 8);
   }, [models, query]);
 
+  function onSearchKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      setOpen(true);
+      setActiveIndex((index) => Math.min(index + 1, Math.max(0, results.length - 1)));
+    } else if (event.key === "ArrowUp") {
+      event.preventDefault();
+      setOpen(true);
+      setActiveIndex((index) => Math.max(0, index - 1));
+    } else if (event.key === "Home" && open) {
+      event.preventDefault();
+      setActiveIndex(0);
+    } else if (event.key === "End" && open) {
+      event.preventDefault();
+      setActiveIndex(Math.max(0, results.length - 1));
+    } else if (event.key === "Enter" && open && results[activeIndex]) {
+      event.preventDefault();
+      router.push(`/m/${results[activeIndex].id}`);
+      closeSearch();
+    }
+  }
+
   const searchField = (
     <>
       <label htmlFor={`model-search-${variant}`} className="sr-only">
@@ -82,15 +108,21 @@ export function ModelSearch({
           onChange={(event) => {
             setQuery(event.target.value);
             setOpen(true);
+            setActiveIndex(0);
           }}
-          onFocus={() => setOpen(true)}
+          onFocus={() => {
+            setOpen(true);
+            setActiveIndex(0);
+          }}
+          onKeyDown={onSearchKeyDown}
           placeholder={hero ? "Search a model, lab, or capability…" : "Search a model or lab…"}
           autoComplete="off"
           role="combobox"
           aria-autocomplete="list"
           aria-expanded={open}
           aria-controls={`model-search-results-${variant}`}
-          className={`min-w-0 flex-1 bg-transparent text-black outline-none placeholder:text-black/35 ${hero ? "text-base" : "text-sm"}`}
+          aria-activedescendant={open && results[activeIndex] ? `model-search-option-${variant}-${activeIndex}` : undefined}
+          className={`min-w-0 flex-1 bg-transparent text-black outline-none placeholder:text-black/60 ${hero ? "text-base" : "text-sm"}`}
         />
         {!hero && (
           <button type="button" className="search-close" aria-label="Close search" onClick={() => closeSearch({ restoreFocus: true })}>
@@ -109,12 +141,15 @@ export function ModelSearch({
       aria-label="Model search results"
     >
       {results.length > 0 ? (
-        results.map((model) => (
+        results.map((model, index) => (
           <Link
             key={model.id}
+            id={`model-search-option-${variant}-${index}`}
             href={`/m/${model.id}`}
             role="option"
-            aria-selected="false"
+            aria-selected={index === activeIndex}
+            tabIndex={-1}
+            onMouseEnter={() => setActiveIndex(index)}
             onClick={() => closeSearch()}
             className="search-result"
           >
@@ -123,7 +158,7 @@ export function ModelSearch({
           </Link>
         ))
       ) : (
-        <p className="px-3 py-4 text-sm text-black/45">No canonical models match.</p>
+        <p className="px-3 py-4 text-sm text-black/60">No canonical models match.</p>
       )}
       <Link href="/browse" onClick={() => closeSearch()} className="search-all">
         Open model explorer →

@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { blendPrice, getCatalog, getEvents, groupContext } from "@/lib/data";
+import { blendPrice, getCatalog, getEvents, groupContext, providerCount } from "@/lib/data";
 import { capabilityAdoption, priceBuckets } from "@/lib/data/stats";
 import type { Event } from "@/lib/pipeline/types";
 import { EventTypeBadge } from "@/components/event-card";
 import { Bar } from "@/components/ui";
+import { fmtPerM, fmtTokens } from "@/lib/format";
+import { ContextPriceChart, type ContextPricePoint } from "@/components/context-price-chart";
 
 export const metadata: Metadata = {
   title: "Market trends",
@@ -17,74 +19,6 @@ function median(values: number[]): number | null {
   const s = [...values].sort((a, b) => a - b);
   const mid = Math.floor(s.length / 2);
   return s.length % 2 === 1 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
-}
-
-const CTX_TICKS = [
-  { v: 8_000, label: "8K" },
-  { v: 131_072, label: "128K" },
-  { v: 1_048_576, label: "1M" },
-];
-const PRICE_TICKS = [
-  { v: 0.03, label: "$0.03" },
-  { v: 1, label: "$1" },
-  { v: 30, label: "$30" },
-];
-
-function Scatter({ points }: { points: { key: string; x: number; y: number; open: boolean; name: string }[] }) {
-  const W = 760;
-  const H = 380;
-  const ML = 56;
-  const MB = 44;
-  const MT = 16;
-  const MR = 16;
-  const xMin = Math.log10(0.01);
-  const xMax = Math.log10(300);
-  const yMin = Math.log10(4_000);
-  const yMax = Math.log10(2_100_000);
-  const sx = (v: number) => ML + ((Math.log10(Math.max(v, 0.01)) - xMin) / (xMax - xMin)) * (W - ML - MR);
-  const sy = (v: number) => H - MB - ((Math.log10(Math.max(v, 4_000)) - yMin) / (yMax - yMin)) * (H - MB - MT);
-  return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label="Context window versus blended input-output price, log scale">
-      {PRICE_TICKS.map((t) => (
-        <g key={t.label}>
-          <line x1={sx(t.v)} y1={MT} x2={sx(t.v)} y2={H - MB} stroke="rgba(0,0,0,0.08)" />
-          <text x={sx(t.v)} y={H - MB + 18} textAnchor="middle" fontSize="11" fill="rgba(0,0,0,0.45)" fontFamily="var(--font-mono)">
-            {t.label}
-          </text>
-        </g>
-      ))}
-      {CTX_TICKS.map((t) => (
-        <g key={t.label}>
-          <line x1={ML} y1={sy(t.v)} x2={W - MR} y2={sy(t.v)} stroke="rgba(0,0,0,0.08)" />
-          <text x={ML - 8} y={sy(t.v) + 4} textAnchor="end" fontSize="11" fill="rgba(0,0,0,0.45)" fontFamily="var(--font-mono)">
-            {t.label}
-          </text>
-        </g>
-      ))}
-      <line x1={ML} y1={H - MB} x2={W - MR} y2={H - MB} stroke="var(--color-ink)" strokeWidth="1.5" />
-      <line x1={ML} y1={MT} x2={ML} y2={H - MB} stroke="var(--color-ink)" strokeWidth="1.5" />
-      <text x={(W + ML) / 2} y={H - 6} textAnchor="middle" fontSize="12" fill="rgba(0,0,0,0.55)">
-        best blended price /M (log)
-      </text>
-      <text x={14} y={H / 2} textAnchor="middle" fontSize="12" fill="rgba(0,0,0,0.55)" transform={`rotate(-90 14 ${H / 2})`}>
-        context window (log)
-      </text>
-      {points.map((p) => (
-        <circle
-          key={p.key}
-          cx={sx(p.x)}
-          cy={sy(p.y)}
-          r={4}
-          fill={p.open ? "var(--color-surface)" : "var(--color-accent)"}
-          stroke="var(--color-accent)"
-          strokeWidth={p.open ? 1.5 : 0}
-          opacity={0.75}
-        >
-          <title>{`${p.name} — $${p.x.toFixed(2)}/M blended`}</title>
-        </circle>
-      ))}
-    </svg>
-  );
 }
 
 export default async function TrendsPage() {
@@ -112,17 +46,28 @@ export default async function TrendsPage() {
     .sort((a, b) => b.count - a.count)
     .slice(0, 8);
   const medMax = Math.max(...labStats.map((s) => Math.max(s.medIn ?? 0, s.medOut ?? 0)), 0.001);
+  const medScale = (value: number | null) => value == null ? 0 : Math.log10(1 + value) / Math.log10(1 + medMax);
 
   const priced = groups.filter((g) => g.best != null);
-  const scatter = priced
+  const scatter: ContextPricePoint[] = priced
     .filter((g) => (groupContext(g) ?? 0) > 0)
     .map((g) => ({
-      key: g.id,
-      x: blendPrice(g.best!.input, g.best!.output),
-      y: groupContext(g) ?? 0,
+      id: g.id,
+      input: g.best!.input,
+      output: g.best!.output,
+      context: groupContext(g) ?? 0,
       open: g.canonical?.openWeights === true,
       name: g.name,
+      lab: g.labId,
+      providers: providerCount(g),
+      textInput: (g.canonical?.modalities?.input.includes("text") ?? false) || g.listings.some((listing) => listing.modalities.input.includes("text")),
+      textOutput: (g.canonical?.modalities?.output.includes("text") ?? false) || g.listings.some((listing) => listing.modalities.output.includes("text")),
     }));
+  const blendedMedian = median(priced.map((g) => blendPrice(g.best!.input, g.best!.output)));
+  const contextMedian = median(groups.map((g) => groupContext(g)).filter((value): value is number => value != null));
+  const latestEventDate = Math.max(...events.map((event) => Date.parse(`${event.date}T00:00:00Z`)), 0);
+  const recentCutoff = latestEventDate - 6 * 86_400_000;
+  const recentEvents = events.filter((event) => Date.parse(`${event.date}T00:00:00Z`) >= recentCutoff).length;
 
   const byType = new Map<string, number>();
   for (const e of events) byType.set(e.type, (byType.get(e.type) ?? 0) + 1);
@@ -143,7 +88,7 @@ export default async function TrendsPage() {
 
   return (
     <div className="space-y-12">
-      <header className="space-y-2">
+      <header className="page-intro">
         <p className="mono-label">State of the market</p>
         <h1 className="text-3xl font-bold tracking-tight text-black sm:text-4xl">Trends</h1>
         <p className="max-w-2xl text-sm leading-relaxed text-black/60">
@@ -153,6 +98,13 @@ export default async function TrendsPage() {
         </p>
       </header>
 
+      <dl className="metric-strip grid grid-cols-2 lg:grid-cols-4">
+        <div className="metric-cell"><dt className="micro-label">Canonical market</dt><dd className="mt-1 font-mono text-2xl font-bold tabular-nums">{groups.length}</dd><dd className="text-xs text-black/60">tracked models</dd></div>
+        <div className="metric-cell"><dt className="micro-label">Median blended price</dt><dd className="mt-1 font-mono text-2xl font-bold tabular-nums">{blendedMedian == null ? "—" : fmtPerM(blendedMedian)}</dd><dd className="text-xs text-black/60">per 1M tokens</dd></div>
+        <div className="metric-cell"><dt className="micro-label">Median context</dt><dd className="mt-1 font-mono text-2xl font-bold tabular-nums">{fmtTokens(contextMedian)}</dd><dd className="text-xs text-black/60">known windows</dd></div>
+        <div className="metric-cell"><dt className="micro-label">Seven-day tape</dt><dd className="mt-1 font-mono text-2xl font-bold tabular-nums">{recentEvents}</dd><dd className="text-xs text-black/60">catalog changes</dd></div>
+      </dl>
+
       <section className="grid gap-6 lg:grid-cols-2">
         <div className="space-y-3">
           <h2 className="font-hand text-2xl font-bold tracking-tight text-black">Capability adoption</h2>
@@ -160,7 +112,7 @@ export default async function TrendsPage() {
             {caps.map((c) => (
               <li key={c.label} className="flex items-center gap-2 text-sm sm:gap-3">
                 <span className="w-28 shrink-0 truncate text-black/60 sm:w-36">{c.label}</span>
-                <Bar pct={c.pct} />
+                <Bar pct={c.pct} label={`${c.label}: ${Math.round(c.pct * 100)} percent of tracked models`} />
                 <span className="w-16 shrink-0 text-right font-mono text-xs tabular-nums text-black/70 sm:w-20">
                   {c.count} · {Math.round(c.pct * 100)}%
                 </span>
@@ -177,7 +129,7 @@ export default async function TrendsPage() {
               {buckets.map((b) => (
                 <li key={b.label} className="flex items-center gap-2 text-sm sm:gap-3">
                   <span className="w-20 shrink-0 font-mono text-xs text-black/60">{b.label}</span>
-                  <Bar pct={b.count / bucketMax} />
+                  <Bar pct={b.count / bucketMax} label={`${b.label}: ${b.count} priced models`} />
                   <span className="w-8 shrink-0 text-right font-mono tabular-nums text-black/70">{b.count}</span>
                 </li>
               ))}
@@ -188,7 +140,8 @@ export default async function TrendsPage() {
 
       <section className="space-y-3">
         <h2 className="font-hand text-2xl font-bold tracking-tight text-black">Median prices by lab</h2>
-        <p className="text-sm text-black/45">Labs with ≥ 3 priced models. Bars scaled to the most expensive median.</p>
+        <p className="text-sm text-black/60">Labs with ≥ 3 priced models. Log-scaled bars keep lower-priced labs readable; the printed prices remain authoritative.</p>
+        <div className="chart-legend"><span className="inline-flex items-center gap-2"><span className="chart-key" />Input median</span><span className="inline-flex items-center gap-2"><span className="chart-key chart-key-special" />Output median</span></div>
         <ul className="card space-y-3 p-4">
           {labStats.map((s) => (
             <li key={s.labId} className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
@@ -196,32 +149,30 @@ export default async function TrendsPage() {
                 {s.labId}
               </Link>
               <div className="flex min-w-48 flex-1 items-center gap-2">
-                <Bar pct={(s.medIn ?? 0) / medMax} />
+                <Bar pct={medScale(s.medIn)} label={`${s.labId} median input price ${s.medIn == null ? "unlisted" : fmtPerM(s.medIn)}`} />
                 <span className="shrink-0 font-mono text-xs tabular-nums text-black/70">
                   in {s.medIn != null ? `$${s.medIn.toFixed(2)}` : "—"}
                 </span>
               </div>
               <div className="flex min-w-48 flex-1 items-center gap-2">
-                <Bar pct={(s.medOut ?? 0) / medMax} fill="bg-special-bright" />
+                <Bar pct={medScale(s.medOut)} tone="special" label={`${s.labId} median output price ${s.medOut == null ? "unlisted" : fmtPerM(s.medOut)}`} />
                 <span className="shrink-0 font-mono text-xs tabular-nums text-black/70">
                   out {s.medOut != null ? `$${s.medOut.toFixed(2)}` : "—"}
                 </span>
               </div>
-              <span className="w-14 shrink-0 text-right font-mono text-xs tabular-nums text-black/45">{s.count} mod.</span>
+              <span className="w-14 shrink-0 text-right font-mono text-xs tabular-nums text-black/60">{s.count} mod.</span>
             </li>
           ))}
         </ul>
       </section>
 
       <section className="space-y-3">
-        <h2 className="font-hand text-2xl font-bold tracking-tight text-black">Context vs price</h2>
-        <p className="text-sm text-black/45">
-          Each dot is one priced model with a known context window. Hollow dots are open-weights models — the
-          frontier of cheap-and-large lives mostly on that side.
+        <h2 className="font-hand text-2xl font-bold tracking-tight text-black">Context vs price explorer</h2>
+        <p className="text-sm text-black/60">
+          Find the models that buy the most context for the least published price. Switch between input, output
+          and the site&rsquo;s 75/25 blend; then slice by lab, weight access, price or context. Both axes are logarithmic.
         </p>
-        <div className="card p-4">
-          <Scatter points={scatter} />
-        </div>
+        <ContextPriceChart points={scatter} />
       </section>
 
       <section className="grid gap-6 md:grid-cols-2">
@@ -229,12 +180,12 @@ export default async function TrendsPage() {
           <h2 className="font-hand text-2xl font-bold tracking-tight text-black">Change pulse</h2>
           <ul className="card space-y-2.5 p-4">
             {events.length === 0 ? (
-              <li className="text-sm text-black/45">No events recorded yet — the hourly diff just started collecting.</li>
+              <li className="text-sm text-black/60">No events recorded yet — the hourly diff just started collecting.</li>
             ) : (
               types.map(([type, count]) => (
                 <li key={type} className="flex items-center gap-3 text-sm">
                   <EventTypeBadge type={type as Event["type"]} />
-                  <Bar pct={count / typeMax} fill="bg-black/45" />
+                  <Bar pct={count / typeMax} tone="neutral" label={`${type}: ${count} changes in the retained event log`} />
                   <span className="w-8 shrink-0 text-right font-mono tabular-nums text-black/70">{count}</span>
                 </li>
               ))
@@ -245,7 +196,7 @@ export default async function TrendsPage() {
           <h2 className="font-hand text-2xl font-bold tracking-tight text-black">Most repriced models</h2>
           <ul className="card divide-y divide-black/10 text-sm">
             {hotModels.length === 0 ? (
-              <li className="px-4 py-3 text-black/45">No repricings detected yet.</li>
+              <li className="px-4 py-3 text-black/60">No repricings detected yet.</li>
             ) : (
               hotModels.map((m) => (
                 <li key={m.id ?? m.name} className="flex items-center justify-between gap-2 px-4 py-2.5">

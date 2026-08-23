@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import { IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
 import { SITE_NAME, SITE_TAGLINE, SITE_URL } from "@/lib/site";
 import { SiteNav } from "@/components/site-nav";
 import { ModelSearch } from "@/components/model-search";
@@ -9,8 +9,16 @@ import { BrandMark } from "@/components/brand-mark";
 import { getCatalog } from "@/lib/data";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
-const jetbrains = JetBrains_Mono({ subsets: ["latin"], variable: "--font-jetbrains" });
+const plexSans = IBM_Plex_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-plex-sans",
+});
+const plexMono = IBM_Plex_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-plex-mono",
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -42,7 +50,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     lab: group.labId,
   }));
   return (
-    <html lang="en" className={`${inter.variable} ${jetbrains.variable}`}>
+    <html lang="en" className={`${plexSans.variable} ${plexMono.variable}`}>
       <body className="min-h-screen flex flex-col font-sans">
         <script
           type="application/ld+json"
@@ -63,21 +71,25 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           Skip to content
         </a>
         <header className="site-header">
-          <div className="mx-auto flex max-w-7xl items-center gap-2 px-4 py-3 sm:px-6 md:gap-3">
+          <div className="mx-auto flex max-w-[90rem] items-center gap-3 px-4 py-3 sm:px-6">
             <Link href="/" className="group flex shrink-0 items-center gap-2.5">
               <BrandMark boxClassName="h-9 w-9 transition-transform group-hover:scale-105" />
-              <span>
-                <span className="block text-base font-bold leading-none tracking-tight text-black">{SITE_NAME}</span>
+              <span className="block">
+                <span className="block text-base font-bold leading-none text-black">{SITE_NAME}</span>
                 <span className="micro-label mt-1 hidden sm:block">AI model market</span>
               </span>
             </Link>
-            <SiteNav />
-            <div className="shrink-0">
+            <div className="ml-auto shrink-0">
               <ModelSearch models={searchModels} />
             </div>
           </div>
+          <div className="site-nav-band">
+            <div className="mx-auto max-w-[90rem] px-4 sm:px-6">
+              <SiteNav />
+            </div>
+          </div>
         </header>
-        <main id="main" className="mx-auto w-full max-w-7xl flex-1 px-4 py-10 sm:px-6 lg:py-14">
+        <main id="main" className="mx-auto w-full max-w-[90rem] flex-1 px-4 py-8 sm:px-6 lg:py-12">
           {children}
         </main>
         <div className="mt-12">

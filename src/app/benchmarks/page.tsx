@@ -14,7 +14,7 @@ export default async function BenchmarksPage() {
   const boards = await getBenchmarkBoards();
   return (
     <div className="space-y-6">
-      <header className="space-y-2">
+      <header className="page-intro">
         <p className="mono-label">Leaderboards</p>
         <h1 className="text-3xl font-bold tracking-tight text-black sm:text-4xl">Benchmark leaderboards</h1>
         <p className="max-w-2xl text-sm leading-relaxed text-black/60">
@@ -27,36 +27,33 @@ export default async function BenchmarksPage() {
           .
         </p>
       </header>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="divide-y divide-black/10 border-y border-black/15">
         {boards.map((b) => {
           const home = benchmarkHome(b.name);
           return (
-            <div key={b.slug} className="card lift relative p-4">
-              <Link href={`/benchmarks/${b.slug}`} className="absolute inset-0 z-10" aria-label={`View ${b.name} leaderboard`}>
-                <span className="sr-only">View {b.name}</span>
-              </Link>
-              <div className="flex items-center justify-between gap-2">
-                <div className="min-w-0 truncate font-medium text-black">{b.name}</div>
+            <article key={b.slug} className="flex min-h-24 flex-col justify-center gap-2 py-4 sm:flex-row sm:items-center sm:gap-6">
+              <div className="min-w-0 flex-1">
+                <Link href={`/benchmarks/${b.slug}`} className="font-semibold text-black transition-colors hover:text-accent">
+                  {b.name} →
+                </Link>
+                <p className="mt-1 text-sm text-black/60">
+                  {b.entries.length} models scored · leader: {b.entries[0]?.groupName} ({b.entries[0]?.score})
+                </p>
+              </div>
+              <div className="flex shrink-0 items-center gap-4">
                 {home && (
                   <a
                     href={home}
                     target="_blank"
                     rel="noreferrer"
                     title={`Official ${b.name} benchmark`}
-                    className="relative z-20 shrink-0 text-xs font-semibold text-accent transition-colors hover:text-accent-strong"
+                    className="inline-flex min-h-11 items-center text-sm font-semibold text-accent transition-colors hover:text-accent-strong"
                   >
                     official ↗
                   </a>
                 )}
               </div>
-              <div className="mt-1 flex items-baseline justify-between text-xs text-black/45">
-                <span>{b.entries.length} models scored</span>
-                <span className="font-semibold text-accent">view →</span>
-              </div>
-              <div className="mt-2 truncate text-xs text-black/60">
-                🥇 {b.entries[0]?.groupName} ({b.entries[0]?.score})
-              </div>
-            </div>
+            </article>
           );
         })}
       </div>

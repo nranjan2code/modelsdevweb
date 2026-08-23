@@ -52,7 +52,7 @@ export default function AboutPage() {
           })),
         }}
       />
-      <header className="space-y-3">
+      <header className="page-intro">
         <p className="mono-label">Methodology</p>
         <h1 className="text-3xl font-bold tracking-tight text-black sm:text-4xl">About &amp; methodology</h1>
         <p className="text-2xl font-bold leading-snug tracking-tight text-black sm:text-3xl">
@@ -151,7 +151,7 @@ export default function AboutPage() {
             label="markdown"
             value={`[![${BADGE_MODEL.name} price](${SITE_URL}/badge/${BADGE_MODEL.id}.svg)](${SITE_URL}/m/${BADGE_MODEL.id})`}
           />
-          <p className="text-xs leading-relaxed text-black/45">
+          <p className="text-xs leading-relaxed text-black/60">
             Use the model&apos;s stable path-style ID after <span className="font-mono">/badge/</span>. The
             image updates when the catalog rebuilds; the destination remains the model&apos;s comparison page.
           </p>
@@ -240,7 +240,7 @@ export default function AboutPage() {
             . Reuse the data or badges freely with attribution to Model Pulse and models.dev.
           </li>
         </ul>
-        <p className="pl-5 text-xs leading-relaxed text-black/45">
+        <p className="pl-5 text-xs leading-relaxed text-black/60">
           All published content here derives from public sources; nothing confidential is republished.
           Provider names and model brands remain the property of their owners.
         </p>

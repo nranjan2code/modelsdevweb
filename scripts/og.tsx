@@ -26,10 +26,10 @@ async function loadFonts(): Promise<FontEntry[]> {
   ];
   return Promise.all(
     weights.map(async ({ w, file }) => {
-      const url = `https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/${file}.ttf`;
+      const url = `https://cdn.jsdelivr.net/fontsource/fonts/ibm-plex-sans@latest/${file}.ttf`;
       const res = await fetch(url);
       if (!res.ok) throw new Error(`font ${file} -> HTTP ${res.status}`);
-      return { name: "Inter", data: Buffer.from(await res.arrayBuffer()), weight: w, style: "normal" as const };
+      return { name: "IBM Plex Sans", data: Buffer.from(await res.arrayBuffer()), weight: w, style: "normal" as const };
     }),
   );
 }
@@ -53,19 +53,25 @@ const SHARED_STYLES = {
   flexDirection: "column",
   width: "100%",
   height: "100%",
-  backgroundColor: "#fafaf9",
-  color: "#0a0a0a",
-  fontFamily: "Inter",
+  backgroundColor: "#f7f8fa",
+  color: "#111827",
+  fontFamily: "IBM Plex Sans",
 } as const;
 
 function Brand({ right }: { right?: string }) {
   return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
       <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-        <div style={{ width: "10px", height: "10px", borderRadius: "9999px", backgroundColor: "#10b981" }} />
-        <div style={{ fontSize: "26px", fontWeight: 700, color: "#0a0a0a" }}>Model Pulse</div>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "34px", height: "34px", borderRadius: "7px", backgroundColor: "#111827" }}>
+          <svg width="25" height="25" viewBox="0 0 32 32" fill="none">
+            <path d="M4 21H9L12.5 15L16 19L21 9L24 13H28" stroke="#ffffff" strokeWidth="2.5" />
+            <circle cx="21" cy="9" r="2.2" fill="#2563eb" />
+            <circle cx="28" cy="13" r="1.6" fill="#14b87a" />
+          </svg>
+        </div>
+        <div style={{ fontSize: "26px", fontWeight: 700, color: "#111827" }}>Model Pulse</div>
       </div>
-      {right && <div style={{ fontSize: "20px", color: "#737373" }}>{right}</div>}
+      {right && <div style={{ fontSize: "20px", color: "#596275" }}>{right}</div>}
     </div>
   );
 }
@@ -73,8 +79,8 @@ function Brand({ right }: { right?: string }) {
 function Stat({ value, label }: { value: string; label: string }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-      <div style={{ fontSize: "40px", fontWeight: 700, color: "#0a0a0a" }}>{value}</div>
-      <div style={{ fontSize: "19px", color: "#737373" }}>{label}</div>
+      <div style={{ fontSize: "40px", fontWeight: 700, color: "#111827" }}>{value}</div>
+      <div style={{ fontSize: "19px", color: "#596275" }}>{label}</div>
     </div>
   );
 }
@@ -91,14 +97,14 @@ function siteCard(stats: { models: number; providers: number; listings: number; 
             fontSize: "54px",
             fontWeight: 700,
             lineHeight: 1.2,
-            color: "#0a0a0a",
+            color: "#111827",
             maxWidth: "1000px",
           }}
         >
           Every AI model. Every provider.
           <span style={{ color: "#2563eb" }}>&nbsp;Every change.</span>
         </div>
-        <div style={{ fontSize: "26px", color: "#525252" }}>
+        <div style={{ fontSize: "26px", color: "#596275" }}>
           Live price comparison and changelog for AI models — diffed hourly from open data.
         </div>
       </div>
@@ -106,7 +112,7 @@ function siteCard(stats: { models: number; providers: number; listings: number; 
         style={{
           display: "flex",
           gap: "56px",
-          borderTop: "3px solid #0a0a0a",
+          borderTop: "4px solid #2563eb",
           paddingTop: "32px",
         }}
       >
@@ -125,13 +131,13 @@ function modelCard(g: ModelGroup) {
     <div style={{ ...SHARED_STYLES, padding: "64px", justifyContent: "space-between" }}>
       <Brand right={g.labId} />
       <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-        <div style={{ fontSize: "64px", fontWeight: 700, lineHeight: 1.1, color: "#0a0a0a" }}>{g.name}</div>
+        <div style={{ fontSize: "64px", fontWeight: 700, lineHeight: 1.1, color: "#111827" }}>{g.name}</div>
         {g.canonical?.description && (
           <div
             style={{
               fontSize: "23px",
               lineHeight: 1.4,
-              color: "#525252",
+              color: "#596275",
               maxWidth: "980px",
               lineClamp: 2,
             }}
@@ -140,7 +146,7 @@ function modelCard(g: ModelGroup) {
           </div>
         )}
       </div>
-      <div style={{ display: "flex", gap: "56px", borderTop: "3px solid #0a0a0a", paddingTop: "32px" }}>
+      <div style={{ display: "flex", gap: "56px", borderTop: "4px solid #2563eb", paddingTop: "32px" }}>
         <Stat value={g.best ? fmtPerM(g.best.input) : "—"} label="best input /M" />
         <Stat value={g.best ? fmtPerM(g.best.output) : "—"} label="best output /M" />
         <Stat value={fmtTokens(ctx)} label="context" />
