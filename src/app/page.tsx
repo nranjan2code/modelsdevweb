@@ -46,9 +46,9 @@ const LEDE_EYEBROW: Record<Lede["kind"], string> = {
  * Homepage information architecture — six modules, in this order:
  *
  *   1. Lead          the day's story + a live market rail
- *   2. The gap       the one fact nobody else publishes
+ *   2. The boards    every other cut of the data, as a deck
  *   3. The wire      today's press beside today's tape
- *   4. The boards    every other cut of the data, as a deck
+ *   4. The gap       the one fact nobody else publishes
  *   5. Three answers cost / evidence / self-host, each carrying a live number
  *   6. Subscribe     the return mechanism
  *
@@ -710,12 +710,6 @@ export default async function HomePage() {
     <div className="space-y-10 lg:space-y-14">
       <Lead story={story} syncedAgo={syncedAgo} glance={glanceStats} />
 
-      {spreads.length > 0 && (
-        <TheGap rows={spreads} leadSummary={spreadSummary(spreads[0].group, spreads[0].spread)} />
-      )}
-
-      <Wire labMoves={labMoves} streetMoves={streetMoves} stories={stories} />
-
       <Deck
         cards={[
           <DeckCard
@@ -861,6 +855,12 @@ export default async function HomePage() {
           />,
         ]}
       />
+
+      <Wire labMoves={labMoves} streetMoves={streetMoves} stories={stories} />
+
+      {spreads.length > 0 && (
+        <TheGap rows={spreads} leadSummary={spreadSummary(spreads[0].group, spreads[0].spread)} />
+      )}
 
       <ThreeAnswers
         notIndependentPct={notIndependentPct}
