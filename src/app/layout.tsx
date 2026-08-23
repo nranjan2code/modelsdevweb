@@ -63,7 +63,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           Skip to content
         </a>
         <header className="site-header">
-          <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-3 px-4 py-3 sm:px-6 lg:flex-nowrap">
+          <div className="mx-auto flex max-w-7xl items-center gap-2 px-4 py-3 sm:px-6 md:gap-3">
             <Link href="/" className="group flex shrink-0 items-center gap-2.5">
               <BrandMark boxClassName="h-9 w-9 transition-transform group-hover:scale-105" />
               <span>
@@ -72,7 +72,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               </span>
             </Link>
             <SiteNav />
-            <div className="order-3 w-full md:order-none md:ml-auto md:w-auto">
+            <div className="shrink-0">
               <ModelSearch models={searchModels} />
             </div>
           </div>
