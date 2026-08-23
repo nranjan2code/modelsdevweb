@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { ModelSearch } from "@/components/model-search";
 import { Subscribe } from "@/components/subscribe";
 import { Badge, DeltaChip, EmptyState, SectionHead } from "@/components/ui";
 import { getCatalog, getEvents, getNews, getSnapshotMeta, groupContext, groupReleaseDate, liveListings } from "@/lib/data";
@@ -44,13 +43,23 @@ const LEDE_EYEBROW: Record<Lede["kind"], string> = {
 };
 
 /*
- * Homepage information architecture — five modules, in this order, for reasons:
+ * Homepage information architecture — six modules, in this order:
  *
- *   1. Lead          the day's story + what this site is + search
- *   2. The gap       the one fact nobody else publishes, at full size
- *   3. The tape      who moved, split first-party vs street
- *   4. Three answers cost / evidence / self-host, each carrying a live number
- *   5. Subscribe     the return mechanism
+ *   1. Lead          the day's story + a live market rail
+ *   2. The gap       the one fact nobody else publishes
+ *   3. The wire      today's press beside today's tape
+ *   4. The boards    every other cut of the data, as a deck
+ *   5. Three answers cost / evidence / self-host, each carrying a live number
+ *   6. Subscribe     the return mechanism
+ *
+ * The weighting rule: **the fold belongs to today, and to more than one thing.**
+ * The lead is sized so the first rows of the next module clear the fold on a
+ * 720px screen. A first screen holding one story and nothing else is a poster,
+ * not a front page — the reader cannot tell whether anything else is here.
+ *
+ * News outranks evergreen. The wire (what was written, what actually repriced)
+ * sits above the deck and the tool router, because a returning reader came for
+ * the tape and a new one wants proof before a calculator.
  *
  * What was removed and why:
  *
@@ -58,69 +67,74 @@ const LEDE_EYEBROW: Record<Lede["kind"], string> = {
  *   Compare / Calculator, restating the top nav verbatim, in the highest-CTR
  *   band on the page. It carried no information a visitor could not get from
  *   the header, and it occupied the position where the site's strongest claim
- *   should sit. Replaced by module 4, where every card states a live figure.
- * - **"The wire".** A three-item stub of the newest events, beside two other
- *   modules built from the same event log. Three views of one dataset reads as
- *   volume, not as editing. `/changelog` is the wire, and is one click away.
+ *   should sit. Replaced by module 5, where every card states a live figure.
  * - **The hero's vanity stats** (343 models / 193 providers / 170 changes).
  *   Supply-side brags. Nobody returns to a site because it tracks 343 models;
- *   they return because it told them something. The rail now carries the
- *   widest credible price gap in the live market instead.
+ *   they return because it told them something. The rail carries live market
+ *   figures instead, one per destination, so it reads as an index to the page.
+ * - **The hero's model search.** The header carries a search field with a `/`
+ *   hotkey, in the same viewport, ~200px above. A second field spent the most
+ *   valuable block on the page repeating a control already on screen.
+ * - **The hero's standfirst, from above the headline.** A cold visitor still
+ *   needs to know what the publication is, but not before the story: it now
+ *   runs as a footer rule under the lede, where it explains without delaying.
  */
 
 function Lead({
   story,
   syncedAgo,
-  models,
   glance,
 }: {
   story: Lede;
   syncedAgo: string | null;
-  models: { id: string; name: string; lab: string }[];
   glance: GlanceStat[];
 }) {
   return (
     <section className="hero-shell" aria-labelledby="daily-lede">
-      <div className="relative grid lg:grid-cols-[minmax(0,1.25fr)_minmax(20rem,0.75fr)]">
-        <div className="p-6 sm:p-9 lg:p-12">
-          <div className="flex flex-wrap items-center gap-2">
+      <div className="relative grid lg:grid-cols-[minmax(0,1.35fr)_minmax(17rem,0.65fr)]">
+        <div className="flex flex-col justify-center p-5 sm:p-7 lg:p-8">
+          <div className="flex flex-wrap items-center gap-x-2.5 gap-y-2">
             <Badge tone={LEDE_TONE[story.kind]} bold>{LEDE_EYEBROW[story.kind]}</Badge>
             <span className="pill bg-white/70">
               <span className="h-2 w-2 rounded-full bg-pos-bright" aria-hidden="true" />
               Live{syncedAgo ? ` · synced ${syncedAgo}` : ""}
             </span>
+            {/* Rule 14: the rule that picked the lede stays next to the claim. */}
+            <span className="micro-label">selected by: {story.rule}</span>
           </div>
 
-          {/*
-            A cold visitor arriving from a shared link sees a news headline and
-            no idea what the publication is. One standfirst line fixes that
-            without displacing the story.
-          */}
-          <p className="mt-6 max-w-xl text-sm leading-relaxed text-black/60">
-            Independent price and benchmark analysis for AI models — what a workload actually costs,
-            and where to buy it.
-          </p>
-
-          <h1 id="daily-lede" className="mt-3 max-w-3xl text-3xl font-bold leading-[1.08] tracking-[-0.03em] text-black sm:text-4xl">
+          <h1 id="daily-lede" className="mt-3 max-w-3xl text-3xl font-bold leading-[1.06] tracking-[-0.03em] text-black sm:text-4xl">
             {story.headline}
           </h1>
-          <p className="mt-4 max-w-2xl text-base leading-relaxed text-black/70 sm:text-lg">{story.body}</p>
-          <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-3">
+          <p className="mt-2.5 max-w-2xl text-base leading-relaxed text-black/70">{story.body}</p>
+          <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2">
             <Link href={story.href} className="button-primary">{story.cta} →</Link>
             <Link href="/changelog" className="text-sm font-semibold text-accent hover:text-accent-strong">Today&rsquo;s changes →</Link>
           </div>
-          <p className="micro-label mt-4">selected by: {story.rule}</p>
+
+          <p className="mt-5 border-t border-black/10 pt-3 text-xs leading-relaxed text-black/60">
+            Independent price and benchmark analysis for AI models — what a workload actually costs,
+            and where to buy it.
+          </p>
         </div>
 
-        <aside className="border-t border-black/15 bg-surface-tint p-6 sm:p-9 lg:border-l lg:border-t-0 lg:p-10" aria-label="Market at a glance and model lookup">
-          <p className="mono-label text-accent">Market at a glance</p>
-          <dl className="mt-4 divide-y divide-black/10 border-y border-black/10">
+        <aside
+          className="flex flex-col justify-center border-t border-black/15 bg-surface-tint px-5 py-5 sm:px-7 lg:border-l lg:border-t-0 lg:px-7 lg:py-6"
+          aria-label="Market at a glance"
+        >
+          <div className="flex items-baseline justify-between gap-3">
+            <p className="mono-label text-accent">Market at a glance</p>
+            <Link href="/exchange" className="text-xs font-semibold text-accent hover:text-accent-strong">
+              The whole market →
+            </Link>
+          </div>
+          <dl className="mt-2.5 divide-y divide-black/10 border-t border-black/10">
             {glance.map((g) => (
-              <div key={g.label} className="flex items-baseline justify-between gap-3 py-2.5">
+              <div key={g.label} className="flex items-baseline justify-between gap-3 py-2">
                 <dt className="min-w-0">
-                  <span className="block text-sm font-medium text-black">{g.label}</span>
+                  <span className="block text-sm font-medium leading-snug text-black">{g.label}</span>
                   {g.detail && (
-                    <span className="mt-0.5 block truncate text-xs text-black/60">{g.detail}</span>
+                    <span className="mt-0.5 block truncate text-xs leading-snug text-black/60">{g.detail}</span>
                   )}
                 </dt>
                 <dd className="shrink-0 font-mono text-base font-bold tabular-nums text-black">
@@ -133,15 +147,6 @@ function Lead({
               </div>
             ))}
           </dl>
-          <Link href="/exchange" className="mt-3 inline-block text-sm font-semibold text-accent hover:text-accent-strong">
-            The whole market →
-          </Link>
-
-          <div className="mt-6 border-t border-black/10 pt-5">
-            <p className="micro-label mb-2">Look up any model</p>
-            <ModelSearch variant="hero" models={models} />
-            <p className="micro-label mt-3 leading-relaxed">A dash means unlisted, not free · verify before purchasing</p>
-          </div>
         </aside>
       </div>
     </section>
@@ -383,7 +388,7 @@ function Deck({ cards }: { cards: React.ReactNode[] }) {
   if (live.length === 0) return null;
   return (
     <section aria-label="Data boards">
-      <SectionHead title="The boards" eyebrow="Every cut of today's data" />
+      <SectionHead title="The boards" eyebrow="Every cut of today's data · a dash means unlisted, not free" />
       <div className="mt-3 grid gap-4 md:grid-cols-2 xl:grid-cols-3">{live}</div>
     </section>
   );
@@ -405,11 +410,11 @@ function TheGap({ rows, leadSummary }: { rows: SpreadRow[]; leadSummary: string 
         href="/exchange"
         label="The exchange"
       />
-      <p className="mt-2 max-w-3xl text-sm leading-relaxed text-black/60">
-        A model is not one price. It is a spread across every venue that sells it, and the ends of
-        that spread are further apart than almost anyone assumes. Listings no second venue comes
-        close to are dropped as feed errors before anything reaches this board.
-      </p>
+      {/*
+        One dek, not two paragraphs. The generic explanation is a method note,
+        and a method note belongs under the evidence it qualifies — above it,
+        it is three lines the reader must clear before reaching a single number.
+      */}
       <p className="mt-2 max-w-3xl text-sm leading-relaxed text-black/70">{leadSummary}</p>
       <ul className="card mt-4 divide-y divide-black/10">
         {rows.map((r, i) => {
@@ -443,7 +448,11 @@ function TheGap({ rows, leadSummary }: { rows: SpreadRow[]; leadSummary: string 
           );
         })}
       </ul>
-
+      <p className="micro-label mt-2.5 max-w-3xl leading-relaxed">
+        A model is not one price — it is a spread across every venue that sells it. Listings more
+        than 20× from the model&rsquo;s own median are dropped as feed errors before anything reaches
+        this board, and a cheapest quote counts only when a second venue is within 1.5× of it.
+      </p>
     </section>
   );
 }
@@ -466,8 +475,8 @@ function ThreeAnswers({
   notIndependentPct: number;
 }) {
   return (
-    <section aria-labelledby="answers-heading">
-      <h2 id="answers-heading" className="sr-only">What we computed today</h2>
+    <section>
+      <SectionHead title="Work the numbers yourself" eyebrow="Three questions · each answered with a figure computed today" />
       <div className="grid gap-4 md:grid-cols-3">
         <AnswerCard
           eyebrow="What will it cost?"
@@ -495,7 +504,7 @@ function ThreeAnswers({
           question="The rent is the floor, and it is higher than people expect."
           body="We compute the smallest configuration the weights fit on. Throughput is not knowable from a model name, so every break-even here is a lower bound."
           stat={hosting ? fmtMonthlyUsd(hosting.usdPerMonth) : null}
-          statLabel={hosting ? `lowest floor · ${hosting.name} on ${hosting.gpu}` : null}
+          statLabel={hosting ? `lowest break-even · ${hosting.name} on ${hosting.gpu}` : null}
           href="/self-host"
           cta="Price out self-hosting"
         />
@@ -571,6 +580,12 @@ export default async function HomePage() {
     .filter((x) => Number.isFinite(x.rate) && x.rate >= 0.3 && x.rate <= 2)
     .sort((a, b) => a.rate - b.rate)[0];
   const topHost = hostableCases(catalog.tracked, weights.models, 1)[0];
+  // `hostableCases` ranks on break-even tokens; the rail states a monthly rent,
+  // so it has to re-sort. Calling the lowest break-even "the cheapest floor"
+  // would be the kind of self-host claim this codebase is careful not to make.
+  const cheapestFloor = hostableCases(catalog.tracked, weights.models, catalog.tracked.length)
+    .filter((h) => h.floor != null)
+    .sort((a, b) => a.floor!.usdPerMonth - b.floor!.usdPerMonth)[0];
 
   // The share of scored rows nobody independent measured. Computed from the
   // live boards so the claim cannot drift away from the data behind it.
@@ -578,8 +593,6 @@ export default async function HomePage() {
   const notIndependentPct = scored.length
     ? Math.round((scored.filter((e) => e.provenance !== "independent").length / scored.length) * 100)
     : 0;
-
-  const searchModels = catalog.tracked.map((group) => ({ id: group.id, name: group.name, lab: group.labId }));
 
   // Coverage the catalog can actually resolve to a model — an untagged story is
   // a link with nowhere to go, which is the whole reason /news tags them.
@@ -679,31 +692,27 @@ export default async function HomePage() {
       value: `${100 - notIndependentPct}%`,
       href: "/benchmarks",
     },
+    // One figure per destination: the rail is an index to the page, not a
+    // preview of the section directly beneath it. Ranked on rent, not on
+    // break-even — the label says "floor", so the sort has to mean that.
+    cheapestFloor?.floor
+      ? {
+          label: "Cheapest hosting floor",
+          detail: `${cheapestFloor.name} · ${cheapestFloor.floor.gpus}× ${cheapestFloor.floor.tier.name}`,
+          value: fmtMonthlyUsd(cheapestFloor.floor.usdPerMonth),
+          href: "/self-host",
+        }
+      : null,
   ];
   const glanceStats = glance.filter((x): x is GlanceStat => x !== null);
 
   return (
-    <div className="space-y-12 lg:space-y-16">
-      <Lead story={story} syncedAgo={syncedAgo} models={searchModels} glance={glanceStats} />
+    <div className="space-y-10 lg:space-y-14">
+      <Lead story={story} syncedAgo={syncedAgo} glance={glanceStats} />
 
       {spreads.length > 0 && (
         <TheGap rows={spreads} leadSummary={spreadSummary(spreads[0].group, spreads[0].spread)} />
       )}
-
-      <ThreeAnswers
-        notIndependentPct={notIndependentPct}
-        cheapest={cheapWorkhorse ? { name: cheapWorkhorse.g.name, id: cheapWorkhorse.g.id, rate: cheapWorkhorse.rate } : null}
-        valueLeader={
-          topValue && valueBoard
-            ? { name: topValue.groupName, id: topValue.groupId, board: valueBoard.name, score: topValue.pointsPerDollar ?? 0 }
-            : null
-        }
-        hosting={
-          topHost?.floor
-            ? { name: topHost.name, id: topHost.groupId, usdPerMonth: topHost.floor.usdPerMonth, gpu: `${topHost.floor.gpus}× ${topHost.floor.tier.name}` }
-            : null
-        }
-      />
 
       <Wire labMoves={labMoves} streetMoves={streetMoves} stories={stories} />
 
@@ -745,6 +754,24 @@ export default async function HomePage() {
           />,
 
           <DeckCard
+            key="markup"
+            eyebrow="Basis"
+            tone="neg"
+            title="Where the gateway markup is"
+            blurb="Median reseller quote against the lab's own counter. Positive means you pay more on the street."
+            rows={markups.map((m) => ({
+              id: m.groupId,
+              label: m.name,
+              sub: `${m.quotes.length} quotes vs ${m.referenceProvider}`,
+              value: `+${Math.round(m.medianBasis * 100)}%`,
+              tone: "neg" as const,
+              href: `/m/${m.groupId}`,
+            }))}
+            href="/exchange"
+            cta="All basis"
+          />,
+
+          <DeckCard
             key="classes"
             eyebrow="Instruments"
             tone="special"
@@ -762,21 +789,20 @@ export default async function HomePage() {
           />,
 
           <DeckCard
-            key="markup"
-            eyebrow="Basis"
-            tone="neg"
-            title="Where the gateway markup is"
-            blurb="Median reseller quote against the lab's own counter. Positive means you pay more on the street."
-            rows={markups.map((m) => ({
-              id: m.groupId,
-              label: m.name,
-              sub: `${m.quotes.length} quotes vs ${m.referenceProvider}`,
-              value: `+${Math.round(m.medianBasis * 100)}%`,
-              tone: "neg" as const,
-              href: `/m/${m.groupId}`,
+            key="context"
+            eyebrow="Long context"
+            tone="warn"
+            title="Biggest windows, cheapest first"
+            blurb="Models carrying a million tokens or more, with what a request actually costs there."
+            rows={longContext.map(({ g, ctx, r }) => ({
+              id: g.id,
+              label: g.name,
+              sub: `${labName(g.labId)} · ${fmtTokens(ctx)}`,
+              value: fmtPerM(r),
+              href: `/m/${g.id}`,
             }))}
-            href="/exchange"
-            cta="All basis"
+            href="/browse"
+            cta="Browse by context"
           />,
 
           <DeckCard
@@ -799,20 +825,21 @@ export default async function HomePage() {
           />,
 
           <DeckCard
-            key="context"
-            eyebrow="Long context"
-            tone="warn"
-            title="Biggest windows, cheapest first"
-            blurb="Models carrying a million tokens or more, with what a request actually costs there."
-            rows={longContext.map(({ g, ctx, r }) => ({
+            key="free"
+            eyebrow="Free tier"
+            tone="pos"
+            title="Genuinely free to try"
+            blurb="At least one live listing published at zero for both input and output — not an unlisted price."
+            rows={freeToTry.map(({ g, providers }) => ({
               id: g.id,
               label: g.name,
-              sub: `${labName(g.labId)} · ${fmtTokens(ctx)}`,
-              value: fmtPerM(r),
+              sub: `${labName(g.labId)} · ${providers} live listing${providers === 1 ? "" : "s"}`,
+              value: "$0",
+              tone: "pos" as const,
               href: `/m/${g.id}`,
             }))}
             href="/browse"
-            cta="Browse by context"
+            cta="Browse all"
           />,
 
           <DeckCard
@@ -832,25 +859,22 @@ export default async function HomePage() {
             href="/deprecations"
             cta="All deprecations"
           />,
-
-          <DeckCard
-            key="free"
-            eyebrow="Free tier"
-            tone="pos"
-            title="Genuinely free to try"
-            blurb="At least one live listing published at zero for both input and output — not an unlisted price."
-            rows={freeToTry.map(({ g, providers }) => ({
-              id: g.id,
-              label: g.name,
-              sub: `${labName(g.labId)} · ${providers} live listing${providers === 1 ? "" : "s"}`,
-              value: "$0",
-              tone: "pos" as const,
-              href: `/m/${g.id}`,
-            }))}
-            href="/browse"
-            cta="Browse all"
-          />,
         ]}
+      />
+
+      <ThreeAnswers
+        notIndependentPct={notIndependentPct}
+        cheapest={cheapWorkhorse ? { name: cheapWorkhorse.g.name, id: cheapWorkhorse.g.id, rate: cheapWorkhorse.rate } : null}
+        valueLeader={
+          topValue && valueBoard
+            ? { name: topValue.groupName, id: topValue.groupId, board: valueBoard.name, score: topValue.pointsPerDollar ?? 0 }
+            : null
+        }
+        hosting={
+          topHost?.floor
+            ? { name: topHost.name, id: topHost.groupId, usdPerMonth: topHost.floor.usdPerMonth, gpu: `${topHost.floor.gpus}× ${topHost.floor.tier.name}` }
+            : null
+        }
       />
 
       <Subscribe changeCount={tapeCount(events, cov, now)} windowLabel={windowLabel(cov)} />

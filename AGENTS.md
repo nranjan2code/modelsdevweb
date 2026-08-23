@@ -313,6 +313,16 @@ hourly GH Action (sync.yml)
   live data at build time — no hard-coded percentages or counts in prose; if you need a number in
   a sentence, derive it from the same catalog/board/archive the page already loaded, the way
   `notIndependentPct` is computed from `boards.flatMap(b => b.entries)` rather than quoted from a doc.
+- **The fold belongs to today, and to more than one thing.** The lead is sized so the first rows of
+  the next module clear the fold on a 1280×720 screen — a first screen holding one story and nothing
+  else is a poster, not a front page, and the reader cannot tell whether anything else is here.
+  Two consequences that are easy to undo by accident: the standfirst runs *under* the lede as a
+  footer rule rather than above the headline, and **the homepage carries no search field of its own**
+  — the header's (with its `/` hotkey) is visible in the same viewport, and a second one spends the
+  most valuable block on the page repeating a control already on screen. News outranks evergreen, so
+  the wire sits above the deck and above the tool router. Method notes go *under* the evidence they
+  qualify (`TheGap`'s outlier rule is a footnote, not a preamble), because three lines of caveat
+  before the first number is a toll on the reader.
 - **`Subscribe`** (`src/components/subscribe.tsx`) is the return mechanism — the site's only
   channel before this was RSS in the footer, which rents the audience from whoever last shared a
   link. Posts to `NEXT_PUBLIC_NEWSLETTER_ACTION`; with that env var unset it degrades to an RSS

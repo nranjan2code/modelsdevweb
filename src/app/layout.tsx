@@ -89,7 +89,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             </div>
           </div>
         </header>
-        <main id="main" className="mx-auto w-full max-w-[90rem] flex-1 px-4 py-8 sm:px-6 lg:py-12">
+        <main id="main" className="mx-auto w-full max-w-[90rem] flex-1 px-4 py-6 sm:px-6 lg:py-8">
           {children}
         </main>
         <div className="mt-12">

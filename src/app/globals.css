@@ -323,12 +323,6 @@ body {
     border-color: var(--color-accent);
     box-shadow: 0 0 0 3px color-mix(in oklch, var(--color-accent) 18%, transparent);
   }
-  .search-shell-hero {
-    min-height: 3.25rem;
-    border-color: rgb(16 24 40 / 0.2);
-    padding-inline: 0.875rem;
-    box-shadow: var(--shadow-hard-sm);
-  }
   .kbd-hint {
     border: 1px solid rgb(16 24 40 / 0.12);
     border-radius: var(--radius-md);

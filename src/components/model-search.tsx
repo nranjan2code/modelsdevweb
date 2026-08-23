@@ -10,20 +10,13 @@ export interface SearchModel {
   lab: string;
 }
 
-export function ModelSearch({
-  models,
-  variant = "header",
-}: {
-  models: SearchModel[];
-  variant?: "header" | "hero";
-}) {
+export function ModelSearch({ models }: { models: SearchModel[] }) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const root = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLInputElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
-  const hero = variant === "hero";
   const router = useRouter();
 
   const openSearch = useCallback(() => {
@@ -34,14 +27,14 @@ export function ModelSearch({
 
   const closeSearch = useCallback(({ restoreFocus = false } = {}) => {
     setOpen(false);
-    if (restoreFocus && !hero) trigger.current?.focus();
-  }, [hero]);
+    if (restoreFocus) trigger.current?.focus();
+  }, []);
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
       const target = event.target as HTMLElement | null;
       const typing = target?.tagName === "INPUT" || target?.tagName === "TEXTAREA" || target?.isContentEditable;
-      if (variant === "header" && event.key === "/" && !typing) {
+      if (event.key === "/" && !typing) {
         event.preventDefault();
         openSearch();
       }
@@ -56,7 +49,7 @@ export function ModelSearch({
       document.removeEventListener("keydown", onKey);
       document.removeEventListener("pointerdown", onPointer);
     };
-  }, [closeSearch, openSearch, variant]);
+  }, [closeSearch, openSearch]);
 
   const results = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -95,14 +88,14 @@ export function ModelSearch({
 
   const searchField = (
     <>
-      <label htmlFor={`model-search-${variant}`} className="sr-only">
+      <label htmlFor="model-search" className="sr-only">
         Search canonical AI models
       </label>
-      <div className={`search-shell ${hero ? "search-shell-hero" : ""}`}>
+      <div className="search-shell">
         <span aria-hidden="true" className="search-icon">⌕</span>
         <input
           ref={input}
-          id={`model-search-${variant}`}
+          id="model-search"
           type="search"
           value={query}
           onChange={(event) => {
@@ -115,27 +108,25 @@ export function ModelSearch({
             setActiveIndex(0);
           }}
           onKeyDown={onSearchKeyDown}
-          placeholder={hero ? "Search a model, lab, or capability…" : "Search a model or lab…"}
+          placeholder="Search a model or lab…"
           autoComplete="off"
           role="combobox"
           aria-autocomplete="list"
           aria-expanded={open}
-          aria-controls={`model-search-results-${variant}`}
-          aria-activedescendant={open && results[activeIndex] ? `model-search-option-${variant}-${activeIndex}` : undefined}
-          className={`min-w-0 flex-1 bg-transparent text-black outline-none placeholder:text-black/60 ${hero ? "text-base" : "text-sm"}`}
+          aria-controls="model-search-results"
+          aria-activedescendant={open && results[activeIndex] ? `model-search-option-${activeIndex}` : undefined}
+          className="min-w-0 flex-1 bg-transparent text-sm text-black outline-none placeholder:text-black/60"
         />
-        {!hero && (
-          <button type="button" className="search-close" aria-label="Close search" onClick={() => closeSearch({ restoreFocus: true })}>
-            ×
-          </button>
-        )}
+        <button type="button" className="search-close" aria-label="Close search" onClick={() => closeSearch({ restoreFocus: true })}>
+          ×
+        </button>
       </div>
     </>
   );
 
   const searchResults = open && (
     <div
-      id={`model-search-results-${variant}`}
+      id="model-search-results"
       className="search-results"
       role="listbox"
       aria-label="Model search results"
@@ -144,7 +135,7 @@ export function ModelSearch({
         results.map((model, index) => (
           <Link
             key={model.id}
-            id={`model-search-option-${variant}-${index}`}
+            id={`model-search-option-${index}`}
             href={`/m/${model.id}`}
             role="option"
             aria-selected={index === activeIndex}
@@ -167,25 +158,21 @@ export function ModelSearch({
   );
 
   return (
-    <div ref={root} className={`relative ${hero ? "mx-auto w-full max-w-2xl" : ""}`}>
-      {hero ? searchField : (
-        <>
-          <button
-            ref={trigger}
-            type="button"
-            className="search-trigger"
-            aria-expanded={open}
-            aria-controls="header-search-panel"
-            aria-label="Search models"
-            onClick={() => (open ? closeSearch() : openSearch())}
-          >
-            <span aria-hidden="true" className="search-icon">⌕</span>
-            <span className="hidden lg:inline">Search</span>
-            <kbd className="kbd-hint hidden xl:inline">/</kbd>
-          </button>
-          {open && <div id="header-search-panel" className="search-panel">{searchField}</div>}
-        </>
-      )}
+    <div ref={root} className="relative">
+      <button
+        ref={trigger}
+        type="button"
+        className="search-trigger"
+        aria-expanded={open}
+        aria-controls="header-search-panel"
+        aria-label="Search models"
+        onClick={() => (open ? closeSearch() : openSearch())}
+      >
+        <span aria-hidden="true" className="search-icon">⌕</span>
+        <span className="hidden lg:inline">Search</span>
+        <kbd className="kbd-hint hidden xl:inline">/</kbd>
+      </button>
+      {open && <div id="header-search-panel" className="search-panel">{searchField}</div>}
       {searchResults}
     </div>
   );
