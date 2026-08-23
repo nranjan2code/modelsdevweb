@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { collapseByModel, frontierIndex, INDEX_MIN_DAYS, lede, marketMoves, type Move } from "./brief";
+import { DEFAULT_WORKLOAD, flatCost, ratePerMillion } from "../economics/workload";
 import type { Catalog } from "./index";
 import type { Event } from "../pipeline/types";
 import type { PriceArchive } from "./archive";
@@ -120,7 +121,8 @@ describe("frontierIndex", () => {
   it("publishes once the archive is deep enough", () => {
     const idx = frontierIndex(build(INDEX_MIN_DAYS), new Set(["a"]));
     expect(idx.ready).toBe(true);
-    expect(idx.latest).toBe(4);
+    // $2/$10 under the default chat workload, not the old fixed 3:1 blend.
+    expect(idx.latest).toBeCloseTo(ratePerMillion(flatCost(2, 10), DEFAULT_WORKLOAD), 6);
   });
 
   it("skips days a model was not listed rather than reading them as free", () => {

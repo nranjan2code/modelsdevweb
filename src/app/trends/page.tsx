@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { blendPrice, getCatalog, getEvents, groupContext, providerCount } from "@/lib/data";
+import { getCatalog, getEvents, groupContext, groupRate, providerCount } from "@/lib/data";
 import { capabilityAdoption, priceBuckets } from "@/lib/data/stats";
 import type { Event } from "@/lib/pipeline/types";
 import { EventTypeBadge } from "@/components/event-card";
@@ -63,7 +63,7 @@ export default async function TrendsPage() {
       textInput: (g.canonical?.modalities?.input.includes("text") ?? false) || g.listings.some((listing) => listing.modalities.input.includes("text")),
       textOutput: (g.canonical?.modalities?.output.includes("text") ?? false) || g.listings.some((listing) => listing.modalities.output.includes("text")),
     }));
-  const blendedMedian = median(priced.map((g) => blendPrice(g.best!.input, g.best!.output)));
+  const blendedMedian = median(priced.map((g) => groupRate(g)).filter(Number.isFinite));
   const contextMedian = median(groups.map((g) => groupContext(g)).filter((value): value is number => value != null));
   const latestEventDate = Math.max(...events.map((event) => Date.parse(`${event.date}T00:00:00Z`)), 0);
   const recentCutoff = latestEventDate - 6 * 86_400_000;

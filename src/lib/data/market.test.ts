@@ -26,7 +26,7 @@ function listing(over: Partial<Listing> & { providerId: string; input: number; o
     lastUpdated: null,
     modalities: { input: [], output: [] },
     limit: { context: context ?? 200_000, output: null, input: null },
-    cost: { input, output, cacheRead: null, cacheWrite: null, reasoning: null, inputAudio: null, outputAudio: null, tiers: false },
+    cost: { input, output, cacheRead: null, cacheWrite: null, reasoning: null, inputAudio: null, outputAudio: null, tiers: [] },
     ...rest,
   } as Listing;
 }

@@ -23,7 +23,7 @@ const listing = (ctx: number | null, key = `p/m`) => ({
   lastUpdated: null,
   modalities: { input: [], output: [] },
   limit: { context: ctx, output: null, input: null },
-  cost: { input: 1, output: 1, cacheRead: null, cacheWrite: null, reasoning: null, inputAudio: null, outputAudio: null, tiers: false },
+  cost: { input: 1, output: 1, cacheRead: null, cacheWrite: null, reasoning: null, inputAudio: null, outputAudio: null, tiers: [] },
 });
 
 const g = (listings: ReturnType<typeof listing>[], canonicalCtx: number | null = null): ModelGroup => ({

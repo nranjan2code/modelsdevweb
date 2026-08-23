@@ -16,7 +16,7 @@ const group = (id: string, over: Partial<GroupFacts> = {}): GroupFacts => ({
   labId: id.split("/")[0],
   labKnown: true,
   free: false,
-  best: { input: 1, output: 2 },
+  best: { input: 1, output: 2, listingKey: id },
   releaseDate: "2026-08-01",
   listings: [listing(`${id}`)],
   ...over,
@@ -31,7 +31,7 @@ const baseInput = (over: Partial<QualityInput> = {}): QualityInput => ({
     kilo: { models: { "stealth/ox-alpha": { name: "Ox Alpha", release_date: "2026-08-20" } } },
   },
   groups: [group("openai/gpt"), group("stealth/ox-alpha", { releaseDate: "2026-08-20", best: null, free: true, listings: [listing("kilo/stealth/ox-alpha", { canonicalId: null, zeroPriced: true })] })],
-  stats: { providers: 2, listings: 2, models: 2, catalogEntries: 2, labs: 1 },
+  stats: { providers: 2, listings: 2, models: 2, activeModels: 2, catalogEntries: 2, labs: 1 },
   labIds: ["openai"],
   canonicalLabs: new Set(["openai"]),
   canonicalIds: new Set(["openai/gpt"]),
@@ -63,7 +63,7 @@ describe("runQuality", () => {
       apiRaw: { openai: { models: {} } },
       liveApiRaw: { openai: { models: Object.fromEntries(["gpt", ...Array.from({ length: 120 }, (_, k) => `x${k}`)].map((id) => [id, {}])) } },
       groups: [],
-      stats: { providers: 1, listings: 0, models: 0, catalogEntries: 0, labs: 0 },
+      stats: { providers: 1, listings: 0, models: 0, activeModels: 0, catalogEntries: 0, labs: 0 },
       labIds: [],
     });
     expect(runQuality(broken).errors.some((e) => e.check === "upstream-complete" && e.message.includes("openai/gpt"))).toBe(true);
@@ -74,7 +74,7 @@ describe("runQuality", () => {
       baseInput({
         // raw still lists kilo/stealth/ox-alpha but catalog lost every group holding it
         groups: [group("openai/gpt")],
-        stats: { providers: 2, listings: 1, models: 1, catalogEntries: 1, labs: 1 },
+        stats: { providers: 2, listings: 1, models: 1, activeModels: 1, catalogEntries: 1, labs: 1 },
       }),
     );
     expect(r.errors.some((e) => e.check === "new-release-visibility" && e.message.includes("kilo/stealth/ox-alpha"))).toBe(true);
@@ -93,12 +93,53 @@ describe("runQuality", () => {
   });
 
   it("fails when provider fallbacks leak into the labs aggregation (pseudo-labs)", () => {
-    const r = runQuality(baseInput({ labIds: ["openai", "nano-gpt"], stats: { providers: 2, listings: 2, models: 2, catalogEntries: 2, labs: 2 } }));
+    const r = runQuality(baseInput({ labIds: ["openai", "nano-gpt"], stats: { providers: 2, listings: 2, models: 2, activeModels: 2, catalogEntries: 2, labs: 2 } }));
     expect(r.errors.some((e) => e.check === "lab-hygiene" && e.message.includes("nano-gpt"))).toBe(true);
   });
 
+  it("fails when a group's best price comes from a withdrawn endpoint", () => {
+    const r = runQuality(
+      baseInput({
+        groups: [
+          group("openai/gpt", {
+            best: { input: 1, output: 2, listingKey: "openai/gpt" },
+            listings: [listing("openai/gpt", { active: false })],
+          }),
+        ],
+        stats: { providers: 2, listings: 1, models: 1, activeModels: 0, catalogEntries: 1, labs: 1 },
+      }),
+    );
+    expect(r.errors.some((e) => e.check === "retirement-integrity" && e.message.includes("withdrawn endpoint"))).toBe(true);
+  });
+
+  it("fails when the active-model count includes models nobody serves", () => {
+    const r = runQuality(
+      baseInput({
+        groups: [group("openai/gpt", { best: null, listings: [listing("openai/gpt", { active: false })] })],
+        // Claims one active model while its only listing is withdrawn.
+        stats: { providers: 2, listings: 1, models: 1, activeModels: 1, catalogEntries: 1, labs: 1 },
+      }),
+    );
+    expect(r.errors.some((e) => e.check === "retirement-integrity" && e.message.includes("activeModels"))).toBe(true);
+  });
+
+  it("accepts a model withdrawn at one venue but live at another", () => {
+    const r = runQuality(
+      baseInput({
+        groups: [
+          group("openai/gpt", {
+            best: { input: 1, output: 2, listingKey: "openai/gpt" },
+            listings: [listing("openai/gpt"), listing("gateway/gpt", { active: false })],
+          }),
+        ],
+        stats: { providers: 2, listings: 2, models: 1, activeModels: 1, catalogEntries: 1, labs: 1 },
+      }),
+    );
+    expect(r.errors.filter((e) => e.check === "retirement-integrity")).toHaveLength(0);
+  });
+
   it("fails when stats disagree with recomputed counts", () => {
-    const r = runQuality(baseInput({ stats: { providers: 99, listings: 99, models: 99, catalogEntries: 99, labs: 1 } }));
+    const r = runQuality(baseInput({ stats: { providers: 99, listings: 99, models: 99, activeModels: 99, catalogEntries: 99, labs: 1 } }));
     // providers, listings, catalogEntries and the lab-attributed model count.
     expect(r.errors.filter((e) => e.check === "stats-integrity")).toHaveLength(4);
   });

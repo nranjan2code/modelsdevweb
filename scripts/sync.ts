@@ -135,6 +135,9 @@ async function main(): Promise<void> {
       providers: next.providers.length,
       listings: next.listings.length,
       models: candidateGroups.filter((g) => g.labKnown).length,
+      activeModels: candidateGroups.filter(
+        (g) => g.labKnown && g.listings.some((l) => l.status !== "deprecated"),
+      ).length,
       catalogEntries: candidateGroups.length,
       labs: new Set(candidateGroups.filter((g) => g.labKnown).map((g) => g.labId)).size,
     },

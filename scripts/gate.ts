@@ -85,6 +85,7 @@ async function main(): Promise<void> {
       providers: catalog.stats.providers,
       listings: catalog.stats.listings,
       models: catalog.stats.models,
+      activeModels: catalog.stats.activeModels,
       catalogEntries: catalog.stats.catalogEntries,
       labs: catalog.stats.labs,
     },

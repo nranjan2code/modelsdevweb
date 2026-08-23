@@ -1,4 +1,5 @@
-import { blendPrice, type ModelGroup } from "./index";
+import { groupRate, type ModelGroup } from "./index";
+import { DEFAULT_WORKLOAD, type Workload } from "../economics/workload";
 
 export interface CapabilityStat {
   label: string;
@@ -49,11 +50,15 @@ const BUCKETS: { label: string; test: (b: number) => boolean }[] = [
   { label: "≥ $30", test: (b) => b >= 30 },
 ];
 
-/** Distribution of blended input/output price across priced model groups; all-free groups count as $0. */
-export function priceBuckets(groups: ModelGroup[]): PriceBucket[] {
+/**
+ * Distribution of effective price under a workload across priced model groups;
+ * all-free groups count as $0. The shape of this histogram moves with the
+ * workload — that is the point, not a defect.
+ */
+export function priceBuckets(groups: ModelGroup[], w: Workload = DEFAULT_WORKLOAD): PriceBucket[] {
   const priced = groups.filter((g) => g.best != null || g.free);
   return BUCKETS.map(({ label, test }) => ({
     label,
-    count: priced.filter((g) => test(g.best ? blendPrice(g.best.input, g.best.output) : 0)).length,
+    count: priced.filter((g) => test(g.best ? groupRate(g, w) : 0)).length,
   }));
 }

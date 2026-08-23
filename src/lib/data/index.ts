@@ -3,7 +3,8 @@ import path from "node:path";
 import { buildIdentityIndex, isGenericModelId } from "../pipeline/identity";
 import { normalizeApi, normalizeModels, unlistedPrice } from "../pipeline/normalize";
 import type { GroupFacts } from "../pipeline/quality";
-import type { CanonicalModel, Event, Listing, NewsItem, Provider } from "../pipeline/types";
+import type { CanonicalModel, Cost, Event, Listing, NewsItem, Provider } from "../pipeline/types";
+import { DEFAULT_WORKLOAD, ratePerMillion, type Workload } from "../economics/workload";
 import { rawApi, rawModels } from "../pipeline/schema";
 
 const LATEST = () => path.join(process.cwd(), "snapshots", "latest");
@@ -12,6 +13,12 @@ export interface BestPrice {
   input: number;
   output: number;
   cacheRead: number | null;
+  /**
+   * The whole rate card, not just the headline pair — tiers and cache terms are
+   * what `costOf` needs, and a group-level figure that drops them is the scalar
+   * price this codebase no longer publishes.
+   */
+  cost: Cost;
   providerId: string;
   providerName: string;
   listingKey: string;
@@ -41,6 +48,14 @@ export interface Stats {
   listings: number;
   /** Lab-attributed models — the number the site reports and reasons over. */
   models: number;
+  /**
+   * Lab-attributed models at least one provider still serves. `models` includes
+   * groups every provider has withdrawn, which are kept for the record but are
+   * not something anyone can buy — the headline count uses this.
+   */
+  activeModels: number;
+  /** Tracked models with no live listing anywhere. */
+  retiredModels: number;
   /** Every group including gateway-only variants with no canonical backing. */
   catalogEntries: number;
   labs: number;
@@ -65,8 +80,13 @@ export interface Catalog {
   stats: Stats;
 }
 
-export function blendPrice(input: number, output: number): number {
-  return (input * 3 + output) / 4;
+/**
+ * Ranking key for a group, under a named workload. Replaces the old fixed 3:1
+ * input:output blend — that constant was a chat workload asserted site-wide,
+ * and it inverted for anything that reasons or retrieves.
+ */
+export function groupRate(g: ModelGroup, w: Workload = DEFAULT_WORKLOAD): number {
+  return g.best ? ratePerMillion(g.best.cost, w) : Number.POSITIVE_INFINITY;
 }
 
 /** Active listings, kept as a helper so counts never silently include sunsets. */
@@ -88,7 +108,7 @@ export function pricedProviderCount(g: ModelGroup): number {
   ).size;
 }
 
-/** True input-price minimum; distinct from the recommended 3:1 blended listing. */
+/** True input-price minimum; distinct from the workload-blended cheapest listing. */
 export function lowestInputListing(g: ModelGroup): Listing | null {
   return (
     liveListings(g)
@@ -97,7 +117,7 @@ export function lowestInputListing(g: ModelGroup): Listing | null {
   );
 }
 
-/** True output-price minimum; distinct from the recommended 3:1 blended listing. */
+/** True output-price minimum; distinct from the workload-blended cheapest listing. */
 export function lowestOutputListing(g: ModelGroup): Listing | null {
   return (
     liveListings(g)
@@ -106,17 +126,26 @@ export function lowestOutputListing(g: ModelGroup): Listing | null {
   );
 }
 
+/**
+ * Cheapest live listing under the default workload. Which listing wins is now
+ * workload-dependent for tiered models, so callers comparing under a different
+ * workload should rank listings themselves rather than trusting `best`.
+ */
 function bestOf(listings: Listing[]): BestPrice | null {
   let best: BestPrice | null = null;
+  let bestRate = Number.POSITIVE_INFINITY;
   for (const l of listings) {
     if (l.status === "deprecated") continue;
     if (unlistedPrice(l.cost)) continue;
     if (l.cost.input == null || l.cost.output == null) continue;
-    if (!best || blendPrice(l.cost.input, l.cost.output) < blendPrice(best.input, best.output)) {
+    const rate = ratePerMillion(l.cost, DEFAULT_WORKLOAD);
+    if (rate < bestRate) {
+      bestRate = rate;
       best = {
         input: l.cost.input,
         output: l.cost.output,
         cacheRead: l.cost.cacheRead,
+        cost: l.cost,
         providerId: l.providerId,
         providerName: l.providerName,
         listingKey: l.key,
@@ -261,7 +290,7 @@ export function groupToFacts(g: ModelGroup): GroupFacts {
     labId: g.labId,
     labKnown: g.labKnown,
     free: g.free,
-    best: g.best ? { input: g.best.input, output: g.best.output } : null,
+    best: g.best ? { input: g.best.input, output: g.best.output, listingKey: g.best.listingKey } : null,
     releaseDate: groupReleaseDate(g),
     listings: g.listings.map((l) => ({
       key: l.key,
@@ -330,6 +359,7 @@ export async function getCatalog(): Promise<Catalog> {
     .sort((a, b) => b.modelCount - a.modelCount);
 
   const tracked = groups.filter((g) => g.labKnown);
+  const trackedActive = tracked.filter((g) => liveListings(g).length > 0).length;
 
   catalogCache = {
     groups,
@@ -341,6 +371,8 @@ export async function getCatalog(): Promise<Catalog> {
       providers: providers.length,
       listings: listings.length,
       models: tracked.length,
+      activeModels: trackedActive,
+      retiredModels: tracked.length - trackedActive,
       catalogEntries: groups.length,
       labs: labs.length,
       deprecated: listings.filter((l) => l.status === "deprecated").length,
@@ -386,6 +418,11 @@ export interface ProviderRow {
   listing: Listing;
   groupId: string;
   groupName: string;
+  /**
+   * The model is still served somewhere else. Distinguishes a withdrawal the
+   * buyer can route around from one that ends the model.
+   */
+  availableElsewhere: boolean;
 }
 
 export async function getProvider(
@@ -394,9 +431,18 @@ export async function getProvider(
   const catalog = await getCatalog();
   const provider = catalog.providers.find((p) => p.id === id);
   if (!provider) return null;
-  const rows: ProviderRow[] = catalog.groups.flatMap((g) =>
-    g.listings.filter((l) => l.providerId === id).map((l) => ({ listing: l, groupId: g.id, groupName: g.name })),
-  );
+  const rows: ProviderRow[] = catalog.groups.flatMap((g) => {
+    const liveAnywhere = liveListings(g).length > 0;
+    return g.listings
+      .filter((l) => l.providerId === id)
+      .map((l) => ({
+        listing: l,
+        groupId: g.id,
+        groupName: g.name,
+        availableElsewhere:
+          liveAnywhere && liveListings(g).some((other) => other.providerId !== id),
+      }));
+  });
   rows.sort(
     (a, b) =>
       (a.listing.cost.input ?? Number.POSITIVE_INFINITY) - (b.listing.cost.input ?? Number.POSITIVE_INFINITY),

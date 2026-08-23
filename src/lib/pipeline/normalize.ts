@@ -1,4 +1,4 @@
-import type { CanonicalModel, Cost, Limits, Listing, Modality, Modalities, Provider } from "./types";
+import type { CanonicalModel, Cost, CostRates, CostTier, Limits, Listing, Modality, Modalities, Provider } from "./types";
 import { reviewedLimits } from "./context-review";
 import { rawApi, rawModels } from "./schema";
 
@@ -38,8 +38,7 @@ function normLimit(v: unknown, providerId = "", modelId = ""): Limits {
   });
 }
 
-function normCost(v: unknown): Cost {
-  const c = (v ?? {}) as RawEntry;
+function normRates(c: RawEntry): CostRates {
   return {
     input: num(c.input),
     output: num(c.output),
@@ -48,8 +47,38 @@ function normCost(v: unknown): Cost {
     reasoning: num(c.reasoning),
     inputAudio: num(c.input_audio),
     outputAudio: num(c.output_audio),
-    tiers: c.tiers != null || c.context_over_200k != null,
   };
+}
+
+/**
+ * Upstream states context pricing twice: a `tiers` array of thresholds, and a
+ * legacy `context_over_200k` card that duplicates the first tier. We read the
+ * array and fall back to the legacy field only when the array is absent, so a
+ * threshold that is not 200k (272k and 256k are both common) is never rounded
+ * to one that is.
+ */
+function normTiers(c: RawEntry): CostTier[] {
+  const out: CostTier[] = [];
+  if (Array.isArray(c.tiers)) {
+    for (const raw of c.tiers) {
+      if (!raw || typeof raw !== "object") continue;
+      const t = raw as RawEntry;
+      const tier = (t.tier ?? {}) as RawEntry;
+      if (tier.type !== "context") continue;
+      const minContext = num(tier.size);
+      if (minContext == null || minContext <= 0) continue;
+      out.push({ minContext, rates: normRates(t) });
+    }
+  }
+  if (!out.length && c.context_over_200k && typeof c.context_over_200k === "object") {
+    out.push({ minContext: 200_000, rates: normRates(c.context_over_200k as RawEntry) });
+  }
+  return out.sort((a, b) => a.minContext - b.minContext);
+}
+
+function normCost(v: unknown): Cost {
+  const c = (v ?? {}) as RawEntry;
+  return { ...normRates(c), tiers: normTiers(c) };
 }
 
 export function unlistedPrice(cost: Cost): boolean {

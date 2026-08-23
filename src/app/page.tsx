@@ -2,7 +2,10 @@ import Link from "next/link";
 import { EventTypeBadge, changeText, eventTarget } from "@/components/event-card";
 import { ModelSearch } from "@/components/model-search";
 import { Badge, DeltaChip, EmptyState, SectionHead } from "@/components/ui";
-import { blendPrice, getCatalog, getEvents, getSnapshotMeta } from "@/lib/data";
+import { getCatalog, getEvents, getSnapshotMeta } from "@/lib/data";
+import { getPriceArchive } from "@/lib/data/archive";
+import { coverage, observedEvents, windowLabel, type Coverage } from "@/lib/data/coverage";
+import { DEFAULT_WORKLOAD, ratePerMillion } from "@/lib/economics/workload";
 import {
   collapseByModel,
   labName,
@@ -44,7 +47,7 @@ const DECISIONS = [
 ] as const;
 
 function DailyBrief({
-  story, syncedAgo, models, trackedModels, providers, weekEvents,
+  story, syncedAgo, models, trackedModels, providers, weekEvents, tapeLabel,
 }: {
   story: Lede;
   syncedAgo: string;
@@ -52,6 +55,8 @@ function DailyBrief({
   trackedModels: number;
   providers: number;
   weekEvents: number;
+  /** The window that actually exists — never a fixed "7-day". */
+  tapeLabel: string;
 }) {
   return (
     <section className="hero-shell" aria-labelledby="daily-lede">
@@ -93,9 +98,9 @@ function DailyBrief({
               <dd className="text-xs text-black/60">providers</dd>
             </div>
             <div className="pl-3">
-              <dt className="micro-label">7-day tape</dt>
+              <dt className="micro-label">tape</dt>
               <dd className="mt-1 font-mono text-xl font-bold tabular-nums text-black">{weekEvents}</dd>
-              <dd className="text-xs text-black/60">changes</dd>
+              <dd className="text-xs text-black/60">changes · {tapeLabel.replace(/^the /, "")}</dd>
             </div>
           </dl>
           <p className="micro-label mt-4 leading-relaxed">A dash means unlisted, not free · verify before purchasing</p>
@@ -206,7 +211,11 @@ function MarketBoard({ labMoves, streetMoves, events, eventHref }: {
 
 function spreadPrices(row: SpreadRow) {
   const pick = row.spread.cheapestFullContext ?? row.spread.cheapest;
-  return { pick, low: blendPrice(pick.cost.input!, pick.cost.output!), high: blendPrice(row.spread.dearest.cost.input!, row.spread.dearest.cost.output!) };
+  return {
+    pick,
+    low: ratePerMillion(pick.cost, DEFAULT_WORKLOAD),
+    high: ratePerMillion(row.spread.dearest.cost, DEFAULT_WORKLOAD),
+  };
 }
 
 function SpreadFeature({ row }: { row: SpreadRow }) {
@@ -287,9 +296,16 @@ function ValueSpotlight({ board }: { board: ReturnType<typeof rankableBoards>[nu
   );
 }
 
-function weeklyCount(events: Event[]): number {
+/**
+ * Changes inside the window we can actually cover, excluding the first sync's
+ * cold-start diff. A hard-coded seven days over a two-day log counted 121
+ * cold-start rows as market activity and captioned them "7-day tape".
+ */
+function tapeCount(events: Event[], c: Coverage): number {
   const cutoff = Date.now() - 7 * 86_400_000;
-  return events.filter((event) => Date.parse(`${event.date}T00:00:00Z`) >= cutoff).length;
+  return observedEvents(events, c).filter(
+    (event) => Date.parse(`${event.date}T00:00:00Z`) >= cutoff,
+  ).length;
 }
 
 export default async function HomePage() {
@@ -302,7 +318,8 @@ export default async function HomePage() {
   const spreads = widestSpreads(catalog.tracked, 6, 3);
   const valueBoard = rankableBoards(boards)[0];
   const freelyUsable = countFreelyUsable(catalog.tracked, weights.models);
-  const weekEvents = weeklyCount(events);
+  const cov = coverage(events, await getPriceArchive());
+  const weekEvents = tapeCount(events, cov);
   const searchModels = catalog.tracked.map((group) => ({ id: group.id, name: group.name, lab: group.labId }));
   const groupByListingKey = new Map(catalog.groups.flatMap((group) => group.listings.map((listing) => [listing.key, group.id] as const)));
   const eventHref = (event: Event): string | null => {
@@ -317,7 +334,7 @@ export default async function HomePage() {
 
   return (
     <div className="space-y-12 lg:space-y-14">
-      <DailyBrief story={story} syncedAgo={syncedAgo} models={searchModels} trackedModels={catalog.stats.models} providers={catalog.stats.providers} weekEvents={weekEvents} />
+      <DailyBrief story={story} syncedAgo={syncedAgo} models={searchModels} trackedModels={catalog.stats.activeModels} providers={catalog.stats.providers} weekEvents={weekEvents} tapeLabel={windowLabel(cov)} />
       <DecisionStrip />
       <MarketBoard labMoves={labMoves} streetMoves={streetMoves} events={events} eventHref={eventHref} />
 
@@ -343,7 +360,7 @@ export default async function HomePage() {
       <section>
         <div className="card relative overflow-hidden border-t-4 border-t-accent p-5 sm:p-7">
           <div className="grid items-center gap-6 lg:grid-cols-[1fr_auto]">
-            <div><Badge tone="accent">Weekly edition</Badge><h2 className="mt-3 text-2xl font-bold tracking-tight text-black">The consequential changes, once a week.</h2><p className="mt-2 max-w-3xl text-sm leading-relaxed text-black/60">{weekEvents} catalog changes landed in the last 7 days. The digest separates launches, lab price moves and retirements from reseller noise—and says when the week was quiet.</p><p className="micro-label mt-3">Auto-written from the auditable diff log · no manufactured story</p></div>
+            <div><Badge tone="accent">Weekly edition</Badge><h2 className="mt-3 text-2xl font-bold tracking-tight text-black">The consequential changes, once a week.</h2><p className="mt-2 max-w-3xl text-sm leading-relaxed text-black/60">{weekEvents} catalog changes landed in {windowLabel(cov)}. The digest separates launches, lab price moves and retirements from reseller noise—and says when the week was quiet.</p><p className="micro-label mt-3">Auto-written from the auditable diff log · no manufactured story</p></div>
             <div className="flex flex-wrap gap-x-5 gap-y-2 lg:justify-end"><Link href="/digest" className="text-sm font-semibold text-accent hover:text-accent-strong">Read the digest →</Link><a href="/rss.xml" className="text-sm font-semibold text-black/60 hover:text-black">Subscribe via RSS →</a></div>
           </div>
         </div>

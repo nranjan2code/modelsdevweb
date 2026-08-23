@@ -18,7 +18,8 @@
  * could start to make sense*, never a claim that it does.
  */
 
-import { blendPrice, type ModelGroup } from "./index";
+import { groupRate, type ModelGroup } from "./index";
+import { DEFAULT_WORKLOAD, type Workload } from "../economics/workload";
 import { isFreelyUsable, type WeightsFacts } from "./weights";
 
 /**
@@ -58,6 +59,11 @@ const BYTES_PER_PARAM_BF16 = 2;
 const SERVING_OVERHEAD = 1.25;
 
 /** VRAM needed to serve a model at bf16, in GB. */
+/** Infinity is how an unpriced listing sorts; it is not a number to display. */
+function finite(n: number): number | null {
+  return Number.isFinite(n) ? n : null;
+}
+
 export function memoryRequiredGb(parameters: number): number {
   return (parameters * BYTES_PER_PARAM_BF16 * SERVING_OVERHEAD) / 1e9;
 }
@@ -111,14 +117,18 @@ export interface HostingCase {
   gated: boolean;
 }
 
-export function hostingCase(g: ModelGroup, facts: WeightsFacts | undefined): HostingCase {
+export function hostingCase(
+  g: ModelGroup,
+  facts: WeightsFacts | undefined,
+  w: Workload = DEFAULT_WORKLOAD,
+): HostingCase {
   const base = {
     groupId: g.id,
     name: g.name,
     parameters: facts?.parameters ?? null,
     licence: facts?.licence ?? null,
     gated: facts?.access === "gated",
-    apiBlendedPerM: g.best ? blendPrice(g.best.input, g.best.output) : null,
+    apiBlendedPerM: g.best ? finite(groupRate(g, w)) : null,
   };
 
   if (!facts) return { ...base, verdict: "unknown", floor: null, breakEvenTokens: null };
@@ -151,9 +161,10 @@ export function hostableCases(
   groups: ModelGroup[],
   weights: Record<string, WeightsFacts>,
   limit = 6,
+  w: Workload = DEFAULT_WORKLOAD,
 ): HostingCase[] {
   return groups
-    .map((g) => hostingCase(g, weights[g.id]))
+    .map((g) => hostingCase(g, weights[g.id], w))
     .filter((c) => c.verdict === "breakeven" && c.breakEvenTokens != null)
     .sort((a, b) => (a.breakEvenTokens ?? 0) - (b.breakEvenTokens ?? 0))
     .slice(0, limit);
@@ -164,9 +175,10 @@ export function apiOnlyCases(
   groups: ModelGroup[],
   weights: Record<string, WeightsFacts>,
   limit = 4,
+  w: Workload = DEFAULT_WORKLOAD,
 ): HostingCase[] {
   return groups
-    .map((g) => hostingCase(g, weights[g.id]))
+    .map((g) => hostingCase(g, weights[g.id], w))
     .filter((c) => c.verdict === "api-only")
     .sort((a, b) => (b.parameters ?? 0) - (a.parameters ?? 0))
     .slice(0, limit);

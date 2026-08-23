@@ -40,7 +40,7 @@ export interface GroupFacts {
   labId: string;
   labKnown: boolean;
   free: boolean;
-  best: { input: number | null; output: number | null } | null;
+  best: { input: number | null; output: number | null; listingKey: string } | null;
   releaseDate: string | null;
   listings: { key: string; canonicalId: string | null; active: boolean; zeroPriced: boolean }[];
 }
@@ -50,6 +50,8 @@ export interface StatsFacts {
   listings: number;
   /** Lab-attributed models — what the site publishes as its model count. */
   models: number;
+  /** Attributed models at least one provider still serves. */
+  activeModels: number;
   /** Every group, attributed or not. */
   catalogEntries: number;
   labs: number;
@@ -239,6 +241,32 @@ function checkStatsIntegrity(i: QualityInput): QualityIssue[] {
   const attributed = i.groups.filter((g) => g.labKnown).length;
   if (i.stats.catalogEntries !== i.groups.length) out.push({ check: "stats-integrity", message: `stats.catalogEntries=${i.stats.catalogEntries}, catalog has ${i.groups.length} groups` });
   if (i.stats.models !== attributed) out.push({ check: "stats-integrity", message: `stats.models=${i.stats.models}, ${attributed} groups are lab-attributed` });
+  return out;
+}
+
+/**
+ * Retirement is per-listing, so a model can be withdrawn at one venue and live
+ * at another. Two things must never happen: a group's advertised best price
+ * coming from an endpoint nobody serves any more, and the site's active-model
+ * count including groups every provider has dropped. Both were reachable before
+ * the retirement layer existed — the lab pages printed withdrawn endpoints as
+ * available providers.
+ */
+function checkRetirementIntegrity(i: QualityInput): QualityIssue[] {
+  const out: QualityIssue[] = [];
+  for (const g of i.groups) {
+    if (!g.best) continue;
+    const backing = g.listings.find((l) => l.key === g.best!.listingKey);
+    if (!backing) {
+      out.push({ check: "retirement-integrity", message: `${g.id}: best price cites ${g.best.listingKey}, which is not one of its listings` });
+    } else if (!backing.active) {
+      out.push({ check: "retirement-integrity", message: `${g.id}: best price comes from ${g.best.listingKey}, a withdrawn endpoint` });
+    }
+  }
+  const active = i.groups.filter((g) => g.labKnown && g.listings.some((l) => l.active)).length;
+  if (i.stats.activeModels !== active) {
+    out.push({ check: "retirement-integrity", message: `stats.activeModels=${i.stats.activeModels}, ${active} attributed groups have a live listing` });
+  }
   return out;
 }
 
@@ -483,6 +511,7 @@ export function runQuality(input: QualityInput): QualityResult {
     ...checkFragmentation(input),
     ...checkLabHygiene(input),
     ...checkStatsIntegrity(input),
+    ...checkRetirementIntegrity(input),
     ...checkFreeIntegrity(input),
     ...checkEvents(input),
     ...checkNews(input),

@@ -43,6 +43,86 @@ aggregate on the site.
 - The `catalog-identity` gate hard-fails if attributed groups drift outside 0.5–1.5× the
   upstream canonical count, or if a provider id appears as a lab.
 
+## Token economics — the price is a function, not a number
+
+`src/lib/economics/` is the only place a price becomes money. Nothing else may
+compute one.
+
+- **`workload.ts#costOf(cost, workload)`** is the single pricing entry point. A
+  `Workload` is a named token profile (input / output / reasoning tokens, cache
+  hit and *write* rates, context length); `WORKLOADS` holds the five presets and
+  `DEFAULT_WORKLOAD` is `chat`. The old `blendPrice()` — a fixed `(3×in + out)/4`
+  — is **deleted**. It asserted a chat workload site-wide and inverted for
+  anything that reasons or retrieves, and no page said it was an assumption.
+- **Every figure names its workload on the page.** A number whose profile is
+  invisible is one the reader cannot check.
+- **Fallbacks never assume an unpublished discount.** No cache-read rate → billed
+  at full input. No cache-write rate → same. No separate reasoning rate → billed
+  as output. Cache *writes* are charged, so a higher hit rate is not automatically
+  cheaper — modelling them as free is how a calculator reports a saving that does
+  not exist.
+- **Context tiers are real rates, not a boolean.** `Cost.tiers` is a sorted
+  `CostTier[]` of thresholds; `effectiveRates()` picks the highest tier at or
+  below the request's context and falls back to the base card for fields a tier
+  omits. 401 listings price by context, and collapsing that to `tiers: boolean`
+  (which this codebase used to do) printed the cheap rate for exactly the
+  long-context requests the expensive rate exists for.
+- **`comparable.ts#isTokenComparable` gates every cross-model price comparison.**
+  `$/M` only means the same thing when both sides bill text tokens. Whisper bills
+  audio tokens and image models fold a per-image charge into the token field —
+  unguarded, Whisper ranked as the cheapest budget model on the site and Nano
+  Banana 2 showed a 95% "gateway discount" that was a unit mismatch.
+- **`instruments.ts`** groups `tracked` into disjoint classes of purchase
+  (`Basket`), over live listings only, with `MIN_CONSTITUENTS` before a class
+  gets a median. Membership is derived from verified facts, never from a name.
+- **`basis.ts`** measures gateway quotes against the lab's own counter. It needs
+  a first-party reference — no lab counter, no basis, and the cheapest reseller
+  is never a substitute. Extreme quotes need corroboration exactly as
+  `priceSpread` requires it (`PRICE_OUTLIER_FACTOR` 20×, `CORROBORATION_FACTOR`
+  1.5×); the first cut of this module omitted that and reported a 96% discount
+  on a mis-scaled unorouter listing. **Open-weight basis is ranked separately**:
+  a host beating Alibaba on Qwen runs the same public weights on cheaper
+  hardware, which is not a gateway undercutting a monopoly.
+- **`volatility.ts`** and any longitudinal claim need `MIN_OBSERVATION_DAYS` (14)
+  of archive and return `ready: false` below it.
+- **`benchmark-workloads.ts`** maps a board to the profile it exercises, so
+  points-per-dollar prices SWE-Bench as an agent loop and GPQA as a long chain of
+  thought. The map is **allow-listed, never pattern-matched** — an unlisted board
+  is `calibrated: false`, priced at the default, and the page says so.
+
+## Retirement is per-listing, not per-model
+
+`src/lib/data/retirement.ts`. Upstream marks `status: "deprecated"` per provider
+endpoint, so one model is routinely live at some venues and withdrawn at others.
+Two different facts, and collapsing them loses information a buyer needs:
+
+- **Withdrawn here** (`partiallyRetired`) — live somewhere, gone at this venue.
+  A migration, not a sunset. A provider counts as having retired a model only if
+  it has no live endpoint left; dropping one variant while serving another is not.
+- **Retired everywhere** (`retiredEverywhere`) — no live listing anywhere. Never
+  counted in what a lab currently offers.
+
+`stats.activeModels` excludes fully-retired groups and is what the homepage
+prints; `stats.models` still counts every attributed group. Lab pages use
+`providerCount()` and list retired models in a separate section — they used to
+print `listings.length`, which counts endpoint variants *and* withdrawn ones, so
+Claude Opus 4.1 advertised 22 providers against 16 that would sell it. Provider
+pages split live from withdrawn rather than price-sorting them together, where a
+dead endpoint could head the table as the venue's cheapest offer. The
+`retirement-integrity` gate hard-fails if a group's best price cites a withdrawn
+endpoint or if `activeModels` disagrees with the live-listing count.
+
+## Never claim a window you cannot cover
+
+`src/lib/data/coverage.ts`. The event log's first sync diffs an empty state
+against the whole catalog, so its volume is a function of catalog size, not of
+market activity — 121 of the first 170 events landed that way. `coverage()`
+detects that cold start (first day ≥ `COLD_START_MULTIPLE` × the median of later
+days, and only with ≥2 later days to compare against), excludes it from every
+rate, and reports `observedDays`. `windowLabel()` prints the window that actually
+exists. Rankings need `MIN_RANKING_DAYS` (7). A hard-coded "last 7 days" caption
+over a two-day log is the same class of error as a flat price index.
+
 ## Editorial rules — the site takes a position
 
 - **First-party vs street.** A lab repricing its own model is news; a gateway changing its
@@ -80,7 +160,8 @@ surface via `groupReleaseDate` — the "0x/Ox Alpha missing from home" regressio
 fragmentation (case-insensitive merge invariants), lab hygiene (only canonical labs, no
 provider fallbacks like `kilo`/`nano-gpt`), catalog identity (attributed-group count tracks
 upstream; no provider id as a lab), stats integrity, free-model ($0/$0) classification,
-and event referential integrity. News deep links and external-signal model IDs are also
+event referential integrity, and retirement integrity (no best price from a
+withdrawn endpoint; `activeModels` matches the live-listing count). News deep links and external-signal model IDs are also
 hard-fail referential checks; their ingestion scripts remove retained IDs that no longer exist
 before the final gate. Context claims at or above 10M are hard-fail unless the exact
 provider/model/value has a sourced decision in `src/lib/pipeline/context-review.ts`; rejected
@@ -230,14 +311,20 @@ hourly GH Action (sync.yml)
   win below that. The published break-even assumes a permanently saturated GPU — the best case
   for self-hosting — which makes every figure a lower bound. Never restate it as "cheaper to
   self-host above X".
+- **`/exchange` is the token-economics view**: instrument baskets, first-party basis, and an
+  explicit coverage panel stating how much history stands behind each number. Cross-sectional
+  claims (levels, spreads) publish today; longitudinal ones wait for archive depth.
+- `/calculator` is the workload tool — pick a profile and a monthly request volume, get a bill.
+  The chosen workload persists in localStorage (`model-pulse:workload`) via
+  `src/lib/workload-state.ts`, same `useSyncExternalStore` shape as `compare.ts`.
 - Static pages: `/compare` (2–4 model diff), `/trends` (market aggregates over `tracked`),
   per-lab feeds at `/feeds/[lab]/rss.xml`. All computed from the same snapshot data.
 - `/compare` selection lives in localStorage (`model-pulse:compare`) via `src/lib/compare.ts`
   (`useSyncExternalStore`). Never read it with useState+useEffect — the
   `react-hooks/set-state-in-effect` lint rule rejects that pattern.
-- Benchmark boards expose `pointsPerDollar` (score ÷ blended price), plus `independent`
-  and `fullyIndependent`; rank with `rankableBoards()` / `valueLeaders()`, never `entries`.
-  See `src/lib/data/benchmarks.ts`.
+- Benchmark boards expose `pointsPerDollar` and `costPerRun` (priced with `costOf` under
+  the board's calibrated workload), plus `independent` and `fullyIndependent`; rank with
+  `rankableBoards()` / `valueLeaders()`, never `entries`. See `src/lib/data/benchmarks.ts`.
 - Model pages lead the provider table with `spreadSummary()` — a generated sentence naming
   the cheapest full-context option and the catch when the outright cheapest has one.
 

@@ -1,4 +1,5 @@
-import { blendPrice, groupContext, pricedProviderCount, providerCount, type ModelGroup } from "./index";
+import { groupContext, pricedProviderCount, providerCount, type ModelGroup } from "./index";
+import { DEFAULT_WORKLOAD, ratePerMillion, type Workload } from "../economics/workload";
 import { unlistedPrice } from "../pipeline/normalize";
 import type { Listing } from "../pipeline/types";
 
@@ -50,7 +51,7 @@ export function groupHasFirstParty(g: ModelGroup): boolean {
  * "no published price" as $0/$0, so treating that as free invents 100% savings
  * and spreads in the thousands.
  */
-function hasRealPrice(l: Listing): boolean {
+export function hasRealPrice(l: Listing): boolean {
   return (
     l.status !== "deprecated" &&
     l.cost.input != null &&
@@ -113,41 +114,35 @@ const MIN_FOR_MEDIAN = 5;
 /** A second provider within this multiple corroborates a price. */
 const CORROBORATION_FACTOR = 1.5;
 
-function withoutPriceOutliers(ranked: Listing[]): Listing[] {
+function withoutPriceOutliers(ranked: Listing[], rate: (l: Listing) => number): Listing[] {
   if (ranked.length < MIN_FOR_MEDIAN) return ranked;
-  const blended = ranked.map((l) => blendPrice(l.cost.input!, l.cost.output!));
+  const blended = ranked.map(rate);
   const mid = Math.floor(blended.length / 2);
   const median =
     blended.length % 2 === 1 ? blended[mid] : (blended[mid - 1] + blended[mid]) / 2;
   if (!(median > 0)) return ranked;
   const kept = ranked.filter((l) => {
-    const p = blendPrice(l.cost.input!, l.cost.output!);
+    const p = rate(l);
     return p <= median * PRICE_OUTLIER_FACTOR && p >= median / PRICE_OUTLIER_FACTOR;
   });
   return kept.length >= MIN_SPREAD_LISTINGS ? kept : ranked;
 }
 
-export function priceSpread(g: ModelGroup): PriceSpread | null {
+export function priceSpread(g: ModelGroup, w: Workload = DEFAULT_WORKLOAD): PriceSpread | null {
   const priced = g.listings.filter(hasRealPrice);
   if (priced.length < MIN_SPREAD_LISTINGS) return null;
 
-  const ranked = withoutPriceOutliers(
-    [...priced].sort(
-      (a, b) =>
-        blendPrice(a.cost.input!, a.cost.output!) - blendPrice(b.cost.input!, b.cost.output!),
-    ),
-  );
+  // The spread is a function of the workload: a listing that is cheapest for a
+  // short chat can be dearest once a long-context tier kicks in.
+  const rate = (l: Listing): number => ratePerMillion(l.cost, w);
+  const ranked = withoutPriceOutliers([...priced].sort((a, b) => rate(a) - rate(b)), rate);
   const cheapest = ranked[0];
   const dearest = ranked[ranked.length - 1];
 
   // A price no other venue comes close to is treated as unconfirmed.
   const corroborated = (l: Listing): boolean => {
-    const p = blendPrice(l.cost.input!, l.cost.output!);
-    return ranked.some(
-      (o) =>
-        o.providerId !== l.providerId &&
-        blendPrice(o.cost.input!, o.cost.output!) <= p * CORROBORATION_FACTOR,
-    );
+    const p = rate(l);
+    return ranked.some((o) => o.providerId !== l.providerId && rate(o) <= p * CORROBORATION_FACTOR);
   };
   const cheapestCredible = ranked.find(corroborated) ?? null;
 
@@ -162,8 +157,8 @@ export function priceSpread(g: ModelGroup): PriceSpread | null {
     null;
 
   const floor = cheapestCredible ?? cheapest;
-  const lo = blendPrice(floor.cost.input!, floor.cost.output!);
-  const hi = blendPrice(dearest.cost.input!, dearest.cost.output!);
+  const lo = rate(floor);
+  const hi = rate(dearest);
 
   return {
     ranked,
@@ -185,7 +180,7 @@ export function priceSpread(g: ModelGroup): PriceSpread | null {
  * cheapest safe option is, how it compares to buying from the lab, and names the
  * catch when the outright cheapest listing has one.
  */
-export function spreadSummary(g: ModelGroup, s: PriceSpread): string {
+export function spreadSummary(g: ModelGroup, s: PriceSpread, w: Workload = DEFAULT_WORKLOAD): string {
   const priced = pricedProviderCount(g);
   const live = providerCount(g);
   const pick = s.cheapestFullContext ?? s.cheapest;
@@ -197,9 +192,9 @@ export function spreadSummary(g: ModelGroup, s: PriceSpread): string {
   ];
 
   if (s.firstParty && s.firstParty.key !== pick.key) {
-    const fp = blendPrice(s.firstParty.cost.input!, s.firstParty.cost.output!);
-    const pk = blendPrice(pick.cost.input!, pick.cost.output!);
-    const saving = fp > 0 ? Math.round((1 - pk / fp) * 100) : 0;
+    const fp = ratePerMillion(s.firstParty.cost, w);
+    const pk = ratePerMillion(pick.cost, w);
+    const saving = Number.isFinite(fp) && Number.isFinite(pk) && fp > 0 ? Math.round((1 - pk / fp) * 100) : 0;
     parts.push(
       saving > 0
         ? `The cheapest full-context option is ${pick.providerName} at ${price} per M — ${saving}% below ${s.firstParty.providerName}'s own price.`

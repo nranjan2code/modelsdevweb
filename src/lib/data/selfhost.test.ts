@@ -7,10 +7,11 @@ import {
 } from "./selfhost";
 import type { ModelGroup } from "./index";
 import type { WeightsFacts } from "./weights";
+import { DEFAULT_WORKLOAD, flatCost, ratePerMillion } from "../economics/workload";
 
 const group = (over: Partial<ModelGroup> = {}): ModelGroup => ({
   id: "lab/m", labId: "lab", labKnown: true, name: "M", canonical: null,
-  listings: [], best: { input: 0.2, output: 0.6, cacheRead: null, providerId: "p", providerName: "P", listingKey: "p/m" },
+  listings: [], best: { input: 0.2, output: 0.6, cacheRead: null, cost: flatCost(0.2, 0.6), providerId: "p", providerName: "P", listingKey: "p/m" },
   free: false, deprecatedCount: 0, ...over,
 });
 
@@ -55,9 +56,11 @@ describe("hostingCase", () => {
   it("break-even equals the GPU rent divided by the API rate", () => {
     const c = hostingCase(group(), facts());
     expect(c.verdict).toBe("breakeven");
-    // blended = (0.2*3 + 0.6)/4 = 0.3 per million.
-    expect(c.apiBlendedPerM).toBeCloseTo(0.3, 6);
-    expect(c.breakEvenTokens).toBeCloseTo((c.floor!.usdPerMonth * 1e6) / 0.3, 0);
+    // Priced under the default chat workload rather than a fixed 3:1 blend, so
+    // the cache-write line and the 1500:500 token mix both move the figure.
+    const rate = ratePerMillion(flatCost(0.2, 0.6), DEFAULT_WORKLOAD);
+    expect(c.apiBlendedPerM).toBeCloseTo(rate, 6);
+    expect(c.breakEvenTokens).toBeCloseTo((c.floor!.usdPerMonth * 1e6) / rate, 0);
   });
 
   it("says unknown rather than guessing when facts are missing", () => {

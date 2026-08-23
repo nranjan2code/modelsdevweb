@@ -2,7 +2,8 @@ export type Modality = "text" | "image" | "pdf" | "audio" | "video";
 
 export type ModelStatus = "alpha" | "beta" | "deprecated";
 
-export interface Cost {
+/** One rate card, in dollars per million tokens. Null means "not published". */
+export interface CostRates {
   input: number | null;
   output: number | null;
   cacheRead: number | null;
@@ -10,7 +11,22 @@ export interface Cost {
   reasoning: number | null;
   inputAudio: number | null;
   outputAudio: number | null;
-  tiers: boolean;
+}
+
+/**
+ * A context-length price step. Upstream expresses these as thresholds — the
+ * card applies once a request's context reaches `minContext`. Collapsing them
+ * to a boolean (which this codebase used to do) prints the cheap rate for
+ * exactly the long-context requests the expensive rate exists for.
+ */
+export interface CostTier {
+  minContext: number;
+  rates: CostRates;
+}
+
+export interface Cost extends CostRates {
+  /** Ascending by threshold. Empty for flat-priced listings. */
+  tiers: CostTier[];
 }
 
 export interface Limits {

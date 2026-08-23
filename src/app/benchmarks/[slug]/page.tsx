@@ -71,8 +71,26 @@ export default async function BenchmarkPage({ params }: { params: Promise<{ slug
         </h1>
         <p className="max-w-2xl text-sm leading-relaxed text-black/60">
           {board.entries.length} models scored{board.metric ? ` · metric: ${board.metric}` : ""}. Prices are the
-          cheapest listed across all serving providers. Pts/$ = score ÷ blended price (3×input + output) / 4 —
-          how much score each dollar buys.
+          cheapest listed across all serving providers. Cost/run and Pts/$ are priced for the{" "}
+          <b className="font-semibold text-black">{board.workload.name.toLowerCase()}</b> token profile —{" "}
+          {board.workload.description.toLowerCase()}
+        </p>
+        <p className="max-w-2xl text-xs leading-relaxed text-black/60">
+          {board.calibrated ? (
+            <>
+              A benchmark is priced for the workload it exercises, not a fixed input:output blend: an
+              agent loop and a single hard question bill very differently on the same rate card.
+            </>
+          ) : (
+            <>
+              This benchmark has not been calibrated to a token profile, so the figures use the site
+              default. Treat the ordering as indicative rather than tuned to {board.name}.
+            </>
+          )}{" "}
+          Profile: {compact(board.workload.inputTokens)} in · {compact(board.workload.outputTokens)} out
+          {board.workload.reasoningTokens > 0 && <> · {compact(board.workload.reasoningTokens)} reasoning</>}
+          {" · "}{Math.round(board.workload.cacheHitRate * 100)}% cache hit ·{" "}
+          {compact(board.workload.contextTokens)} context.
         </p>
         <p className="max-w-2xl text-xs leading-relaxed text-black/60">
           Scores are facts as publicly reported by labs (see report links below and on each model page) and
@@ -83,7 +101,9 @@ export default async function BenchmarkPage({ params }: { params: Promise<{ slug
 
       {valueLeaders.length > 1 && (
         <section className="card-flat p-4">
-          <div className="mono-label mb-3">Best value · top {valueLeaders.length} by pts per dollar</div>
+          <div className="mono-label mb-3">
+            Best value · top {valueLeaders.length} by pts per dollar · {board.workload.name.toLowerCase()} profile
+          </div>
           <ol className="grid gap-x-6 gap-y-2 sm:grid-cols-2 lg:grid-cols-3">
             {valueLeaders.map((e, i) => (
               <li key={e.groupId} className="flex items-baseline justify-between gap-2 text-sm">
@@ -102,7 +122,7 @@ export default async function BenchmarkPage({ params }: { params: Promise<{ slug
         </section>
       )}
 
-      <BenchmarkEntriesTable maxScore={maxScore} rows={board.entries.map((entry) => ({ groupId: entry.groupId, groupName: entry.groupName, labId: entry.labId, score: entry.score, bestInput: entry.bestInput, bestOutput: entry.bestOutput, pointsPerDollar: entry.pointsPerDollar, context: catalog.groupById.get(entry.groupId) ? groupContext(catalog.groupById.get(entry.groupId)!) : null }))} />
+      <BenchmarkEntriesTable maxScore={maxScore} rows={board.entries.map((entry) => ({ groupId: entry.groupId, groupName: entry.groupName, labId: entry.labId, score: entry.score, bestInput: entry.bestInput, bestOutput: entry.bestOutput, pointsPerDollar: entry.pointsPerDollar, costPerRun: entry.costPerRun, context: catalog.groupById.get(entry.groupId) ? groupContext(catalog.groupById.get(entry.groupId)!) : null }))} />
 
       {reportSources.length > 0 && (
         <p className="text-xs leading-relaxed text-black/60">
@@ -132,4 +152,10 @@ export default async function BenchmarkPage({ params }: { params: Promise<{ slug
       )}
     </div>
   );
+}
+
+function compact(n: number): string {
+  if (n >= 1_000_000) return `${Number((n / 1_000_000).toFixed(1))}M`;
+  if (n >= 1_000) return `${Number((n / 1_000).toFixed(1))}k`;
+  return String(n);
 }

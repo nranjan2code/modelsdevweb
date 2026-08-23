@@ -1,5 +1,7 @@
-import { blendPrice, getCatalog } from "./index";
+import { getCatalog } from "./index";
 import { provenanceOf, type Provenance } from "./provenance";
+import { calibrationFor } from "../economics/benchmark-workloads";
+import { costOf, type Workload } from "../economics/workload";
 import type { Benchmark } from "../pipeline/types";
 
 export interface BenchmarkEntry {
@@ -13,7 +15,13 @@ export interface BenchmarkEntry {
   provenance: Provenance;
   bestInput: number | null;
   bestOutput: number | null;
+  /**
+   * Benchmark points per dollar, priced under the workload this benchmark
+   * actually exercises rather than a fixed input:output blend.
+   */
   pointsPerDollar: number | null;
+  /** Dollars to run one request of this benchmark's workload — the buyer's unit. */
+  costPerRun: number | null;
 }
 
 export interface BenchmarkBoard {
@@ -28,6 +36,10 @@ export interface BenchmarkBoard {
    * apples to apples. Mixed boards are ranked on their independent subset.
    */
   fullyIndependent: boolean;
+  /** The token profile this board's value figures were priced under. */
+  workload: Workload;
+  /** False when the benchmark is not in the calibration allow-list. */
+  calibrated: boolean;
 }
 
 export function slugify(name: string): string {
@@ -76,10 +88,15 @@ export async function getBenchmarkBoards(): Promise<BenchmarkBoard[]> {
     for (const b of c.benchmarks as Benchmark[]) {
       const slug = slugify(b.name);
       const board = bySlug.get(slug) ?? { name: b.name, entries: [], metric: b.metric };
+      const { workload } = calibrationFor(slug);
       let pointsPerDollar: number | null = null;
-      if (best && best.input != null) {
-        const blend = blendPrice(best.input, best.output);
-        pointsPerDollar = blend <= 0 ? Number.POSITIVE_INFINITY : b.score / blend;
+      let costPerRun: number | null = null;
+      if (best) {
+        const bill = costOf(best.cost, workload);
+        if (bill.priced) {
+          costPerRun = bill.total;
+          pointsPerDollar = bill.total <= 0 ? Number.POSITIVE_INFINITY : b.score / bill.total;
+        }
       }
       const entry: BenchmarkEntry = {
         groupId: g.id,
@@ -92,6 +109,7 @@ export async function getBenchmarkBoards(): Promise<BenchmarkBoard[]> {
         bestInput: best?.input ?? null,
         bestOutput: best?.output ?? null,
         pointsPerDollar,
+        costPerRun,
       };
       board.entries.push(entry);
       bySlug.set(slug, board);
@@ -101,6 +119,7 @@ export async function getBenchmarkBoards(): Promise<BenchmarkBoard[]> {
     .map(([slug, board]) => {
       const sorted = collapseBoardEntries(board.entries);
       const independent = sorted.filter((e) => e.provenance === "independent");
+      const { workload, calibrated } = calibrationFor(slug);
       return {
         name: board.name,
         slug,
@@ -108,6 +127,8 @@ export async function getBenchmarkBoards(): Promise<BenchmarkBoard[]> {
         entries: sorted,
         independent,
         fullyIndependent: independent.length === sorted.length && sorted.length > 0,
+        workload,
+        calibrated,
       };
     })
     .sort((a, b) => b.entries.length - a.entries.length);
@@ -132,7 +153,7 @@ export function rankableBoards(boards: BenchmarkBoard[]): BenchmarkBoard[] {
     .sort((a, b) => b.independent.length - a.independent.length);
 }
 
-/** Independent entries with a real price, ranked by benchmark points per blended dollar. */
+/** Independent entries with a real price, ranked by points per dollar under the board's workload. */
 export function valueLeaders(board: BenchmarkBoard, limit = 5): BenchmarkEntry[] {
   return board.independent
     .filter((e) => e.pointsPerDollar != null && Number.isFinite(e.pointsPerDollar))

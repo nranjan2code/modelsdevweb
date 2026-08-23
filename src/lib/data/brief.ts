@@ -1,4 +1,5 @@
-import { blendPrice, groupContext, groupReleaseDate, type Catalog, type ModelGroup } from "./index";
+import { groupContext, groupReleaseDate, type Catalog, type ModelGroup } from "./index";
+import { DEFAULT_WORKLOAD, flatCost, ratePerMillion, type Workload } from "../economics/workload";
 import { isFirstParty } from "./market";
 import { archiveDepth, type PriceArchive } from "./archive";
 import type { Event } from "../pipeline/types";
@@ -173,7 +174,11 @@ export interface FrontierIndex {
  * Returns `ready: false` rather than a flat line when history is too short —
  * the homepage says when it will start publishing instead of faking a chart.
  */
-export function frontierIndex(archive: PriceArchive, frontierIds: Set<string>): FrontierIndex {
+export function frontierIndex(
+  archive: PriceArchive,
+  frontierIds: Set<string>,
+  w: Workload = DEFAULT_WORKLOAD,
+): FrontierIndex {
   const points: IndexPoint[] = [];
   for (let i = 0; i < archive.dates.length; i++) {
     const blended: number[] = [];
@@ -182,7 +187,7 @@ export function frontierIndex(archive: PriceArchive, frontierIds: Set<string>): 
       const inp = m.in[i];
       const out = m.out[i];
       if (inp == null || out == null || (inp === 0 && out === 0)) continue;
-      blended.push(blendPrice(inp, out));
+      blended.push(ratePerMillion(flatCost(inp, out), w));
     }
     if (blended.length === 0) continue;
     blended.sort((a, b) => a - b);

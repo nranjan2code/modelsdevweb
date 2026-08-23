@@ -157,7 +157,10 @@ export interface LabModelRow {
   input: number | null;
   output: number | null;
   context: number | null;
+  /** Providers still serving it — organisations, not endpoint variants. */
   providers: number;
+  /** Providers that have withdrawn their endpoint while others still serve it. */
+  withdrawn: number;
   released: string | null;
 }
 
@@ -167,7 +170,16 @@ export function LabModelsTable({ rows }: { rows: LabModelRow[] }) {
     { key: "input", label: "Best in /M", align: "right", sortValue: (row) => row.input, render: (row) => <span className="font-mono tabular-nums">{fmtPerM(row.input)}</span> },
     { key: "output", label: "Best out /M", align: "right", sortValue: (row) => row.output, render: (row) => <span className="font-mono tabular-nums">{fmtPerM(row.output)}</span> },
     { key: "context", label: "Context", align: "right", sortValue: (row) => row.context, render: (row) => <span className="font-mono tabular-nums">{fmtTokens(row.context)}</span> },
-    { key: "providers", label: "Providers", align: "right", sortValue: (row) => row.providers, render: (row) => <span className="tabular-nums text-black/60">{row.providers}</span> },
+    { key: "providers", label: "Live providers", align: "right", sortValue: (row) => row.providers, render: (row) => (
+      <span className="whitespace-nowrap tabular-nums text-black/60">
+        {row.providers}
+        {row.withdrawn > 0 && (
+          <span className="ml-1.5 text-xs text-neg" title={`${row.withdrawn} provider${row.withdrawn === 1 ? " has" : "s have"} withdrawn this model`}>
+            −{row.withdrawn}
+          </span>
+        )}
+      </span>
+    ) },
     { key: "released", label: "Released", sortValue: (row) => row.released, render: (row) => <span className="whitespace-nowrap text-xs text-black/60">{fmtDate(row.released)}</span> },
   ];
   return <SmartTable rows={rows} columns={columns} rowKey={(row) => row.id} searchText={(row) => `${row.name} ${row.id}`} placeholder="Filter models…" noun="models" minWidth="min-w-[680px]" defaultSort="released" defaultDirection="desc" empty="No models match." />;
@@ -181,8 +193,13 @@ export interface BenchmarkTableRow {
   bestInput: number | null;
   bestOutput: number | null;
   pointsPerDollar: number | null;
+  /** Dollars to run one request of this board's workload. */
+  costPerRun: number | null;
   context: number | null;
 }
+
+const fmtRun = (value: number | null) =>
+  value == null ? "—" : value >= 0.01 ? `$${value.toFixed(3)}` : `${(value * 100).toFixed(3)}\u00a2`;
 
 const fmtPpd = (value: number | null) => value == null ? "—" : !Number.isFinite(value) ? "free" : value >= 100 ? Math.round(value).toLocaleString("en-US") : value.toFixed(1);
 
@@ -194,10 +211,11 @@ export function BenchmarkEntriesTable({ rows, maxScore }: { rows: BenchmarkTable
     { key: "score", label: "Score", sortValue: (row) => row.score, render: (row) => <div className="flex w-48 items-center gap-2"><span className="w-12 shrink-0 font-mono font-semibold tabular-nums">{row.score}</span><Bar pct={row.score / maxScore} tone="accent" label={`${row.groupName}: benchmark score ${row.score}`} /></div> },
     { key: "bestInput", label: "Best in /M", align: "right", sortValue: (row) => row.bestInput, render: (row) => <span className="font-mono tabular-nums">{fmtPerM(row.bestInput)}</span> },
     { key: "bestOutput", label: "Best out /M", align: "right", sortValue: (row) => row.bestOutput, render: (row) => <span className="font-mono tabular-nums">{fmtPerM(row.bestOutput)}</span> },
+    { key: "costPerRun", label: "Cost / run", align: "right", sortValue: (row) => row.costPerRun, render: (row) => <span className="font-mono tabular-nums text-black/70">{fmtRun(row.costPerRun)}</span> },
     { key: "pointsPerDollar", label: "Pts / $", align: "right", sortValue: (row) => row.pointsPerDollar, render: (row) => <span className="font-mono font-semibold tabular-nums text-pos">{fmtPpd(row.pointsPerDollar)}</span> },
     { key: "context", label: "Context", align: "right", sortValue: (row) => row.context, render: (row) => <span className="font-mono tabular-nums text-black/60">{fmtTokens(row.context)}</span> },
   ];
-  return <SmartTable rows={rows} columns={columns} rowKey={(row) => row.groupId} searchText={(row) => `${row.groupName} ${row.groupId} ${row.labId}`} placeholder="Filter leaderboard…" noun="models" minWidth="min-w-[880px]" defaultSort="score" defaultDirection="desc" empty="No benchmark entries match." />;
+  return <SmartTable rows={rows} columns={columns} rowKey={(row) => row.groupId} searchText={(row) => `${row.groupName} ${row.groupId} ${row.labId}`} placeholder="Filter leaderboard…" noun="models" minWidth="min-w-[980px]" defaultSort="score" defaultDirection="desc" empty="No benchmark entries match." />;
 }
 
 export interface DeprecationTableRow {
