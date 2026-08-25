@@ -89,7 +89,7 @@ export default async function ExchangePage() {
 
   return (
     <div className="space-y-8">
-      <header className="page-intro">
+      <header className="page-intro page-intro-split">
         <p className="mono-label">Token economics</p>
         <h1 className="text-3xl font-bold tracking-tight text-black sm:text-4xl">The exchange</h1>
         <p className="max-w-3xl text-sm leading-relaxed text-black/60">

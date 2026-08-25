@@ -51,7 +51,7 @@ export default async function ProviderPage({ params }: { params: Promise<{ id: s
         <span className="font-medium text-black">{provider.name}</span>
       </nav>
 
-      <header className="page-intro">
+      <header className="page-intro page-intro-split">
         <p className="mono-label">Provider</p>
         <h1 className="text-3xl font-bold tracking-tight text-black sm:text-4xl">{provider.name}</h1>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-black/60">

@@ -48,7 +48,7 @@ export default async function SelfHostPage() {
 
   return (
     <div className="space-y-12">
-      <header className="page-intro">
+      <header className="page-intro page-intro-split">
         <p className="mono-label text-special">The other half of the price question</p>
         <h1 className="text-3xl font-bold tracking-tight text-black sm:text-4xl">Self-host or buy?</h1>
         <p className="max-w-2xl text-sm leading-relaxed text-black/60">

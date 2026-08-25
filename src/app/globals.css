@@ -485,6 +485,37 @@ body {
     text-wrap: pretty;
   }
 
+  @media (min-width: 64rem) {
+    .page-intro-split {
+      display: grid;
+      grid-template-columns: minmax(18rem, 0.8fr) minmax(28rem, 1.2fr);
+      column-gap: clamp(3rem, 7vw, 8rem);
+      row-gap: 0.75rem;
+      align-items: end;
+    }
+
+    .page-intro-split > .mono-label:first-child,
+    .page-intro-split > h1:nth-child(2) {
+      grid-column: 1;
+    }
+
+    .page-intro-split > .mono-label:first-child {
+      grid-row: 1;
+    }
+
+    .page-intro-split > h1:nth-child(2) {
+      grid-row: 2;
+    }
+
+    .page-intro-split > p:nth-child(3):last-child,
+    .page-intro-split > div:nth-child(3):last-child {
+      grid-column: 2;
+      grid-row: 1 / span 2;
+      align-self: end;
+      max-width: 68ch;
+    }
+  }
+
   .metric-strip {
     border-block: 1px solid rgb(16 24 40 / 0.12);
     background: var(--color-surface);
