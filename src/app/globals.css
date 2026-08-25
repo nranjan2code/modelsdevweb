@@ -420,7 +420,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
-    max-width: 52rem;
+    width: 100%;
     border-top: 3px solid var(--color-ink);
     padding-top: 1rem;
   }

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Subscribe } from "@/components/subscribe";
 import { Badge, DeltaChip, EmptyState, SectionHead } from "@/components/ui";
-import { getCatalog, getEvents, getNews, getSnapshotMeta, groupContext, groupReleaseDate, liveListings } from "@/lib/data";
+import { getCatalog, getEvents, getNews, getSnapshotMeta, groupContext, groupReleaseDate, liveListings, providerCount } from "@/lib/data";
 import { retirementOf } from "@/lib/data/retirement";
 import { buildBaskets } from "@/lib/economics/instruments";
 import { widestMarkups } from "@/lib/economics/basis";
@@ -642,6 +642,11 @@ export default async function HomePage() {
   const baskets = buildBaskets(catalog.tracked, freelyUsable, DEFAULT_WORKLOAD);
   const markups = widestMarkups(catalog.tracked, DEFAULT_WORKLOAD, 5);
   const hostable = hostableCases(catalog.tracked, weights.models, 5);
+  const widelyAvailable = catalog.tracked
+    .map((g) => ({ g, providers: providerCount(g) }))
+    .filter((x) => x.providers > 0)
+    .sort((a, b) => b.providers - a.providers || a.g.name.localeCompare(b.g.name))
+    .slice(0, 5);
 
   const longContext = catalog.tracked
     .map((g) => ({ g, ctx: groupContext(g) ?? 0, r: rate(g) }))
@@ -765,6 +770,24 @@ export default async function HomePage() {
             }))}
             href="/exchange"
             cta="All basis"
+          />,
+
+          <DeckCard
+            key="availability"
+            eyebrow="Availability"
+            tone="accent"
+            title="Most places to buy"
+            blurb="Models with the deepest live provider coverage — breadth matters when a venue fails."
+            rows={widelyAvailable.map(({ g, providers }) => ({
+              id: g.id,
+              label: g.name,
+              sub: `${labName(g.labId)} · live providers`,
+              value: String(providers),
+              tone: "accent" as const,
+              href: `/m/${g.id}`,
+            }))}
+            href="/browse"
+            cta="Browse the catalog"
           />,
 
           <DeckCard
