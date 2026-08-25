@@ -81,14 +81,14 @@ const PRICE_OPTIONS = [
 ];
 
 const CAPS = [
-  ["reasoning", "reasoning"],
-  ["tools", "tools"],
-  ["structured", "structured"],
-  ["vision", "vision"],
-  ["audio", "audio"],
-  ["video", "video"],
-  ["pdf", "pdf"],
-  ["open", "open weights"],
+  ["reasoning", "Reasoning"],
+  ["tools", "Tools"],
+  ["structured", "Structured output"],
+  ["vision", "Vision"],
+  ["audio", "Audio"],
+  ["video", "Video"],
+  ["pdf", "PDF"],
+  ["open", "Open weights"],
 ] as const;
 
 const FLAG_CAPS = new Set(["beta", "alpha", "experimental"]);
@@ -229,7 +229,7 @@ export function BrowseTable({ rows: packedRows }: { rows: PackedBrowseRow[] }) {
                 <th className="text-right">Providers</th>
                 <th>Released</th>
                 <th>
-                  <span title="Add to comparison">Cmp</span>
+                  <span title="Add a model to comparison">Compare</span>
                 </th>
               </tr>
             </thead>
