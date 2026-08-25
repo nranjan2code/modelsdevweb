@@ -197,6 +197,30 @@ describe("runQuality", () => {
     expect(r.ok).toBe(true);
   });
 
+  it("keeps historical events when a later removal explains the missing listing", () => {
+    const event = (id: string, type: Event["type"], date: string): Event => ({
+      id,
+      type,
+      date,
+      modelKey: "ofox/vanished-model",
+      modelName: "Vanished",
+      canonicalId: null,
+      labId: null,
+      providerId: "ofox",
+      changes: [],
+    });
+    const r = runQuality(
+      baseInput({
+        events: [
+          event("added", "model_added", "2026-08-21"),
+          event("removed", "model_removed", "2026-08-22"),
+        ],
+      }),
+    );
+    expect(r.errors.filter((e) => e.check === "events-integrity")).toEqual([]);
+    expect(r.ok).toBe(true);
+  });
+
   it("warns on stale news but fails on dead news deep-links", () => {
     const r = runQuality(
       baseInput({

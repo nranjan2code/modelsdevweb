@@ -382,6 +382,15 @@ function checkEvents(i: QualityInput): QualityIssue[] {
   const dupes: string[] = [];
   const bad: string[] = [];
   const dangling: string[] = [];
+  // A listing can be added and then disappear before the next snapshot. Keep
+  // that historical add/reprice event: a later removal event proves why the
+  // listing is no longer present in the current catalog.
+  const removedOn = new Map<string, string>();
+  for (const e of i.events) {
+    if (!REMOVAL_TYPES.has(e.type)) continue;
+    const previous = removedOn.get(e.modelKey);
+    if (previous == null || e.date > previous) removedOn.set(e.modelKey, e.date);
+  }
   const tomorrow = addDays(isoDay(i.now), 1);
   const oldest = addDays(isoDay(i.now), -EVENT_RETENTION_DAYS);
   for (const e of i.events) {
@@ -390,8 +399,12 @@ function checkEvents(i: QualityInput): QualityIssue[] {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(e.date) || e.date > tomorrow) bad.push(`${e.id}@${e.date}`);
     if (e.date >= oldest) {
       if (REMOVAL_TYPES.has(e.type)) continue;
-      if (!keys.has(e.modelKey)) dangling.push(`${e.id}:${e.modelKey}`);
-      else if (e.canonicalId != null && !i.canonicalIds.has(e.canonicalId)) dangling.push(`${e.id}:canonical ${e.canonicalId}`);
+      const removedAfter = (removedOn.get(e.modelKey) ?? "") >= e.date;
+      if (!keys.has(e.modelKey)) {
+        if (!removedAfter) dangling.push(`${e.id}:${e.modelKey}`);
+      } else if (e.canonicalId != null && !i.canonicalIds.has(e.canonicalId)) {
+        dangling.push(`${e.id}:canonical ${e.canonicalId}`);
+      }
     }
   }
   if (dupes.length > 0) out.push({ check: "events-integrity", message: `duplicate event ids: ${cap(dupes)}` });

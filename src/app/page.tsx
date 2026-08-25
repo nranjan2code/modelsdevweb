@@ -82,11 +82,11 @@ const LEDE_EYEBROW: Record<Lede["kind"], string> = {
 
 function Lead({
   story,
-  syncedAgo,
+  syncedAt,
   glance,
 }: {
   story: Lede;
-  syncedAgo: string | null;
+  syncedAt: string | null;
   glance: GlanceStat[];
 }) {
   return (
@@ -97,7 +97,7 @@ function Lead({
             <Badge tone={LEDE_TONE[story.kind]} bold>{LEDE_EYEBROW[story.kind]}</Badge>
             <span className="pill bg-white/70">
               <span className="status-dot bg-pos-bright" aria-hidden="true" />
-              Live{syncedAgo ? ` · synced ${syncedAgo}` : ""}
+              Live{syncedAt ? ` · data through ${syncedAt}` : ""}
             </span>
             {/* Rule 14: the rule that picked the lede stays next to the claim. */}
             <span className="micro-label">selected by: {story.rule}</span>
@@ -564,7 +564,9 @@ export default async function HomePage() {
     getCatalog(), getEvents(), getBenchmarkBoards(), getWeights(), getSnapshotMeta(), getPriceArchive(),
     getNews(),
   ]);
-  const syncedAgo = fmtAgo(meta.fetchedAt);
+  // This is a static export: a relative label calculated with Date.now() would
+  // be frozen at build time and incorrectly remain "just now" for visitors.
+  const syncedAt = meta.fetchedAt ? fmtDate(meta.fetchedAt) : null;
   const moves = marketMoves(events, catalog, 7);
   const story = lede(moves, catalog, events);
   const labMoves = collapseByModel(moves.firstParty).slice(0, 5);
@@ -708,7 +710,7 @@ export default async function HomePage() {
 
   return (
     <div className="space-y-10 lg:space-y-14">
-      <Lead story={story} syncedAgo={syncedAgo} glance={glanceStats} />
+      <Lead story={story} syncedAt={syncedAt} glance={glanceStats} />
 
       <Deck
         cards={[
