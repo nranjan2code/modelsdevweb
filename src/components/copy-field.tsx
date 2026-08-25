@@ -20,7 +20,7 @@ export function CopyField({ value, label }: { value: string; label: string }) {
       </code>
       <button
         onClick={copy}
-        className="inline-flex min-h-11 shrink-0 items-center rounded-md border border-black/15 bg-white px-3 py-2 text-xs font-semibold transition-colors hover:border-black"
+        className="control-button shrink-0"
       >
         {copied ? "copied ✓" : `copy ${label}`}
       </button>

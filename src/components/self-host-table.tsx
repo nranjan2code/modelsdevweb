@@ -98,7 +98,7 @@ export function SelfHostTable({ rows }: { rows: HostRow[] }) {
                 type="button"
                 onClick={() => setMonthly(p.tokens)}
                 aria-pressed={monthly === p.tokens}
-                className={`inline-flex min-h-11 items-center rounded-md border px-3 py-2 text-xs font-medium transition-all ${
+                className={`control-button ${
                   monthly === p.tokens
                     ? "border-black bg-black text-white"
                     : "border-black/15 bg-white text-black/60 hover:border-black hover:text-black"

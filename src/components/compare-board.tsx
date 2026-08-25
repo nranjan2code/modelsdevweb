@@ -214,7 +214,7 @@ export function CompareBoard({ models: packedModels }: { models: PackedCompareMo
                 <button
                   onClick={() => add(m.id)}
                   disabled={selected.length >= COMPARE_MAX}
-                  className="inline-flex min-h-11 items-center rounded-md border border-black/15 bg-white px-3 py-2 text-xs font-medium text-black/70 transition-all enabled:hover:border-black enabled:hover:text-black disabled:opacity-40"
+                  className="control-button disabled:opacity-40"
                 >
                   + {m.name} <span className="text-black/60">{m.lab}</span>
                 </button>
@@ -252,7 +252,7 @@ export function CompareBoard({ models: packedModels }: { models: PackedCompareMo
                       <button
                         onClick={() => remove(m.id)}
                         aria-label={`Remove ${m.name}`}
-                        className="ml-auto inline-flex h-11 w-11 shrink-0 items-center justify-center rounded border border-black/15 text-base text-black/60 transition-colors hover:border-neg hover:text-neg"
+                        className="control-button ml-auto h-11 w-11 shrink-0 px-0 text-base hover:border-neg hover:bg-neg-soft hover:text-neg"
                       >
                         ×
                       </button>

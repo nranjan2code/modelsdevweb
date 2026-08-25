@@ -24,7 +24,7 @@ export function WorkloadSwitcher({ compact = false }: { compact?: boolean }) {
                 type="button"
                 onClick={() => setWorkload(w.id)}
                 aria-pressed={on}
-                className={`rounded-md border px-2.5 py-1 text-xs font-semibold transition ${
+                className={`control-button ${
                   on
                     ? "border-accent bg-accent-soft text-accent-strong"
                     : "border-black/15 bg-white text-black/60 hover:border-black/30 hover:text-black"

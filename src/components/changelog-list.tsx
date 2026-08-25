@@ -145,7 +145,7 @@ export function ChangelogList({ events }: { events: Event[] }) {
                   key={t.value}
                   onClick={() => setFilters(makeFilters(t.value, days))}
                   aria-pressed={type === t.value}
-                  className={`inline-flex min-h-11 items-center rounded-md border px-3 py-2 text-xs font-medium transition-colors ${
+                  className={`control-button ${
                     type === t.value
                       ? "border-accent/30 bg-accent-soft text-accent-strong"
                       : "border-black/15 bg-white text-black/60 hover:border-accent hover:text-accent"
@@ -164,7 +164,7 @@ export function ChangelogList({ events }: { events: Event[] }) {
                   key={w.value}
                   onClick={() => setFilters(makeFilters(type, w.value))}
                   aria-pressed={days === w.value}
-                  className={`inline-flex min-h-11 items-center rounded-md border px-3 py-2 text-xs font-medium transition-colors ${
+                  className={`control-button ${
                     days === w.value
                       ? "border-accent/30 bg-accent-soft text-accent-strong"
                       : "border-black/15 bg-white text-black/60 hover:border-accent hover:text-accent"
@@ -190,7 +190,7 @@ export function ChangelogList({ events }: { events: Event[] }) {
           </span>
           <button
             onClick={() => setFilters(DEFAULT_FILTERS)}
-            className="ml-auto inline-flex min-h-11 items-center rounded border border-accent/40 px-3 py-2 font-semibold transition-colors hover:border-accent hover:bg-white"
+            className="control-button ml-auto"
           >
             clear ×
           </button>

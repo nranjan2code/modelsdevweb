@@ -139,7 +139,7 @@ export function ContextPriceChart({ points }: { points: ContextPricePoint[] }) {
             <legend className="micro-label mb-1.5">Price basis</legend>
             <div className="inline-flex rounded-md border border-black/15 bg-white p-1">
               {(["input", "output", "blended"] as const).map((value) => (
-                <button key={value} type="button" onClick={() => setBasis(value)} aria-pressed={basis === value} className={`min-h-9 rounded px-3 text-xs font-semibold transition-colors ${basis === value ? "bg-accent text-white" : "text-black/60 hover:bg-accent-soft hover:text-accent"}`}>
+                <button key={value} type="button" onClick={() => setBasis(value)} aria-pressed={basis === value} className="control-button min-h-9 rounded px-3">
                   {value === "blended" ? "Blend 75/25" : value[0].toUpperCase() + value.slice(1)}
                 </button>
               ))}
@@ -159,9 +159,9 @@ export function ContextPriceChart({ points }: { points: ContextPricePoint[] }) {
         <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
           <div><strong className="font-mono text-sm tabular-nums">{visible.length}</strong><span className="text-sm text-black/60"> visible · </span><strong className="font-mono text-sm tabular-nums text-warn">{visibleFrontier.length}</strong><span className="text-sm text-black/60"> Pareto-efficient</span></div>
           <div className="flex items-center gap-1" aria-label="Chart zoom">
-            <button type="button" aria-label="Zoom out" disabled={zoom === 1} onClick={() => setZoom((value) => Math.max(1, value / 2))} className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-black/15 bg-white font-mono disabled:opacity-40">−</button>
+            <button type="button" aria-label="Zoom out" disabled={zoom === 1} onClick={() => setZoom((value) => Math.max(1, value / 2))} className="control-button h-9 w-9 px-0 font-mono">−</button>
             <span className="min-w-12 text-center font-mono text-xs tabular-nums">{zoom}×</span>
-            <button type="button" aria-label="Zoom in" disabled={zoom === 4} onClick={() => setZoom((value) => Math.min(4, value * 2))} className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-black/15 bg-white font-mono disabled:opacity-40">+</button>
+            <button type="button" aria-label="Zoom in" disabled={zoom === 4} onClick={() => setZoom((value) => Math.min(4, value * 2))} className="control-button h-9 w-9 px-0 font-mono">+</button>
           </div>
         </div>
 
