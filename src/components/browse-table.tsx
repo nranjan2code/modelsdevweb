@@ -168,46 +168,30 @@ export function BrowseTable({ rows: packedRows }: { rows: PackedBrowseRow[] }) {
     <div className="space-y-4">
       <div className="data-table-shell" ref={tableRef}>
       <div className="data-table-toolbar">
-        <input
-          className="input w-56"
-          placeholder="Search models…"
-          aria-label="Search models"
-          value={q}
-          onChange={(e) => { setQ(e.target.value); setPage(1); }}
-        />
-        <select
-          className="input"
-          value={ctxMin}
-          onChange={(e) => { setCtxMin(Number(e.target.value)); setPage(1); }}
-          aria-label="Minimum context"
-        >
-          {CTX_OPTIONS.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </select>
-        <select
-          className="input"
-          value={String(priceMax)}
-          onChange={(e) => { setPriceMax(Number(e.target.value)); setPage(1); }}
-          aria-label="Maximum input price"
-        >
-          {PRICE_OPTIONS.map((o) => (
-            <option key={o.label} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </select>
-        <select className="input" value={sort} onChange={(e) => { setSort(e.target.value as SortKey); setPage(1); }} aria-label="Sort by">
-          <option value="input">Sort: cheapest input</option>
-          <option value="output">Sort: cheapest output</option>
-          <option value="newest">Sort: newest</option>
-          <option value="context">Sort: largest context</option>
-          <option value="providers">Sort: most providers</option>
-          <option value="swe">Sort: best SWE-Bench</option>
-        </select>
-        <div className="flex flex-wrap gap-1.5">
+        <div className="data-table-primary-controls">
+          <input
+            className="input"
+            placeholder="Search models…"
+            aria-label="Search models"
+            value={q}
+            onChange={(e) => { setQ(e.target.value); setPage(1); }}
+          />
+          <select className="input" value={ctxMin} onChange={(e) => { setCtxMin(Number(e.target.value)); setPage(1); }} aria-label="Minimum context">
+            {CTX_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+          </select>
+          <select className="input" value={String(priceMax)} onChange={(e) => { setPriceMax(Number(e.target.value)); setPage(1); }} aria-label="Maximum input price">
+            {PRICE_OPTIONS.map((o) => <option key={o.label} value={o.value}>{o.label}</option>)}
+          </select>
+          <select className="input" value={sort} onChange={(e) => { setSort(e.target.value as SortKey); setPage(1); }} aria-label="Sort by">
+            <option value="input">Sort: cheapest input</option>
+            <option value="output">Sort: cheapest output</option>
+            <option value="newest">Sort: newest</option>
+            <option value="context">Sort: largest context</option>
+            <option value="providers">Sort: most providers</option>
+            <option value="swe">Sort: best SWE-Bench</option>
+          </select>
+        </div>
+        <div className="data-table-capability-controls">
           {CAPS.map(([cap, label]) => (
             <button
               key={cap}
@@ -223,21 +207,12 @@ export function BrowseTable({ rows: packedRows }: { rows: PackedBrowseRow[] }) {
             </button>
           ))}
         </div>
-        <button
-          type="button"
-          onClick={() => { setIncludeExtended((value) => !value); setPage(1); }}
-          aria-pressed={includeExtended}
-              className={`control-button ${
-            includeExtended
-              ? "border-special bg-special-soft text-special"
-              : "border-black/15 bg-white text-black/60 hover:border-black hover:text-black"
-          }`}
-        >
-          extended catalog
-        </button>
-        <span className="ml-auto font-mono text-xs tabular-nums text-black/60">
-          {filtered.length} / {rows.length}
-        </span>
+        <div className="data-table-secondary-controls">
+          <button type="button" onClick={() => { setIncludeExtended((value) => !value); setPage(1); }} aria-pressed={includeExtended} className={`control-button ${includeExtended ? "border-special bg-special-soft text-special" : ""}`}>
+            {includeExtended ? "Extended catalog on" : "Extended catalog"}
+          </button>
+          <span className="font-mono text-xs tabular-nums text-black/60">{filtered.length} / {rows.length} models</span>
+        </div>
       </div>
 
       <div className="data-table-viewport">
