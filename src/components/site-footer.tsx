@@ -16,6 +16,8 @@ const COLUMNS: { title: string; links: { href: string; label: string; external?:
   {
     title: "Market",
     links: [
+      { href: "/exchange#equity-context", label: "Public-market context" },
+      { href: "/exchange", label: "Token exchange" },
       { href: "/benchmarks", label: "Benchmarks" },
       { href: "/trends", label: "Trends" },
       { href: "/providers", label: "Providers" },

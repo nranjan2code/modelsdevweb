@@ -7,7 +7,7 @@ import { useEffect, useRef } from "react";
 const NAV_GROUPS = [
   { label: "Explore", items: [{ href: "/browse", label: "Models" }, { href: "/compare", label: "Compare" }] },
   { label: "Decide", items: [{ href: "/calculator", label: "Calculator" }, { href: "/self-host", label: "Self-host" }] },
-  { label: "Market", items: [{ href: "/exchange", label: "Exchange" }, { href: "/trends", label: "Market pulse" }, { href: "/changelog", label: "Changes" }, { href: "/deprecations", label: "Deprecations" }] },
+  { label: "Market", items: [{ href: "/exchange", label: "Exchange" }, { href: "/exchange#equity-context", label: "Public markets" }, { href: "/trends", label: "Market pulse" }, { href: "/changelog", label: "Changes" }, { href: "/deprecations", label: "Deprecations" }] },
   { label: "Evidence", items: [{ href: "/benchmarks", label: "Benchmarks" }, { href: "/providers", label: "Providers" }, { href: "/about", label: "Methodology" }, { href: "/status", label: "Status" }] },
   { label: "Follow", items: [{ href: "/digest", label: "Digest" }, { href: "/news", label: "News" }] },
 ] as const;
@@ -15,7 +15,10 @@ const NAV_GROUPS = [
 export function SiteNav() {
   const pathname = usePathname();
   const root = useRef<HTMLElement>(null);
-  const active = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
+  const active = (href: string) => {
+    const path = href.split("#", 1)[0];
+    return pathname === path || pathname.startsWith(`${path}/`);
+  };
 
   useEffect(() => {
     const navigation = root.current;
@@ -35,7 +38,7 @@ export function SiteNav() {
             <span className="nav-group-label">{group.label}</span>
             <div className="nav-cluster-links">
               {group.items.map((item) => (
-                <Link key={item.href} href={item.href} aria-current={active(item.href) ? "page" : undefined} className={`nav-link ${active(item.href) ? "nav-link-active" : ""}`}>
+                <Link key={item.href} href={item.href} aria-current={!item.href.includes("#") && active(item.href) ? "page" : undefined} className={`nav-link ${!item.href.includes("#") && active(item.href) ? "nav-link-active" : ""}`}>
                   {item.label}
                 </Link>
               ))}

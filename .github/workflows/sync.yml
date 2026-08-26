@@ -15,6 +15,7 @@ concurrency:
 jobs:
   sync:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
 
@@ -25,7 +26,8 @@ jobs:
           node-version: 26
           cache: pnpm
 
-      - run: pnpm install --frozen-lockfile
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
       - name: Style gate (brand tokens)
         run: pnpm check:style
@@ -39,9 +41,11 @@ jobs:
       - name: Typecheck
         run: npx tsc --noEmit
 
-      - run: pnpm test
+      - name: Unit tests
+        run: pnpm test
 
-      - run: pnpm sync
+      - name: Sync model catalog and price archive
+        run: pnpm sync
 
       - name: Fetch daily model news
         env:
@@ -51,7 +55,7 @@ jobs:
       - name: Sync open-weight licence facts (Hugging Face, daily)
         run: pnpm sync-weights
 
-      - name: Sync external signals (Hugging Face and GitHub)
+      - name: Sync external signals (Hugging Face and GitHub, every 6h)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: pnpm sync-external

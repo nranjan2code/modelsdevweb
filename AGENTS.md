@@ -235,7 +235,7 @@ hourly GH Action (sync.yml)
   ├─ pnpm sync   → snapshots/{latest,date}/ + events/index.json
   ├─ pnpm news   → news/index.json (Tavily; refreshes every 4h, keeps the last good result on failure)
   ├─ pnpm sync-weights → snapshots/latest/weights.json (HF licence/access/params; skips if <20h old)
-  ├─ pnpm sync-external → snapshots/latest/external-signals.json (HF downloads/likes/trending/papers + GitHub stars/forks)
+  ├─ pnpm sync-external → snapshots/latest/external-signals.json (HF downloads/likes/trending/papers + GitHub stars/forks; refreshes every 6h)
   │                         + snapshots/external-history/{date}.json
   ├─ pnpm gate   → validates the complete candidate state after external refreshes
   ├─ pnpm notify → watcher webhooks; successful event ids → events/notified.json

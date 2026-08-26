@@ -21,6 +21,7 @@ import { getBenchmarkBoards, rankableBoards, valueLeaders } from "@/lib/data/ben
 import { spreadSummary, widestSpreads, type SpreadRow } from "@/lib/data/market";
 import { fmtMonthlyUsd, hostableCases } from "@/lib/data/selfhost";
 import { getWeights, isFreelyUsable } from "@/lib/data/weights";
+import { EQUITY_ENTITIES, listingCount } from "@/lib/data/equities";
 import { fmtAgo, fmtDate, fmtPerM, fmtTokens } from "@/lib/format";
 import type { Event, NewsItem } from "@/lib/pipeline/types";
 
@@ -710,6 +711,12 @@ export default async function HomePage() {
           href: "/self-host",
         }
       : null,
+    {
+      label: "Public-market context",
+      detail: `${EQUITY_ENTITIES.length} companies · ${listingCount()} listings across exchanges`,
+      value: "Read the map",
+      href: "/exchange#equity-context",
+    },
   ];
   const glanceStats = glance.filter((x): x is GlanceStat => x !== null);
 

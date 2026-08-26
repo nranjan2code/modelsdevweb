@@ -18,7 +18,7 @@ const EVENTS_FILE = path.join(ROOT, "events", "index.json");
 const EXTERNAL_SIGNALS_FILE = path.join(LATEST, "external-signals.json");
 
 async function fetchJson(url: string): Promise<unknown> {
-  const res = await fetch(url);
+  const res = await fetch(url, { signal: AbortSignal.timeout(30_000) });
   if (!res.ok) throw new Error(`${url} -> HTTP ${res.status}`);
   return res.json();
 }

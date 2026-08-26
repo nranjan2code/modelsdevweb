@@ -9,6 +9,7 @@ import { bestDiscounts, widestMarkups, MIN_QUOTES, type BasisReport } from "@/li
 import { MIN_OBSERVATION_DAYS } from "@/lib/economics/volatility";
 import { DEFAULT_WORKLOAD } from "@/lib/economics/workload";
 import { Badge, Bar, SectionHead } from "@/components/ui";
+import { EQUITY_ENTITIES, EXCHANGES, listingCount } from "@/lib/data/equities";
 
 export const metadata: Metadata = {
   title: "Exchange",
@@ -228,6 +229,39 @@ export default async function ExchangePage() {
           )}
         </section>
       )}
+
+      <section id="equity-context" className="scroll-mt-28 space-y-3">
+        <SectionHead title="AI equity context" eyebrow="Global listings · one company, many securities" eyebrowTone="special" />
+        <p className="max-w-3xl text-sm leading-relaxed text-black/60">
+          Public-market context sits beside token economics, never inside its rankings. The registry
+          separates companies from their listings, so a company with a local share and an ADR counts
+          once. Exchange sessions are recorded in local time: markets close at different local times
+          and some have a midday break. The page publishes the registry and context only; it does not
+          republish stock quotes.
+        </p>
+        <div className="card space-y-4 p-5">
+          <dl className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            <Stat label="companies" value={String(EQUITY_ENTITIES.length)} note="direct and indirect exposure" />
+            <Stat label="listings" value={String(listingCount())} note="canonical security records" />
+            <Stat label="exchanges" value={String(Object.keys(EXCHANGES).length)} note="local trading calendars" />
+            <Stat label="private labs" value={String(EQUITY_ENTITIES.filter((entity) => entity.status === "private").length)} note="no synthetic tickers" />
+          </dl>
+          <div className="border-t border-black/10 pt-4">
+            <h3 className="text-sm font-bold text-black">Tracked public exposure</h3>
+            <ul className="mt-2 divide-y divide-black/10">
+              {EQUITY_ENTITIES.filter((entity) => entity.status === "public").map((entity) => {
+                const listing = entity.listings[0];
+                const exchange = listing ? EXCHANGES[listing.exchangeId] : null;
+                return <li key={entity.id} className="flex items-center justify-between gap-4 py-2 text-sm"><span><span className="font-semibold text-black">{entity.name}</span><span className="ml-2 text-xs text-black/60">{entity.roles.join(" · ")}</span></span><span className="shrink-0 text-right font-mono text-xs tabular-nums text-black/70">{listing ? `${listing.ticker} · ${exchange?.name ?? listing.exchangeId}` : "no listing"}</span></li>;
+              })}
+            </ul>
+          </div>
+          <p className="border-t border-black/10 pt-3 text-xs leading-relaxed text-black/60">
+            This is market context, not investment advice. Use the listed exchange or company source
+            for current prices. An indirect relationship is never presented as direct ownership.
+          </p>
+        </div>
+      </section>
 
       <section className="space-y-3">
         <SectionHead title="What we can honestly measure" eyebrow="Coverage" eyebrowTone="accent" />

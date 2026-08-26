@@ -11,14 +11,14 @@ const ROOT = path.dirname(import.meta.dirname);
 const EXTERNAL_FILE = path.join(ROOT, "snapshots", "latest", "external-signals.json");
 const EXTERNAL_HISTORY_DIR = path.join(ROOT, "snapshots", "external-history");
 const SIGNAL_RETENTION_DAYS = 30;
+const REFRESH_INTERVAL_HOURS = 6;
 
-async function loadPreviousSignals(): Promise<ExternalSignal[]> {
+async function loadPreviousSnapshot(): Promise<ExternalSignalsSnapshot | null> {
   try {
     const buf = await readFile(EXTERNAL_FILE, "utf8");
-    const data = JSON.parse(buf) as ExternalSignalsSnapshot;
-    return data.signals;
+    return JSON.parse(buf) as ExternalSignalsSnapshot;
   } catch {
-    return [];
+    return null;
   }
 }
 
@@ -48,10 +48,24 @@ function mergeSignals(existing: ExternalSignal[], fresh: ExternalSignal[]): Exte
 async function main(): Promise<void> {
   console.log("[sync-external] Starting external data sync");
 
+  const previous = await loadPreviousSnapshot();
+  const force = process.argv.includes("--force");
+  const previousAt = previous ? Date.parse(previous.fetchedAt) : Number.NaN;
+  const ageHours = Number.isFinite(previousAt) ? (Date.now() - previousAt) / 3_600_000 : Number.POSITIVE_INFINITY;
   const catalog = await getCatalog();
   const groups = catalog.groups;
 
-  const previousSignals = await loadPreviousSignals();
+  const previousSignals = previous?.signals ?? [];
+  if (!force && ageHours >= 0 && ageHours < REFRESH_INTERVAL_HOURS) {
+    const cleaned = pruneExternalSignals(previousSignals, new Set(groups.map((group) => group.id)));
+    if (cleaned.removed > 0 && previous) {
+      const snapshot: ExternalSignalsSnapshot = { ...previous, signals: cleaned.signals, compositeScores: computeCompositeScore(cleaned.signals) };
+      await writeFile(EXTERNAL_FILE, JSON.stringify(snapshot));
+      console.warn(`[sync-external] removed ${cleaned.removed} stale signal(s) during interval skip`);
+    }
+    console.log(`[sync-external] last refresh was ${ageHours.toFixed(1)}h ago (< ${REFRESH_INTERVAL_HOURS}h) — skipping fetch (use --force to override)`);
+    return;
+  }
   console.log(`[sync-external] Loaded ${previousSignals.length} previous signals`);
 
   const freshSignals: ExternalSignal[] = [];

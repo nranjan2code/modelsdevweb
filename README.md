@@ -90,6 +90,7 @@ Local secrets live in `.env.local` (gitignored): `TAVILY_API_KEY` is read automa
 | `src/app/self-host/page.tsx` | interactive decision tool: your volume vs GPU rent, per model |
 | `src/app/status/page.tsx` | data desk: latest run, source freshness and refresh cadence |
 | `src/lib/data/index.ts` | build-time catalog, feeds and pipeline status readers |
+| `src/lib/data/equities.ts` | free-only public-company registry and exchange-local session rules |
 | `scripts/sync-weights.ts` | daily Hugging Face licence/gating/params refresh |
 | `scripts/sync-external.ts` | Hugging Face/GitHub signal refresh + dated history |
 | `scripts/notify.ts` | filtered watcher webhook delivery with retry state |
@@ -117,6 +118,10 @@ Local secrets live in `.env.local` (gitignored): `TAVILY_API_KEY` is read automa
 - `/badge/<model>.svg` — live SVG price badge for embedding in READMEs (regenerated each sync)
 - `/llms.txt` — index for AI agents
 - `/status` — latest committed pipeline run, source freshness and update cadence
+
+Public-market context is deliberately limited to a free, evidence-backed registry of companies,
+listings and exchange sessions. Model Pulse does not republish third-party stock
+quotes or price history; see `docs/market-context.md` for the boundary and rationale.
 
 ### MCP server (for AI agents)
 
@@ -205,7 +210,7 @@ gh run list --limit 3              # sync workflow health
 If a sync run fails, check `gh run view <id> --log-failed` and inspect `/status` after the next
 successful commit. Tavily failures keep the previous `news/index.json`, so stale-but-valid news is
 preferred over an empty section. News refreshes every four hours; licence facts refresh daily, while
-the model catalog and external signals run hourly.
+the model catalog runs hourly and external signals refresh every 6 hours.
 
 ## Data & pricing caveats
 
