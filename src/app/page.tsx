@@ -22,6 +22,7 @@ import { spreadSummary, widestSpreads, type SpreadRow } from "@/lib/data/market"
 import { fmtMonthlyUsd, hostableCases } from "@/lib/data/selfhost";
 import { getWeights, isFreelyUsable } from "@/lib/data/weights";
 import { EQUITY_ENTITIES, listingCount } from "@/lib/data/equities";
+import { getEcosystemSnapshot } from "@/lib/ecosystem/data";
 import { fmtAgo, fmtDate, fmtPerM, fmtTokens } from "@/lib/format";
 import type { Event, NewsItem } from "@/lib/pipeline/types";
 
@@ -552,6 +553,25 @@ function fmtCompact(n: number): string {
   return n >= 1000 ? Math.round(n).toLocaleString("en-US") : n.toFixed(1);
 }
 
+function EcosystemWatch({ snapshot }: { snapshot: Awaited<ReturnType<typeof getEcosystemSnapshot>> }) {
+  const byId = new Map(snapshot.entities.map((entity) => [entity.id, entity]));
+  const rows = snapshot.scores.slice(0, 4).map((score) => ({ entity: byId.get(score.entityId), score })).filter((row) => row.entity);
+  if (rows.length === 0) return null;
+  return (
+    <section>
+      <SectionHead title="The ecosystem watch" eyebrow="Daily adoption signals · developers, agents and applications" href="/ecosystem" label="Full ecosystem" />
+      <div className="card divide-y divide-black/10 sm:grid sm:grid-cols-2 sm:divide-x sm:divide-y-0">
+        {rows.map(({ entity, score }) => (
+          <Link key={entity!.id} href="/ecosystem" className="flex items-center justify-between gap-4 px-4 py-3 transition-colors hover:bg-surface-tint sm:px-5">
+            <span className="min-w-0"><span className="block truncate font-medium text-black">{entity!.name}</span><span className="mt-0.5 block text-xs text-black/60">{entity!.type} · {score.signalCount} signals</span></span>
+            <span className="shrink-0 font-mono text-sm font-bold tabular-nums text-accent">{Math.round(score.score * 100)}<span className="text-xs font-normal text-black/45">/100</span></span>
+          </Link>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 /** Changes inside the window we can actually cover, cold-start diff excluded. */
 function tapeCount(events: Event[], c: Coverage, nowMs: number): number {
   const cutoff = nowMs - 7 * 86_400_000;
@@ -561,9 +581,9 @@ function tapeCount(events: Event[], c: Coverage, nowMs: number): number {
 }
 
 export default async function HomePage() {
-  const [catalog, events, boards, weights, meta, archive, news] = await Promise.all([
+  const [catalog, events, boards, weights, meta, archive, news, ecosystem] = await Promise.all([
     getCatalog(), getEvents(), getBenchmarkBoards(), getWeights(), getSnapshotMeta(), getPriceArchive(),
-    getNews(),
+    getNews(), getEcosystemSnapshot(),
   ]);
   // This is a static export: a relative label calculated with Date.now() would
   // be frozen at build time and incorrectly remain "just now" for visitors.
@@ -723,6 +743,7 @@ export default async function HomePage() {
   return (
     <div className="space-y-10 lg:space-y-14">
       <Lead story={story} syncedAt={syncedAt} glance={glanceStats} />
+      <EcosystemWatch snapshot={ecosystem} />
 
       <Deck
         cards={[

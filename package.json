@@ -9,6 +9,7 @@
     "lint": "eslint",
     "sync": "tsx scripts/sync.ts",
     "sync-external": "tsx scripts/sync-external.ts",
+    "sync-ecosystem": "tsx scripts/sync-ecosystem.ts",
     "sync-weights": "tsx scripts/sync-weights.ts",
     "archive-backfill": "tsx scripts/archive-backfill.ts",
     "gate": "tsx scripts/gate.ts",

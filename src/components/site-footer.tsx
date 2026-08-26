@@ -9,6 +9,7 @@ const COLUMNS: { title: string; links: { href: string; label: string; external?:
     title: "Explore",
     links: [
       { href: "/browse", label: "Browse catalog" },
+      { href: "/ecosystem", label: "AI ecosystem" },
       { href: "/compare", label: "Compare models" },
       { href: "/calculator", label: "Cost calculator" },
     ],
@@ -37,6 +38,7 @@ const COLUMNS: { title: string; links: { href: string; label: string; external?:
       { href: "/rss.xml", label: "RSS feed", external: true },
       { href: "/api/models.json", label: "Models JSON", external: true },
       { href: "/api/events.json", label: "Events JSON", external: true },
+      { href: "/api/ecosystem.json", label: "Ecosystem JSON", external: true },
       { href: "/llms.txt", label: "llms.txt for agents", external: true },
       { href: "/status", label: "Pipeline status" },
     ],

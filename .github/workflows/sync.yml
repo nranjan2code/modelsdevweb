@@ -60,6 +60,11 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: pnpm sync-external
 
+      - name: Sync ecosystem adoption (GitHub and npm, daily)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: pnpm sync-ecosystem
+
       - name: Data quality gates (with external signals)
         run: pnpm gate
 

@@ -18,6 +18,7 @@ export async function GET() {
 - GET ${SITE_URL}/api/prices.json — every provider listing with per-token pricing
 - GET ${SITE_URL}/api/events.json — changelog events (releases, repricings, deprecations)
 - GET ${SITE_URL}/api/news.json — daily news headlines about top models, tagged with model ids
+- GET ${SITE_URL}/api/ecosystem.json — daily adoption signals and rankings for agents, applications, frameworks and infrastructure
 - GET ${SITE_URL}/api/benchmarks.json — benchmark leaderboards with scores, best prices and points-per-dollar
 - GET ${SITE_URL}/feed.json — JSON Feed 1.1 of recent changes
 - GET ${SITE_URL}/rss.xml — RSS 2.0 of recent changes
