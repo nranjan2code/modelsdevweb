@@ -8,7 +8,7 @@ const NAV_GROUPS = [
   { label: "Explore", items: [{ href: "/browse", label: "Models" }, { href: "/compare", label: "Compare" }] },
   { label: "Decide", items: [{ href: "/calculator", label: "Calculator" }, { href: "/self-host", label: "Self-host" }] },
   { label: "Market", items: [{ href: "/exchange", label: "Exchange" }, { href: "/trends", label: "Market pulse" }, { href: "/changelog", label: "Changes" }, { href: "/deprecations", label: "Deprecations" }] },
-  { label: "Evidence", items: [{ href: "/benchmarks", label: "Benchmarks" }, { href: "/providers", label: "Providers" }, { href: "/about", label: "Methodology" }] },
+  { label: "Evidence", items: [{ href: "/benchmarks", label: "Benchmarks" }, { href: "/providers", label: "Providers" }, { href: "/about", label: "Methodology" }, { href: "/status", label: "Status" }] },
   { label: "Follow", items: [{ href: "/digest", label: "Digest" }, { href: "/news", label: "News" }] },
 ] as const;
 

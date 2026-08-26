@@ -36,6 +36,7 @@ const COLUMNS: { title: string; links: { href: string; label: string; external?:
       { href: "/api/models.json", label: "Models JSON", external: true },
       { href: "/api/events.json", label: "Events JSON", external: true },
       { href: "/llms.txt", label: "llms.txt for agents", external: true },
+      { href: "/status", label: "Pipeline status" },
     ],
   },
 ];

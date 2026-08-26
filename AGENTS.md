@@ -223,13 +223,17 @@ keep describing it.
   dated snapshots only on a cold start.
 - Never call external APIs from components or client code — fetch in `scripts/*.ts` during
   CI instead, commit the JSON result. API keys must never reach the browser bundle.
+- `/status` is the public data desk. It is a static page backed by committed snapshots and
+  reports the latest successful run, source timestamps, refresh cadence and the counts committed
+  with the catalog. Keep it factual: a slower source that is not due for refresh is scheduled, not
+  failed.
 
 ## Data flow
 
 ```
 hourly GH Action (sync.yml)
   ├─ pnpm sync   → snapshots/{latest,date}/ + events/index.json
-  ├─ pnpm news   → news/index.json (Tavily; runs once/day, skips rest of day)
+  ├─ pnpm news   → news/index.json (Tavily; refreshes every 4h, keeps the last good result on failure)
   ├─ pnpm sync-weights → snapshots/latest/weights.json (HF licence/access/params; skips if <20h old)
   ├─ pnpm sync-external → snapshots/latest/external-signals.json (HF downloads/likes/trending/papers + GitHub stars/forks)
   │                         + snapshots/external-history/{date}.json
@@ -348,6 +352,9 @@ hourly GH Action (sync.yml)
   `src/lib/workload-state.ts`, same `useSyncExternalStore` shape as `compare.ts`.
 - Static pages: `/compare` (2–4 model diff), `/trends` (market aggregates over `tracked`),
   per-lab feeds at `/feeds/[lab]/rss.xml`. All computed from the same snapshot data.
+- `/status` (`src/app/status/page.tsx`) is the pipeline data desk. It reads committed files through
+  `getPipelineStatus()` in `src/lib/data/index.ts`; it must not call GitHub Actions or any upstream
+  API from the page.
 - `/compare` selection lives in localStorage (`model-pulse:compare`) via `src/lib/compare.ts`
   (`useSyncExternalStore`). Never read it with useState+useEffect — the
   `react-hooks/set-state-in-effect` lint rule rejects that pattern.

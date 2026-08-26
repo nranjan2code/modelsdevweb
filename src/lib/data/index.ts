@@ -313,6 +313,30 @@ export interface SnapshotMetaInfo {
   fetchedAt: string | null;
 }
 
+export interface PipelineStatusItem {
+  id: string;
+  label: string;
+  description: string;
+  cadence: string;
+  fetchedAt: string | null;
+  state: "current" | "scheduled" | "unknown";
+}
+
+export interface PipelineStatus {
+  runAt: string | null;
+  snapshotDate: string | null;
+  providers: number;
+  listings: number;
+  models: number;
+  groups: number;
+  archiveDays: number;
+  events: number;
+  newsItems: number;
+  externalSignals: number;
+  weightedModels: number;
+  items: PipelineStatusItem[];
+}
+
 let metaCache: SnapshotMetaInfo | null = null;
 
 /** When the current snapshot was pulled — powers "synced Xh ago" freshness stamps. */
@@ -325,6 +349,83 @@ export async function getSnapshotMeta(): Promise<SnapshotMetaInfo> {
     metaCache = { date: null, fetchedAt: null };
   }
   return metaCache;
+}
+
+/** The public, human-readable view of the last committed data run. */
+export async function getPipelineStatus(): Promise<PipelineStatus> {
+  const [catalog, meta, newsRaw, weightsRaw, externalRaw, events] = await Promise.all([
+    getCatalog(),
+    getSnapshotMeta(),
+    readJsonFile<{ fetchedAt?: string; items?: unknown[] }>(path.join(process.cwd(), "news", "index.json")),
+    readJsonFile<{ fetchedAt?: string; models?: Record<string, unknown> }>(path.join(LATEST(), "weights.json")),
+    readJsonFile<{ fetchedAt?: string; signals?: unknown[] }>(path.join(LATEST(), "external-signals.json")),
+    getEvents(),
+  ]);
+  const archive = await readJsonFile<{ dates?: string[] }>(path.join(process.cwd(), "snapshots", "price-archive.json"));
+
+  return {
+    runAt: meta.fetchedAt,
+    snapshotDate: meta.date,
+    providers: catalog.stats.providers,
+    listings: catalog.stats.listings,
+    models: catalog.stats.models,
+    groups: catalog.stats.catalogEntries,
+    archiveDays: archive?.dates?.length ?? 0,
+    events: events.length,
+    newsItems: newsRaw?.items?.length ?? 0,
+    externalSignals: externalRaw?.signals?.length ?? 0,
+    weightedModels: Object.keys(weightsRaw?.models ?? {}).length,
+    items: [
+      {
+        id: "models",
+        label: "Models and prices",
+        description: "Provider listings, price cards, capabilities and endpoint status.",
+        cadence: "Every hour",
+        fetchedAt: meta.fetchedAt,
+        state: "current",
+      },
+      {
+        id: "news",
+        label: "Model news",
+        description: "A curated daily brief, refreshed from the latest market coverage.",
+        cadence: "Every 4 hours",
+        fetchedAt: newsRaw?.fetchedAt ?? null,
+        state: newsRaw?.fetchedAt ? "current" : "unknown",
+      },
+      {
+        id: "weights",
+        label: "Open-weight facts",
+        description: "Licence, access and parameter facts resolved from model cards.",
+        cadence: "Daily",
+        fetchedAt: weightsRaw?.fetchedAt ?? null,
+        state: weightsRaw?.fetchedAt ? "current" : "unknown",
+      },
+      {
+        id: "signals",
+        label: "External signals",
+        description: "Hugging Face and GitHub activity, resolved to canonical models.",
+        cadence: "Every hour",
+        fetchedAt: externalRaw?.fetchedAt ?? null,
+        state: externalRaw?.fetchedAt ? "current" : "unknown",
+      },
+      {
+        id: "quality",
+        label: "Quality gates",
+        description: "Identity, pricing, retirement, enrichment and freshness checks.",
+        cadence: "Every run",
+        fetchedAt: meta.fetchedAt,
+        state: "current",
+      },
+    ],
+  };
+}
+
+async function readJsonFile<T>(file: string): Promise<T | null> {
+  try {
+    return JSON.parse(await readFile(file, "utf8")) as T;
+  } catch {
+    return null;
+  }
 }
 
 async function readMeta(): Promise<SnapshotMeta | null> {

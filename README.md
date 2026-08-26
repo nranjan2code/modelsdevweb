@@ -28,7 +28,7 @@ It answers four questions:
 GitHub Actions (hourly cron)
   └─ fetch https://models.dev/{api,models}.json
   └─ validate + normalize + diff against previous snapshot; append permanent price archive
-  └─ fetch daily model news via Tavily (skips after first run of the day)
+  └─ fetch model news via Tavily (refreshes every 4 hours; keeps the last good result on failure)
   └─ refresh HF licence/access/parameter facts (skips when less than 20h old)
   └─ refresh HF + GitHub signals and write a dated external-signal history snapshot
   └─ run quality gates over the complete candidate state; notify configured watchers
@@ -88,6 +88,8 @@ Local secrets live in `.env.local` (gitignored): `TAVILY_API_KEY` is read automa
 | `src/lib/pipeline/external-resolver.ts` | external item → canonical model resolution |
 | `src/lib/scoring/composite.ts` | per-source normalization, decay and composite signals |
 | `src/app/self-host/page.tsx` | interactive decision tool: your volume vs GPU rent, per model |
+| `src/app/status/page.tsx` | data desk: latest run, source freshness and refresh cadence |
+| `src/lib/data/index.ts` | build-time catalog, feeds and pipeline status readers |
 | `scripts/sync-weights.ts` | daily Hugging Face licence/gating/params refresh |
 | `scripts/sync-external.ts` | Hugging Face/GitHub signal refresh + dated history |
 | `scripts/notify.ts` | filtered watcher webhook delivery with retry state |
@@ -114,6 +116,7 @@ Local secrets live in `.env.local` (gitignored): `TAVILY_API_KEY` is read automa
 - `/rss.xml` — RSS feed of changes and news; `/feeds/<lab>/rss.xml` — per-lab feeds
 - `/badge/<model>.svg` — live SVG price badge for embedding in READMEs (regenerated each sync)
 - `/llms.txt` — index for AI agents
+- `/status` — latest committed pipeline run, source freshness and update cadence
 
 ### MCP server (for AI agents)
 
@@ -199,8 +202,10 @@ vercel ls                          # latest production deployment status
 gh run list --limit 3              # sync workflow health
 ```
 
-If a sync run fails, check `gh run view <id> --log-failed`. Tavily failures keep the previous
-`news/index.json`, so stale-but-valid news is preferred over an empty section.
+If a sync run fails, check `gh run view <id> --log-failed` and inspect `/status` after the next
+successful commit. Tavily failures keep the previous `news/index.json`, so stale-but-valid news is
+preferred over an empty section. News refreshes every four hours; licence facts refresh daily, while
+the model catalog and external signals run hourly.
 
 ## Data & pricing caveats
 
