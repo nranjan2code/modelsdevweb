@@ -35,14 +35,16 @@ export default async function EcosystemPage() {
 
   return (
     <div className="space-y-10 lg:space-y-14">
-      <section className="max-w-3xl">
-        <Badge tone="accent" bold>Daily ecosystem watch</Badge>
-        <h1 className="mt-3 text-4xl font-bold leading-tight tracking-[-0.03em] text-black sm:text-5xl">What developers are building with AI.</h1>
-        <p className="mt-3 text-base leading-relaxed text-black/70">
+      <header className="page-intro page-intro-split">
+        <p className="mono-label text-accent">Daily ecosystem watch</p>
+        <h1 className="text-3xl font-bold tracking-tight text-black sm:text-4xl">What developers are building with AI.</h1>
+        <div className="max-w-2xl text-sm leading-relaxed text-black/60">
+          <p>
           Adoption signals for public AI projects, measured from GitHub activity and npm usage where those signals are available. Popularity and momentum are separate readings.
-        </p>
-        <p className="micro-label mt-4">Last collected {snapshot.date ? fmtDate(snapshot.date) : "not yet collected"} · {snapshot.signals.length} source signals · {snapshot.entities.length} tracked entities</p>
-      </section>
+          </p>
+          <p className="micro-label mt-4">Last collected {snapshot.date ? fmtDate(snapshot.date) : "not yet collected"} · {snapshot.signals.length} source signals · {snapshot.entities.length} tracked entities</p>
+        </div>
+      </header>
 
       {grouped.map(({ type, rows: groupRows }) => (
         <section key={type}>

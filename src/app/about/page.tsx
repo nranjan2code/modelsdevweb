@@ -40,7 +40,7 @@ const FAQ = [
 
 export default function AboutPage() {
   return (
-    <div className="max-w-3xl space-y-10 text-sm leading-relaxed text-black/70">
+    <div className="space-y-10 text-sm leading-relaxed text-black/70">
       <JsonLd
         data={{
           "@context": "https://schema.org",
@@ -52,21 +52,22 @@ export default function AboutPage() {
           })),
         }}
       />
-      <header className="page-intro">
+      <header className="page-intro page-intro-split">
         <p className="mono-label">Methodology</p>
         <h1 className="text-3xl font-bold tracking-tight text-black sm:text-4xl">About &amp; methodology</h1>
-        <p className="text-2xl font-bold leading-snug tracking-tight text-black sm:text-3xl">
-          Every AI model. Every provider.{" "}
-          <span className="wavy wavy-accent">Every change.</span>
-        </p>
-        <p className="max-w-2xl text-base font-medium leading-relaxed text-black/60">
-          Model Pulse is the front page of the AI model market: prices, releases and repricings tracked
-          hourly — with the numbers to prove who is cheapest, newest and fastest-moving. Built on open data,
-          auditable in git, and free for humans and agents alike.
-        </p>
+        <div className="max-w-2xl">
+          <p className="text-2xl font-bold leading-snug tracking-tight text-black sm:text-3xl">
+            Every AI model. Every provider. <span className="wavy wavy-accent">Every change.</span>
+          </p>
+          <p className="mt-3 text-base font-medium leading-relaxed text-black/60">
+            Model Pulse is the front page of the AI model market: prices, releases and repricings tracked
+            hourly — with the numbers to prove who is cheapest, newest and fastest-moving. Built on open data,
+            auditable in git, and free for humans and agents alike.
+          </p>
+        </div>
       </header>
 
-      <section className="space-y-2">
+      <section className="max-w-3xl space-y-2">
         <h2 className="font-hand text-2xl font-bold tracking-tight text-black">Data source</h2>
         <p>
           All model specifications, capabilities and prices come from{" "}
@@ -84,7 +85,7 @@ export default function AboutPage() {
         </p>
       </section>
 
-      <section className="space-y-2">
+      <section className="max-w-3xl space-y-2">
         <h2 className="font-hand text-2xl font-bold tracking-tight text-black">How diffs work</h2>
         <ul className="list-disc space-y-1 pl-5">
           <li>Every provider-model listing is flattened into comparable fields (costs, limits, capabilities, status).</li>
@@ -94,7 +95,7 @@ export default function AboutPage() {
         </ul>
       </section>
 
-      <section className="space-y-2">
+      <section className="max-w-3xl space-y-2">
         <h2 className="font-hand text-2xl font-bold tracking-tight text-black">Pricing caveats</h2>
         <ul className="list-disc space-y-1 pl-5">
           <li>Prices are USD per 1M tokens as published by models.dev contributors.</li>
@@ -108,7 +109,7 @@ export default function AboutPage() {
         </ul>
       </section>
 
-      <section className="space-y-2">
+      <section className="max-w-3xl space-y-2">
         <h2 className="font-hand text-2xl font-bold tracking-tight text-black">For machines</h2>
         <p>
           Every view has a JSON twin — see{" "}
@@ -122,7 +123,7 @@ export default function AboutPage() {
         </p>
       </section>
 
-      <section className="space-y-3">
+      <section className="max-w-3xl space-y-3">
         <div className="space-y-2">
           <h2 className="font-hand text-2xl font-bold tracking-tight text-black">Price badges</h2>
           <p>
@@ -158,7 +159,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <section className="space-y-3">
+      <section className="max-w-3xl space-y-3">
         <h2 className="font-hand text-2xl font-bold tracking-tight text-black">FAQ</h2>
         <div className="divide-y divide-black/10 rounded-lg border-2 border-black bg-white">
           {FAQ.map((f) => (
@@ -172,7 +173,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <section className="space-y-3">
+      <section className="max-w-3xl space-y-3">
         <h2 className="font-hand text-2xl font-bold tracking-tight text-black">Sources &amp; licenses</h2>
         <ul className="list-disc space-y-2 pl-5">
           <li>
