@@ -172,14 +172,21 @@ function checkNewReleaseVisibility(i: QualityInput): QualityIssue[] {
   const dropped: string[] = [];
   const undated: string[] = [];
   for (const { pid, mid, entry } of rawListings(i.apiRaw)) {
-    const d = typeof entry.release_date === "string" ? entry.release_date : typeof entry.last_updated === "string" ? entry.last_updated : null;
+    // `last_updated` is not a release date, and a provider may add an endpoint
+    // long after the canonical model launched. Only unattributed groups depend
+    // on their provider date to surface as a new model; canonical-backed groups
+    // correctly keep the canonical model's original release date even when an
+    // individual provider spelling cannot be resolved by exact identity.
+    const d = typeof entry.release_date === "string" ? entry.release_date : null;
     if (!d || d < cutoff || d > upper) continue;
     const key = `${pid}/${mid}`;
     const group = byKey.get(key);
     if (!group) {
       dropped.push(key);
-    } else if (!(group.releaseDate && group.releaseDate >= d)) {
-      undated.push(`${key} (listed ${d}, catalog says ${group.releaseDate ?? "nothing"})`);
+    } else {
+      if (!group.labKnown && !(group.releaseDate && group.releaseDate >= d)) {
+        undated.push(`${key} (listed ${d}, catalog says ${group.releaseDate ?? "nothing"})`);
+      }
     }
   }
   if (dropped.length > 0) out.push({ check: "new-release-visibility", message: `recent releases dropped during normalization: ${cap(dropped)}` });

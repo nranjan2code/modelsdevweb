@@ -6,7 +6,7 @@ const NOW = new Date("2026-08-21T18:00:00Z");
 
 const listing = (key: string, opts: Partial<{ canonicalId: string | null; active: boolean; zeroPriced: boolean }> = {}) => ({
   key,
-  canonicalId: opts.canonicalId ?? key,
+  canonicalId: "canonicalId" in opts ? (opts.canonicalId ?? null) : key,
   active: opts.active ?? true,
   zeroPriced: opts.zeroPriced ?? false,
 });
@@ -85,11 +85,50 @@ describe("runQuality", () => {
       baseInput({
         groups: [
           group("openai/gpt"),
-          group("stealth/ox-alpha", { releaseDate: "2025-01-01", listings: [listing("kilo/stealth/ox-alpha", { canonicalId: null })] }),
+          group("stealth/ox-alpha", { labKnown: false, releaseDate: "2025-01-01", listings: [listing("kilo/stealth/ox-alpha", { canonicalId: null })] }),
         ],
       }),
     );
     expect(r.errors.some((e) => e.check === "new-release-visibility" && e.message.includes("date predates"))).toBe(true);
+  });
+
+  it("accepts a provider endpoint added after its canonical model was released", () => {
+    const r = runQuality(
+      baseInput({
+        apiRaw: {
+          openai: { models: { gpt: { name: "GPT" } } },
+          hyper: { models: { "qwen3.8-27b": { name: "Qwen 3.8 27B", release_date: "2026-08-20" } } },
+        },
+        groups: [
+          group("openai/gpt"),
+          group("alibaba/qwen3.8-27b", {
+            releaseDate: "2026-08-14",
+            listings: [listing("hyper/qwen3.8-27b", { canonicalId: null })],
+          }),
+        ],
+      }),
+    );
+    expect(r.errors.filter((e) => e.check === "new-release-visibility")).toHaveLength(0);
+  });
+
+  it("does not treat last_updated as a model release date", () => {
+    const r = runQuality(
+      baseInput({
+        apiRaw: {
+          openai: { models: { gpt: { name: "GPT" } } },
+          kilo: { models: { legacy: { name: "Legacy", last_updated: "2026-08-20" } } },
+        },
+        groups: [
+          group("openai/gpt"),
+          group("legacy", {
+            labKnown: false,
+            releaseDate: "2025-01-01",
+            listings: [listing("kilo/legacy", { canonicalId: null })],
+          }),
+        ],
+      }),
+    );
+    expect(r.errors.filter((e) => e.check === "new-release-visibility")).toHaveLength(0);
   });
 
   it("fails when provider fallbacks leak into the labs aggregation (pseudo-labs)", () => {
