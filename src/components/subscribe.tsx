@@ -25,7 +25,7 @@ export function Subscribe({ changeCount, windowLabel }: { changeCount: number; w
             One email. The changes that actually cost you money.
           </h2>
           <p className="mt-2 max-w-2xl text-sm leading-relaxed text-black/60">
-            {changeCount} catalog changes landed in {windowLabel}. Almost none of them matter. The
+            {changeCount} catalog changes landed in {windowLabel}. Most are inventory noise. The
             digest separates first-party repricing and retirements from reseller noise, names the
             models whose bill moved, and says plainly when the week was quiet.
           </p>

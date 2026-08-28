@@ -300,15 +300,14 @@ hourly GH Action (sync.yml)
 
 ## Pages & client state
 
-- **Homepage is a publication front page, not a dashboard** (`src/app/page.tsx`). Six modules,
-  in order: **Lead** (the day's story + a standfirst + a live "market at a glance" rail — never
-  vanity stats like a raw model count) → **The gap** (widest credible price spreads, one leaderboard,
-  not a hero-sized restatement of its own top row) → **The wire** (model-linked press next to the
-  price tape — `getNews()` was previously fetched and never rendered on the homepage) →
-  **The boards** (a deck of `DeckCard`s — just-shipped, benchmark value, instrument classes, gateway
-  basis, self-host floors, long context, migration notices, free tier — each a real leaderboard cut
-  with a route to the page that owns it) → **Three answers** (cost / evidence / self-host, each
-  carrying a number computed today) → **Subscribe** (see below). A prior version had three modules
+- **Homepage is a publication front page, not a dashboard** (`src/app/page.tsx`). Seven modules,
+  in order: **Lead** (the day's story + a standfirst + a three-row snapshot rail — never vanity
+  stats like a raw model count) → **The wire** (model-linked press next to the price tape) →
+  **The gap** (widest credible price spreads, one leaderboard, not a hero-sized restatement of its
+  own top row) → **The boards** (four selected `DeckCard`s — just-shipped, benchmark value, gateway
+  basis and long context — with the full cuts owned by their destination pages) → **Three answers**
+  (cost / evidence / self-host, each carrying a number computed today) → **Ecosystem watch**
+  (evergreen adoption signals) → **Subscribe** (see below). A prior version had three modules
   restating the top nav verbatim ("Start with a decision") and three separate views of the same
   event log (labs/street/wire as different sections) in the highest-attention band on the page —
   duplication, not editing. **A card or section renders only when it has rows**; do not add an

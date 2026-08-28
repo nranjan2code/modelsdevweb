@@ -169,7 +169,7 @@ export function ModelSearch({ models }: { models: SearchModel[] }) {
         onClick={() => (open ? closeSearch() : openSearch())}
       >
         <span aria-hidden="true" className="search-icon">⌕</span>
-        <span className="hidden lg:inline">Search</span>
+        <span>Search models</span>
         <kbd className="kbd-hint hidden xl:inline">/</kbd>
       </button>
       {open && <div id="header-search-panel" className="search-panel">{searchField}</div>}

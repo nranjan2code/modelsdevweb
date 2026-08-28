@@ -1,9 +1,7 @@
 import Link from "next/link";
 import { Subscribe } from "@/components/subscribe";
 import { Badge, DeltaChip, EmptyState, SectionHead } from "@/components/ui";
-import { getCatalog, getEvents, getNews, getSnapshotMeta, groupContext, groupReleaseDate, liveListings, providerCount } from "@/lib/data";
-import { retirementOf } from "@/lib/data/retirement";
-import { buildBaskets } from "@/lib/economics/instruments";
+import { getCatalog, getEvents, getNews, getSnapshotMeta, groupContext, groupReleaseDate } from "@/lib/data";
 import { widestMarkups } from "@/lib/economics/basis";
 import { onTopic, toStories } from "@/lib/data/stories";
 import { getPriceArchive } from "@/lib/data/archive";
@@ -20,8 +18,7 @@ import {
 import { getBenchmarkBoards, rankableBoards, valueLeaders } from "@/lib/data/benchmarks";
 import { spreadSummary, widestSpreads, type SpreadRow } from "@/lib/data/market";
 import { fmtMonthlyUsd, hostableCases } from "@/lib/data/selfhost";
-import { getWeights, isFreelyUsable } from "@/lib/data/weights";
-import { EQUITY_ENTITIES, listingCount } from "@/lib/data/equities";
+import { getWeights } from "@/lib/data/weights";
 import { getEcosystemSnapshot } from "@/lib/ecosystem/data";
 import { fmtAgo, fmtDate, fmtPerM, fmtTokens } from "@/lib/format";
 import type { Event, NewsItem } from "@/lib/pipeline/types";
@@ -45,14 +42,16 @@ const LEDE_EYEBROW: Record<Lede["kind"], string> = {
 };
 
 /*
- * Homepage information architecture — six modules, in this order:
+ * Homepage information architecture — story first, then evidence, decisions,
+ * and the quieter evergreen material:
  *
- *   1. Lead          the day's story + a live market rail
- *   2. The boards    every other cut of the data, as a deck
- *   3. The wire      today's press beside today's tape
- *   4. The gap       the one fact nobody else publishes
+ *   1. Lead          the day's story + a three-row market rail
+ *   2. The wire      today's press beside today's tape
+ *   3. The gap       the one fact nobody else publishes
+ *   4. The boards    four selected cuts of the data
  *   5. Three answers cost / evidence / self-host, each carrying a live number
- *   6. Subscribe     the return mechanism
+ *   6. Ecosystem     evergreen adoption signals
+ *   7. Subscribe     the return mechanism
  *
  * The weighting rule: **the fold belongs to today, and to more than one thing.**
  * The lead is sized so the first rows of the next module clear the fold on a
@@ -97,10 +96,7 @@ function Lead({
         <div className="flex flex-col justify-center p-5 sm:p-7 lg:p-8">
           <div className="flex flex-wrap items-center gap-x-2.5 gap-y-2">
             <Badge tone={LEDE_TONE[story.kind]} bold>{LEDE_EYEBROW[story.kind]}</Badge>
-            <span className="pill bg-white/70">
-              <span className="status-dot bg-pos-bright" aria-hidden="true" />
-              Live{syncedAt ? ` · data through ${syncedAt}` : ""}
-            </span>
+            <span className="pill bg-white/70">Snapshot{syncedAt ? ` · data through ${syncedAt}` : ""}</span>
             {/* Rule 14: the rule that picked the lede stays next to the claim. */}
             <span className="micro-label">selected by: {story.rule}</span>
           </div>
@@ -118,6 +114,12 @@ function Lead({
             Independent price and benchmark analysis for AI models — what a workload actually costs,
             and where to buy it.
           </p>
+          <nav aria-label="Start here" className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs font-semibold text-accent">
+            <span className="text-black/60">Start with:</span>
+            <Link href="/compare" className="hover:text-accent-strong">compare providers →</Link>
+            <Link href="/calculator" className="hover:text-accent-strong">price a workload →</Link>
+            <Link href="/self-host" className="hover:text-accent-strong">price out self-hosting →</Link>
+          </nav>
         </div>
 
         <aside
@@ -185,7 +187,7 @@ function Press({ stories }: { stories: { item: NewsItem; modelName: string | nul
             rel="noopener noreferrer"
             className="text-sm font-medium leading-snug text-black transition-colors hover:text-accent"
           >
-            {item.title}
+            {item.title} ↗
           </a>
           <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-black/60">
             <span className="font-medium">{item.source}</span>
@@ -318,8 +320,8 @@ function Wire({
  * A reader who is not here for today's lead story still needs somewhere to go,
  * and the site holds far more than five modules' worth of answers: release
  * dates, licence classes, break-evens, gateway markups, context windows,
- * retirement notices, benchmark value. Each card below is a real leaderboard cut
- * from live data with a route into the page that owns it.
+ * retirement notices, and free tiers. The homepage selects four cuts; the
+ * owning routes retain the complete catalog.
  *
  * A card with no rows does not render. An empty bordered box that says nothing
  * happened costs the reader attention and returns nothing.
@@ -390,7 +392,7 @@ function Deck({ cards }: { cards: React.ReactNode[] }) {
   if (live.length === 0) return null;
   return (
     <section aria-label="Data boards">
-      <SectionHead title="The boards" eyebrow="Every cut of today's data · a dash means unlisted, not free" />
+      <SectionHead title="The boards" eyebrow={`Four cuts from today's data · prices use the ${DEFAULT_WORKLOAD.name.toLowerCase()} workload`} />
       <div className="mt-3 grid gap-4 md:grid-cols-2 xl:grid-cols-3">{live}</div>
     </section>
   );
@@ -407,7 +409,7 @@ function TheGap({ rows, leadSummary }: { rows: SpreadRow[]; leadSummary: string 
     <section>
       <SectionHead
         title="Same weights. Wildly different bill."
-        eyebrow="The gap nobody else publishes"
+        eyebrow={`The gap nobody else publishes · ${DEFAULT_WORKLOAD.name.toLowerCase()} workload`}
         eyebrowTone="warn"
         href="/exchange"
         label="The exchange"
@@ -451,7 +453,7 @@ function TheGap({ rows, leadSummary }: { rows: SpreadRow[]; leadSummary: string 
         })}
       </ul>
       <p className="micro-label mt-2.5 max-w-3xl leading-relaxed">
-        A model is not one price — it is a spread across every venue that sells it. Listings more
+        Prices use the {DEFAULT_WORKLOAD.name.toLowerCase()} workload: {fmtTokens(DEFAULT_WORKLOAD.inputTokens)} input + {fmtTokens(DEFAULT_WORKLOAD.outputTokens)} output tokens, {fmtTokens(DEFAULT_WORKLOAD.contextTokens)} context. A model is not one price — it is a spread across every venue that sells it. Listings more
         than 20× from the model&rsquo;s own median are dropped as feed errors before anything reaches
         this board, and a cheapest quote counts only when a second venue is within 1.5× of it.
       </p>
@@ -559,7 +561,7 @@ function EcosystemWatch({ snapshot }: { snapshot: Awaited<ReturnType<typeof getE
   if (rows.length === 0) return null;
   return (
     <section>
-      <SectionHead title="The ecosystem watch" eyebrow="Daily adoption signals · developers, agents and applications" href="/ecosystem" label="Full ecosystem" />
+      <SectionHead title="The ecosystem watch" eyebrow="GitHub activity + npm usage · discovery signals, not recommendations" href="/ecosystem" label="Full ecosystem" />
       <div className="card divide-y divide-black/10 sm:grid sm:grid-cols-2 sm:divide-x sm:divide-y-0">
         {rows.map(({ entity, score }) => (
           <Link key={entity!.id} href="/ecosystem" className="flex items-center justify-between gap-4 px-4 py-3 transition-colors hover:bg-surface-tint sm:px-5">
@@ -603,13 +605,6 @@ export default async function HomePage() {
     .filter((x) => Number.isFinite(x.rate) && x.rate >= 0.3 && x.rate <= 2)
     .sort((a, b) => a.rate - b.rate)[0];
   const topHost = hostableCases(catalog.tracked, weights.models, 1)[0];
-  // `hostableCases` ranks on break-even tokens; the rail states a monthly rent,
-  // so it has to re-sort. Calling the lowest break-even "the cheapest floor"
-  // would be the kind of self-host claim this codebase is careful not to make.
-  const cheapestFloor = hostableCases(catalog.tracked, weights.models, catalog.tracked.length)
-    .filter((h) => h.floor != null)
-    .sort((a, b) => a.floor!.usdPerMonth - b.floor!.usdPerMonth)[0];
-
   // The share of scored rows nobody independent measured. Computed from the
   // live boards so the claim cannot drift away from the data behind it.
   const scored = boards.flatMap((b) => b.entries);
@@ -633,15 +628,6 @@ export default async function HomePage() {
   const repricedToday = events.filter(
     (e) => e.type === "repriced" && e.date === (meta.date ?? ""),
   ).length;
-  const longContextFloor = [...catalog.tracked]
-    .filter((g) => g.best != null && (groupContext(g) ?? 0) >= 1_000_000)
-    .map((g) => ({ g, rate: ratePerMillion(g.best!.cost, DEFAULT_WORKLOAD) }))
-    .filter((x) => Number.isFinite(x.rate))
-    .sort((a, b) => a.rate - b.rate)[0];
-
-  const freelyUsable = new Set(
-    Object.values(weights.models).filter(isFreelyUsable).map((f) => f.groupId),
-  );
   const rate = (g: (typeof catalog.tracked)[number]) =>
     g.best ? ratePerMillion(g.best.cost, DEFAULT_WORKLOAD) : Number.POSITIVE_INFINITY;
   const DAY = 86_400_000;
@@ -660,33 +646,12 @@ export default async function HomePage() {
     .sort((a, b) => b.released.localeCompare(a.released))
     .slice(0, 5);
 
-  const baskets = buildBaskets(catalog.tracked, freelyUsable, DEFAULT_WORKLOAD);
   const markups = widestMarkups(catalog.tracked, DEFAULT_WORKLOAD, 5);
-  const hostable = hostableCases(catalog.tracked, weights.models, 5);
-  const widelyAvailable = catalog.tracked
-    .map((g) => ({ g, providers: providerCount(g) }))
-    .filter((x) => x.providers > 0)
-    .sort((a, b) => b.providers - a.providers || a.g.name.localeCompare(b.g.name))
-    .slice(0, 5);
 
   const longContext = catalog.tracked
     .map((g) => ({ g, ctx: groupContext(g) ?? 0, r: rate(g) }))
     .filter((x) => x.ctx >= 1_000_000 && Number.isFinite(x.r))
     .sort((a, b) => b.ctx - a.ctx || a.r - b.r)
-    .slice(0, 5);
-
-  const freeToTry = catalog.tracked
-    .filter((g) => g.free && liveListings(g).length > 0)
-    .map((g) => ({ g, providers: liveListings(g).length }))
-    .sort((a, b) => b.providers - a.providers)
-    .slice(0, 5);
-
-  // Withdrawn at one venue but alive elsewhere — a migration notice, which is
-  // the actionable half of the deprecation feed.
-  const migrating = catalog.groups
-    .map((g) => ({ g, r: retirementOf(g) }))
-    .filter((x) => x.r.partiallyRetired)
-    .sort((a, b) => b.r.retiredProviders.length - a.r.retiredProviders.length)
     .slice(0, 5);
 
   const valueRows = valueBoard ? valueLeaders(valueBoard, 5) : [];
@@ -698,14 +663,6 @@ export default async function HomePage() {
           detail: `${spreads[0].group.name} · ${spreads[0].spread.ranked.length} listings`,
           value: `${spreads[0].spread.ratio.toFixed(1)}×`,
           href: `/m/${spreads[0].group.id}`,
-        }
-      : null,
-    longContextFloor
-      ? {
-          label: "Cheapest 1M context",
-          detail: longContextFloor.g.name,
-          value: fmtPerM(longContextFloor.rate),
-          href: `/m/${longContextFloor.g.id}`,
         }
       : null,
     {
@@ -720,30 +677,18 @@ export default async function HomePage() {
       value: `${100 - notIndependentPct}%`,
       href: "/benchmarks",
     },
-    // One figure per destination: the rail is an index to the page, not a
-    // preview of the section directly beneath it. Ranked on rent, not on
-    // break-even — the label says "floor", so the sort has to mean that.
-    cheapestFloor?.floor
-      ? {
-          label: "Cheapest hosting floor",
-          detail: `${cheapestFloor.name} · ${cheapestFloor.floor.gpus}× ${cheapestFloor.floor.tier.name}`,
-          value: fmtMonthlyUsd(cheapestFloor.floor.usdPerMonth),
-          href: "/self-host",
-        }
-      : null,
-    {
-      label: "Public-market context",
-      detail: `${EQUITY_ENTITIES.length} companies · ${listingCount()} listings across exchanges`,
-      value: "Read the map",
-      href: "/exchange#equity-context",
-    },
   ];
-  const glanceStats = glance.filter((x): x is GlanceStat => x !== null);
+  const glanceStats = glance.filter((x): x is GlanceStat => x !== null).slice(0, 3);
 
   return (
     <div className="space-y-10 lg:space-y-14">
       <Lead story={story} syncedAt={syncedAt} glance={glanceStats} />
-      <EcosystemWatch snapshot={ecosystem} />
+
+      <Wire labMoves={labMoves} streetMoves={streetMoves} stories={stories} />
+
+      {spreads.length > 0 && (
+        <TheGap rows={spreads} leadSummary={spreadSummary(spreads[0].group, spreads[0].spread, DEFAULT_WORKLOAD)} />
+      )}
 
       <Deck
         cards={[
@@ -801,41 +746,6 @@ export default async function HomePage() {
           />,
 
           <DeckCard
-            key="availability"
-            eyebrow="Availability"
-            tone="accent"
-            title="Most places to buy"
-            blurb="Models with the deepest live provider coverage — breadth matters when a venue fails."
-            rows={widelyAvailable.map(({ g, providers }) => ({
-              id: g.id,
-              label: g.name,
-              sub: `${labName(g.labId)} · live providers`,
-              value: String(providers),
-              tone: "accent" as const,
-              href: `/m/${g.id}`,
-            }))}
-            href="/browse"
-            cta="Browse the catalog"
-          />,
-
-          <DeckCard
-            key="classes"
-            eyebrow="Instruments"
-            tone="special"
-            title="What each class costs"
-            blurb="Models grouped by the kind of purchase they are, with the median rate for the class."
-            rows={baskets.map((b) => ({
-              id: b.instrument.id,
-              label: b.instrument.name,
-              sub: `${b.constituents.length} models · cheapest ${b.cheapest!.group.name}`,
-              value: fmtPerM(b.median),
-              href: "/exchange",
-            }))}
-            href="/exchange"
-            cta="The exchange"
-          />,
-
-          <DeckCard
             key="context"
             eyebrow="Long context"
             tone="warn"
@@ -852,68 +762,8 @@ export default async function HomePage() {
             cta="Browse by context"
           />,
 
-          <DeckCard
-            key="host"
-            eyebrow="Open weights"
-            tone="special"
-            title="Lowest self-hosting floor"
-            blurb="Monthly GPU rent for the smallest configuration the weights fit on. A floor, never a recommendation."
-            rows={hostable.map((h) => ({
-              id: h.groupId,
-              label: h.name,
-              sub: h.floor
-                ? `${h.floor.gpus}× ${h.floor.tier.name}${h.licence ? ` · ${h.licence}` : ""}${h.gated ? " · gated" : ""}`
-                : "—",
-              value: h.floor ? fmtMonthlyUsd(h.floor.usdPerMonth) : "—",
-              href: `/m/${h.groupId}`,
-            }))}
-            href="/self-host"
-            cta="Price out hosting"
-          />,
-
-          <DeckCard
-            key="free"
-            eyebrow="Free tier"
-            tone="pos"
-            title="Genuinely free to try"
-            blurb="At least one live listing published at zero for both input and output — not an unlisted price."
-            rows={freeToTry.map(({ g, providers }) => ({
-              id: g.id,
-              label: g.name,
-              sub: `${labName(g.labId)} · ${providers} live listing${providers === 1 ? "" : "s"}`,
-              value: "$0",
-              tone: "pos" as const,
-              href: `/m/${g.id}`,
-            }))}
-            href="/browse"
-            cta="Browse all"
-          />,
-
-          <DeckCard
-            key="migrating"
-            eyebrow="Migration"
-            tone="warn"
-            title="Dropped by a venue, alive elsewhere"
-            blurb="A provider withdrew its endpoint while others still serve the model. Re-point rather than replace."
-            rows={migrating.map(({ g, r }) => ({
-              id: g.id,
-              label: g.name,
-              sub: `gone from ${r.retiredProviders.slice(0, 2).join(", ")}${r.retiredProviders.length > 2 ? ` +${r.retiredProviders.length - 2}` : ""}`,
-              value: `${r.liveProviders} left`,
-              tone: "warn" as const,
-              href: `/m/${g.id}`,
-            }))}
-            href="/deprecations"
-            cta="All deprecations"
-          />,
         ]}
       />
-
-      <Wire labMoves={labMoves} streetMoves={streetMoves} stories={stories} />
-
-      {spreads.length > 0 && (
-        <TheGap rows={spreads} leadSummary={spreadSummary(spreads[0].group, spreads[0].spread)} />
-      )}
 
       <ThreeAnswers
         notIndependentPct={notIndependentPct}
@@ -929,6 +779,7 @@ export default async function HomePage() {
             : null
         }
       />
+      <EcosystemWatch snapshot={ecosystem} />
 
       <Subscribe changeCount={tapeCount(events, cov, now)} windowLabel={windowLabel(cov)} />
     </div>
