@@ -23,11 +23,11 @@ type WeightSlice = "all" | "open" | "closed";
 type WorkloadSlice = "text" | "all";
 
 const W = 860;
-const H = 500;
-const ML = 68;
-const MR = 24;
-const MT = 38;
-const MB = 54;
+const H = 410;
+const ML = 62;
+const MR = 20;
+const MT = 30;
+const MB = 48;
 const PRICE_FLOOR = 0.001;
 const CONTEXT_FLOOR = 4_000;
 const X_TICKS = [0, 0.03, 0.25, 1, 3, 30, 300];
@@ -132,31 +132,49 @@ export function ContextPriceChart({ points }: { points: ContextPricePoint[] }) {
   }
 
   return (
-    <div className="card overflow-hidden">
-      <div className="border-b border-black/10 bg-surface-tint p-4 sm:p-5">
-        <div className="flex flex-wrap items-end gap-3">
-          <fieldset className="min-w-0">
-            <legend className="micro-label mb-1.5">Price basis</legend>
-            <div className="inline-flex rounded-md border border-black/15 bg-white p-1">
+    <div className="chart-workbench card overflow-hidden">
+      <aside className="chart-control-rail" aria-label="Chart controls">
+        <div className="chart-control-heading">
+          <div>
+            <p className="mono-label">Explore the field</p>
+            <p className="mt-1 text-sm font-semibold">Configure the view</p>
+          </div>
+          <button type="button" onClick={reset} className="chart-reset">Reset</button>
+        </div>
+
+        <fieldset className="chart-control-group min-w-0">
+          <legend className="micro-label mb-2">Price basis</legend>
+          <div className="grid grid-cols-3 rounded-md border border-black/15 bg-white p-1">
               {(["input", "output", "blended"] as const).map((value) => (
-                <button key={value} type="button" onClick={() => setBasis(value)} aria-pressed={basis === value} className="control-button min-h-9 rounded px-3">
+                <button key={value} type="button" onClick={() => setBasis(value)} aria-pressed={basis === value} className="control-button min-h-9 rounded px-2 text-xs">
                   {value === "blended" ? "Blend 75/25" : value[0].toUpperCase() + value.slice(1)}
                 </button>
               ))}
-            </div>
-          </fieldset>
-          <label className="block"><span className="micro-label mb-1.5 block">Lab</span><select className="input min-w-36" value={lab} onChange={(event) => setLab(event.target.value)}><option value="all">All labs</option>{labs.map((value) => <option key={value} value={value}>{value}</option>)}</select></label>
-          <label className="block"><span className="micro-label mb-1.5 block">Weights</span><select className="input" value={weights} onChange={(event) => setWeights(event.target.value as WeightSlice)}><option value="all">All models</option><option value="open">Open only</option><option value="closed">Hosted only</option></select></label>
-          <label className="block"><span className="micro-label mb-1.5 block">Workload</span><select className="input" value={workload} onChange={(event) => setWorkload(event.target.value as WorkloadSlice)}><option value="text">Text generation</option><option value="all">All token-priced</option></select></label>
-          <label className="block"><span className="micro-label mb-1.5 block">Price ceiling</span><select className="input" value={priceCeiling} onChange={(event) => setPriceCeiling(event.target.value)}><option value="all">Any price</option><option value="1">≤ $1/M</option><option value="3">≤ $3/M</option><option value="10">≤ $10/M</option></select></label>
-          <label className="block"><span className="micro-label mb-1.5 block">Minimum context</span><select className="input" value={contextFloor} onChange={(event) => setContextFloor(event.target.value)}><option value="0">Any context</option><option value="131072">≥ 128K</option><option value="1048576">≥ 1M</option></select></label>
-          <button type="button" onClick={reset} className="button-secondary ml-auto">Reset view</button>
-        </div>
-        <p className="mt-3 text-xs leading-relaxed text-black/60">Blended price weights input 75% and output 25%. The Pareto frontier recomputes for the selected basis and every active slice.</p>
-      </div>
+          </div>
+        </fieldset>
 
-      <div className="p-4 sm:p-5">
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+        <div className="chart-control-group">
+          <p className="micro-label mb-2">Slice</p>
+          <div className="chart-filter-grid">
+            <label className="block chart-filter-wide"><span className="micro-label mb-1 block">Lab</span><select className="input w-full" value={lab} onChange={(event) => setLab(event.target.value)}><option value="all">All labs</option>{labs.map((value) => <option key={value} value={value}>{value}</option>)}</select></label>
+            <label className="block"><span className="micro-label mb-1 block">Weights</span><select className="input w-full" value={weights} onChange={(event) => setWeights(event.target.value as WeightSlice)}><option value="all">All models</option><option value="open">Open only</option><option value="closed">Hosted only</option></select></label>
+            <label className="block"><span className="micro-label mb-1 block">Workload</span><select className="input w-full" value={workload} onChange={(event) => setWorkload(event.target.value as WorkloadSlice)}><option value="text">Text generation</option><option value="all">All token-priced</option></select></label>
+          </div>
+        </div>
+
+        <div className="chart-control-group">
+          <p className="micro-label mb-2">Limits</p>
+          <div className="chart-filter-grid">
+            <label className="block"><span className="micro-label mb-1 block">Price</span><select className="input w-full" value={priceCeiling} onChange={(event) => setPriceCeiling(event.target.value)}><option value="all">Any price</option><option value="1">≤ $1/M</option><option value="3">≤ $3/M</option><option value="10">≤ $10/M</option></select></label>
+            <label className="block"><span className="micro-label mb-1 block">Context</span><select className="input w-full" value={contextFloor} onChange={(event) => setContextFloor(event.target.value)}><option value="0">Any context</option><option value="131072">≥ 128K</option><option value="1048576">≥ 1M</option></select></label>
+          </div>
+        </div>
+
+        <p className="chart-method-note">Blended price weights input 75% and output 25%. The frontier recomputes for every active slice.</p>
+      </aside>
+
+      <div className="chart-workspace">
+        <div className="chart-utility-bar">
           <div><strong className="font-mono text-sm tabular-nums">{visible.length}</strong><span className="text-sm text-black/60"> visible · </span><strong className="font-mono text-sm tabular-nums text-warn">{visibleFrontier.length}</strong><span className="text-sm text-black/60"> Pareto-efficient</span></div>
           <div className="flex items-center gap-1" aria-label="Chart zoom">
             <button type="button" aria-label="Zoom out" disabled={zoom === 1} onClick={() => setZoom((value) => Math.max(1, value / 2))} className="control-button h-9 w-9 px-0 font-mono">−</button>
