@@ -3,14 +3,14 @@
 import { useState } from "react";
 
 export function CopyField({ value, label }: { value: string; label: string }) {
-  const [copied, setCopied] = useState(false);
+  const [status, setStatus] = useState<"idle" | "copied" | "failed">("idle");
   async function copy() {
     try {
       await navigator.clipboard.writeText(value);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
+      setStatus("copied");
+      setTimeout(() => setStatus("idle"), 1500);
     } catch {
-      /* clipboard unavailable — user can still select the text */
+      setStatus("failed");
     }
   }
   return (
@@ -19,11 +19,15 @@ export function CopyField({ value, label }: { value: string; label: string }) {
         {value}
       </code>
       <button
+        type="button"
         onClick={copy}
         className="control-button shrink-0"
       >
-        {copied ? "copied ✓" : `copy ${label}`}
+        {status === "copied" ? "copied ✓" : status === "failed" ? `select and copy ${label}` : `copy ${label}`}
       </button>
+      <span className="sr-only" role="status" aria-live="polite">
+        {status === "copied" ? `${label} copied` : status === "failed" ? `Could not copy ${label}; select the text and copy it manually` : ""}
+      </span>
     </div>
   );
 }

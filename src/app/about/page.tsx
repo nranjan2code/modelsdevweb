@@ -164,8 +164,11 @@ export default function AboutPage() {
         <div className="divide-y divide-black/10 rounded-lg border-2 border-black bg-white">
           {FAQ.map((f) => (
             <details key={f.q} className="group px-4 py-3">
-              <summary className="cursor-pointer list-none font-medium text-black marker:hidden transition-colors hover:text-accent">
-                {f.q}
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-medium text-black marker:hidden transition-colors hover:text-accent focus-visible:rounded-sm">
+                <span>{f.q}</span>
+                <span aria-hidden="true" className="font-mono text-lg leading-none text-accent transition-transform group-open:rotate-45">
+                  +
+                </span>
               </summary>
               <p className="mt-2 text-black/60">{f.a}</p>
             </details>
