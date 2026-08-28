@@ -131,17 +131,17 @@ export function Calculator({ rows }: { rows: CalcRow[] }) {
         <div className="data-table-toolbar">
           <label htmlFor="calculator-filter" className="sr-only">Filter models</label>
           <input id="calculator-filter" type="search" className="input w-full sm:w-64" placeholder="Filter models…" value={q} onChange={(e) => { setQ(e.target.value); setPage(1); }} />
-          <span className="ml-auto font-mono text-xs tabular-nums text-black/60">{priced.length} models</span>
+          <span className="ml-auto font-mono text-xs tabular-nums text-black/60" role="status" aria-live="polite">{priced.length} models</span>
         </div>
         <div className="data-table-viewport">
-          <table className="table-base min-w-[760px]">
+          <table className="table-base min-w-[760px]" aria-label="Cost calculator table">
             <thead>
               <tr>
-                <th>#</th>
+                <th scope="col">#</th>
                 <SortableTh label="model" active={sort === "name"} direction={direction} onSort={() => changeSort("name")}>Model</SortableTh>
                 <SortableTh label="estimated monthly cost" active={sort === "monthly"} direction={direction} onSort={() => changeSort("monthly")} align="right">Est. monthly</SortableTh>
-                <th>Relative</th>
-                <th className="text-right">Per request</th>
+                <th scope="col">Relative</th>
+                <th scope="col" className="text-right">Per request</th>
                 <SortableTh label="input price" active={sort === "input"} direction={direction} onSort={() => changeSort("input")} align="right">Sticker in / out</SortableTh>
               </tr>
             </thead>

@@ -78,15 +78,15 @@ function SmartTable<T>({
       <div className="data-table-toolbar">
         <input type="search" className="input w-full sm:w-64" value={q} onChange={(event) => { setQ(event.target.value); setPage(1); }} placeholder={placeholder} aria-label={placeholder} />
         {extraToolbar}
-        <span className="ml-auto font-mono text-xs tabular-nums text-black/60">{filtered.length} {noun}</span>
+        <span className="ml-auto font-mono text-xs tabular-nums text-black/60" role="status" aria-live="polite">{filtered.length} {noun}</span>
       </div>
       <div className="data-table-viewport">
-        <table className={`table-base ${minWidth}`}>
+        <table className={`table-base ${minWidth}`} aria-label={`${noun} table`}>
           <thead>
             <tr>
               {columns.map((column) => column.sortValue ? (
                 <SortableTh key={column.key} label={column.label} active={sort === column.key} direction={direction} onSort={() => changeSort(column.key)} align={column.align}>{column.label}</SortableTh>
-              ) : <th key={column.key} className={column.align === "right" ? "text-right" : undefined}>{column.label}</th>)}
+              ) : <th key={column.key} scope="col" className={column.align === "right" ? "text-right" : undefined}>{column.label}</th>)}
             </tr>
           </thead>
           <tbody>
@@ -148,7 +148,7 @@ export function ProviderListingsTable({ rows }: { rows: ProviderListingRow[] }) 
     { key: "lastUpdated", label: "Updated", sortValue: (row) => row.lastUpdated, render: (row) => <span className="whitespace-nowrap text-xs text-black/60">{fmtDate(row.lastUpdated)}</span> },
   ];
   const filter = <select className="input" value={status} onChange={(event) => setStatus(event.target.value)} aria-label="Filter by status"><option value="all">All statuses</option><option value="stable">Stable</option><option value="beta">Beta</option><option value="alpha">Alpha</option><option value="deprecated">Deprecated</option></select>;
-  return <SmartTable rows={visible} columns={columns} rowKey={(row) => row.key} searchText={(row) => `${row.groupName} ${row.groupId} ${row.modelId}`} placeholder="Filter models or variants…" noun="listings" minWidth="min-w-[880px]" defaultSort="groupName" empty="No listings match." extraToolbar={filter} />;
+  return <SmartTable key={status} rows={visible} columns={columns} rowKey={(row) => row.key} searchText={(row) => `${row.groupName} ${row.groupId} ${row.modelId}`} placeholder="Filter models or variants…" noun="listings" minWidth="min-w-[880px]" defaultSort="groupName" empty="No listings match." extraToolbar={filter} />;
 }
 
 export interface LabModelRow {

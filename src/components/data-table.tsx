@@ -20,11 +20,11 @@ export function SortableTh({
   children?: ReactNode;
 }) {
   return (
-    <th aria-sort={active ? (direction === "asc" ? "ascending" : "descending") : "none"} className={align === "right" ? "text-right" : undefined}>
+    <th scope="col" aria-sort={active ? (direction === "asc" ? "ascending" : "descending") : "none"} className={align === "right" ? "text-right" : undefined}>
       <button type="button" onClick={onSort} className={`table-sort ${align === "right" ? "justify-end" : "justify-start"}`}>
         <span>{children ?? label}</span>
         <span className={active ? "text-accent" : "text-black/60"} aria-hidden="true">{active ? (direction === "asc" ? "↑" : "↓") : "↕"}</span>
-        <span className="sr-only">Sort by {label}</span>
+        <span className="sr-only">Sort by {label}{active ? `, currently ${direction === "asc" ? "ascending" : "descending"}` : ""}</span>
       </button>
     </th>
   );
@@ -68,7 +68,7 @@ export function TablePager({
   return (
     <div className="data-table-footer">
       <div className="flex flex-wrap items-center gap-3 text-xs text-black/60">
-        <span className="font-mono tabular-nums">{start}–{end} of {total} {noun}</span>
+        <span className="font-mono tabular-nums" role="status" aria-live="polite">{start}–{end} of {total} {noun}</span>
         {onPageSizeChange && (
           <label className="inline-flex items-center gap-2">Rows per page
             <select className="data-table-page-size" value={pageSize} onChange={(event) => onPageSizeChange(Number(event.target.value))}>

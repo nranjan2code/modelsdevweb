@@ -164,7 +164,8 @@ export function ModelSearch({ models }: { models: SearchModel[] }) {
         type="button"
         className="search-trigger"
         aria-expanded={open}
-        aria-controls="header-search-panel"
+        aria-controls="model-search-results"
+        aria-haspopup="listbox"
         aria-label="Search models"
         onClick={() => (open ? closeSearch() : openSearch())}
       >

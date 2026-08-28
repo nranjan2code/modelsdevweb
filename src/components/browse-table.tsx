@@ -151,7 +151,8 @@ export function BrowseTable({ rows: packedRows }: { rows: PackedBrowseRow[] }) {
   const tableRef = useRef<HTMLDivElement>(null);
   function goTo(p: number) {
     setPage(Math.min(Math.max(1, p), totalPages));
-    tableRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    const behavior = typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+    tableRef.current?.scrollIntoView({ behavior, block: "start" });
   }
 
   function toggleCap(cap: string) {
@@ -191,10 +192,11 @@ export function BrowseTable({ rows: packedRows }: { rows: PackedBrowseRow[] }) {
             <option value="swe">Sort: best SWE-Bench</option>
           </select>
         </div>
-        <div className="data-table-capability-controls">
+        <div className="data-table-capability-controls" role="group" aria-label="Filter by capability">
           {CAPS.map(([cap, label]) => (
             <button
               key={cap}
+              type="button"
               onClick={() => toggleCap(cap)}
               aria-pressed={caps.has(cap)}
               className={`control-button ${
@@ -211,24 +213,24 @@ export function BrowseTable({ rows: packedRows }: { rows: PackedBrowseRow[] }) {
           <button type="button" onClick={() => { setIncludeExtended((value) => !value); setPage(1); }} aria-pressed={includeExtended} className={`control-button ${includeExtended ? "border-special bg-special-soft text-special" : ""}`}>
             {includeExtended ? "Extended catalog on" : "Extended catalog"}
           </button>
-          <span className="font-mono text-xs tabular-nums text-black/60">{filtered.length} / {rows.length} models</span>
+          <span className="font-mono text-xs tabular-nums text-black/60" role="status" aria-live="polite">{filtered.length} / {rows.length} models</span>
         </div>
       </div>
 
       <div className="data-table-viewport">
-          <table className="table-base min-w-[860px]">
+          <table className="table-base min-w-[860px]" aria-label="Model browse table">
             <thead>
               <tr>
-                <th>Model</th>
-                <th className="text-right">Best in /M</th>
-                <th className="text-right">Best out /M</th>
-                <th className="text-right">Context</th>
-                <th>Caps</th>
-                <th>Weights</th>
-                <th className="text-right">SWE-Bench</th>
-                <th className="text-right">Providers</th>
-                <th>Released</th>
-                <th>
+                <th scope="col">Model</th>
+                <th scope="col" className="text-right">Best in /M</th>
+                <th scope="col" className="text-right">Best out /M</th>
+                <th scope="col" className="text-right">Context</th>
+                <th scope="col">Caps</th>
+                <th scope="col">Weights</th>
+                <th scope="col" className="text-right">SWE-Bench</th>
+                <th scope="col" className="text-right">Providers</th>
+                <th scope="col">Released</th>
+                <th scope="col">
                   <span title="Add a model to comparison">Compare</span>
                 </th>
               </tr>
@@ -301,6 +303,7 @@ export function BrowseTable({ rows: packedRows }: { rows: PackedBrowseRow[] }) {
                 <td className="whitespace-nowrap text-xs text-black/60">{fmtDate(r.released)}</td>
                 <td>
                   <button
+                    type="button"
                     onClick={() => toggleCompare(r.id)}
                     aria-pressed={inCompare.includes(r.id)}
                     title={inCompare.includes(r.id) ? "Remove from comparison" : "Add to comparison"}

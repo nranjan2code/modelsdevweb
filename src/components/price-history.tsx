@@ -35,17 +35,17 @@ function PriceChart({ points }: { points: PricePoint[] }) {
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="chart-canvas w-full" role="img" aria-labelledby="price-chart-title price-chart-desc">
       <title id="price-chart-title">Best published input and output price history</title>
-      <desc id="price-chart-desc">Daily lowest published price per one million tokens. Blue is input price and violet is output price. The vertical scale starts at zero.</desc>
+      <desc id="price-chart-desc">Daily lowest published price per one million tokens. Accent is input price and violet is output price. The vertical scale starts at zero.</desc>
       {yTicks.map((tick) => (
         <g key={tick}>
-          <line x1={ML} y1={sy(tick)} x2={W - MR} y2={sy(tick)} stroke="rgba(0,0,0,0.08)" />
-          <text x={ML - 8} y={sy(tick) + 4} textAnchor="end" fontSize="11" fill="rgba(0,0,0,0.65)" fontFamily="var(--font-mono)">
+          <line x1={ML} y1={sy(tick)} x2={W - MR} y2={sy(tick)} stroke="var(--color-ink)" strokeOpacity="0.08" />
+          <text x={ML - 8} y={sy(tick) + 4} textAnchor="end" fontSize="11" fill="var(--color-ink)" fillOpacity="0.65" fontFamily="var(--font-mono)">
             {fmtPerM(tick)}
           </text>
         </g>
       ))}
       {xTicks.map((index) => (
-        <text key={index} x={sx(index)} y={H - 12} textAnchor={index === 0 ? "start" : index === points.length - 1 ? "end" : "middle"} fontSize="11" fill="rgba(0,0,0,0.65)" fontFamily="var(--font-mono)">
+        <text key={index} x={sx(index)} y={H - 12} textAnchor={index === 0 ? "start" : index === points.length - 1 ? "end" : "middle"} fontSize="11" fill="var(--color-ink)" fillOpacity="0.65" fontFamily="var(--font-mono)">
           {fmtDate(points[index].date)}
         </text>
       ))}

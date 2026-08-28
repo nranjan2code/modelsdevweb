@@ -86,20 +86,20 @@ export function PriceTable({ listings }: { listings: Listing[] }) {
           <option value="alpha">Alpha</option>
           <option value="deprecated">Deprecated</option>
         </select>
-        <span className="ml-auto font-mono text-xs tabular-nums text-black/60">{rows.length} listings</span>
+        <span className="ml-auto font-mono text-xs tabular-nums text-black/60" role="status" aria-live="polite">{rows.length} listings</span>
       </div>
       <div className="data-table-viewport">
-      <table className="table-base min-w-[880px]">
+      <table className="table-base min-w-[880px]" aria-label="Provider price table">
         <thead>
           <tr>
             <SortableTh label="provider" active={sort === "providerName"} direction={direction} onSort={() => changeSort("providerName")}>Provider</SortableTh>
             <SortableTh label="input price" active={sort === "input"} direction={direction} onSort={() => changeSort("input")} align="right">Input /M</SortableTh>
             <SortableTh label="output price" active={sort === "output"} direction={direction} onSort={() => changeSort("output")} align="right">Output /M</SortableTh>
-            <th className="text-right">Cache read /M</th>
-            <th className="text-right">Cache write /M</th>
+            <th scope="col" className="text-right">Cache read /M</th>
+            <th scope="col" className="text-right">Cache write /M</th>
             <SortableTh label="context" active={sort === "context"} direction={direction} onSort={() => changeSort("context")} align="right">Context</SortableTh>
-            <th>Capabilities</th>
-            <th>Status</th>
+            <th scope="col">Capabilities</th>
+            <th scope="col">Status</th>
             <SortableTh label="updated date" active={sort === "lastUpdated"} direction={direction} onSort={() => changeSort("lastUpdated")}>Updated</SortableTh>
           </tr>
         </thead>

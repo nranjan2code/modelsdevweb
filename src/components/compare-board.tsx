@@ -212,6 +212,7 @@ export function CompareBoard({ models: packedModels }: { models: PackedCompareMo
             {suggestions.map((m) => (
               <li key={m.id}>
                 <button
+                  type="button"
                   onClick={() => add(m.id)}
                   disabled={selected.length >= COMPARE_MAX}
                   className="control-button disabled:opacity-40"
@@ -238,18 +239,19 @@ export function CompareBoard({ models: packedModels }: { models: PackedCompareMo
       ) : (
         <div className="data-table-shell">
           <div className="data-table-viewport">
-          <table className="table-base w-full min-w-[720px]">
+          <table className="table-base w-full min-w-[720px]" aria-label="Model comparison table">
             <thead>
               <tr>
-                <th className="w-44">Attribute</th>
+                <th scope="col" className="w-44">Attribute</th>
                 {chosen.map((m) => (
-                  <th key={m.id}>
+                  <th key={m.id} scope="col">
                     <div className="flex items-center gap-1.5 whitespace-normal">
                       <Link href={`/m/${m.id}`} className="text-sm normal-case tracking-normal text-black hover:text-accent">
                         {m.name}
                       </Link>
                       <span className="shrink-0 text-xs text-black/60">{m.lab}</span>
                       <button
+                        type="button"
                         onClick={() => remove(m.id)}
                         aria-label={`Remove ${m.name}`}
                         className="control-button ml-auto h-11 w-11 shrink-0 px-0 text-base hover:border-neg hover:bg-neg-soft hover:text-neg"
@@ -264,7 +266,7 @@ export function CompareBoard({ models: packedModels }: { models: PackedCompareMo
             <tbody>
               {rows.map((row) => (
                 <tr key={row.key}>
-                  <td className="text-xs font-medium text-black/60">{row.label}</td>
+                  <th scope="row" className="text-left text-xs font-medium text-black/60">{row.label}</th>
                   {chosen.map((m) => (
                     <td key={m.id}>{row.render(m)}</td>
                   ))}

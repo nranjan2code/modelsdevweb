@@ -130,17 +130,17 @@ export function SelfHostTable({ rows }: { rows: HostRow[] }) {
       <div className="data-table-shell">
         <div className="data-table-toolbar">
           <input type="search" value={q} onChange={(e) => { setQ(e.target.value); setPage(1); }} placeholder="Filter models…" aria-label="Filter models" className="input w-full sm:max-w-xs" />
-          <span className="ml-auto font-mono text-xs tabular-nums text-black/60">{scored.length} models</span>
+          <span className="ml-auto font-mono text-xs tabular-nums text-black/60" role="status" aria-live="polite">{scored.length} models</span>
         </div>
       <div className="data-table-viewport">
-        <table className="table-base min-w-[720px]">
+        <table className="table-base min-w-[720px]" aria-label="Self-hosting cost table">
           <thead>
             <tr>
               <SortableTh label="model" active={sort === "name"} direction={direction} onSort={() => changeSort("name")}>Model</SortableTh>
               <SortableTh label="API cost" active={sort === "apiCost"} direction={direction} onSort={() => changeSort("apiCost")} align="right">API at your volume</SortableTh>
               <SortableTh label="GPU rent" active={sort === "rentPerMonth"} direction={direction} onSort={() => changeSort("rentPerMonth")} align="right">Cheapest GPU that fits</SortableTh>
               <SortableTh label="cost difference" active={sort === "savings"} direction={direction} onSort={() => changeSort("savings")} align="right">Difference</SortableTh>
-              <th>Verdict</th>
+              <th scope="col">Verdict</th>
             </tr>
           </thead>
           <tbody>

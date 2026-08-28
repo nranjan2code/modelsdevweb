@@ -139,10 +139,11 @@ export function ChangelogList({ events }: { events: Event[] }) {
         <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
           <div>
             <p className="mono-label mb-2">Change type</p>
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filter by change type">
               {TYPES.map((t) => (
                 <button
                   key={t.value}
+                  type="button"
                   onClick={() => setFilters(makeFilters(t.value, days))}
                   aria-pressed={type === t.value}
                   className={`control-button ${
@@ -158,10 +159,11 @@ export function ChangelogList({ events }: { events: Event[] }) {
           </div>
           <div>
             <p className="mono-label mb-2">Time range</p>
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filter by time range">
               {WINDOWS.map((w) => (
                 <button
                   key={w.value}
+                  type="button"
                   onClick={() => setFilters(makeFilters(type, w.value))}
                   aria-pressed={days === w.value}
                   className={`control-button ${
@@ -177,7 +179,7 @@ export function ChangelogList({ events }: { events: Event[] }) {
           </div>
         </div>
         <div className="pb-3 text-left xl:text-right">
-          <span className="font-mono text-sm font-semibold tabular-nums text-black">{filtered.length}</span>
+          <span className="font-mono text-sm font-semibold tabular-nums text-black" role="status" aria-live="polite">{filtered.length}</span>
           <span className="ml-1 text-xs text-black/60">events</span>
         </div>
       </div>
@@ -189,6 +191,7 @@ export function ChangelogList({ events }: { events: Event[] }) {
             {days ? ` · last ${days} days` : ""}
           </span>
           <button
+            type="button"
             onClick={() => setFilters(DEFAULT_FILTERS)}
             className="control-button ml-auto"
           >
