@@ -280,8 +280,7 @@ body {
     font-size: 0.5625rem;
     font-weight: 700;
     color: rgb(16 24 40 / 0.42);
-    text-transform: uppercase;
-    letter-spacing: 0.055em;
+    letter-spacing: 0;
   }
 
   .nav-link {
@@ -423,7 +422,6 @@ body {
     isolation: isolate;
     overflow: hidden;
     border: 1px solid rgb(16 24 40 / 0.1);
-    border-top: 4px solid var(--color-accent);
     border-radius: var(--radius-lg);
     background: var(--color-surface);
     padding: 0;
@@ -584,6 +582,11 @@ body {
   .pareto-dot,
   .pareto-halo {
     transition: cx 220ms ease, cy 220ms ease, r 140ms ease, opacity 140ms ease;
+  }
+
+  .pareto-point:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 3px;
   }
 
   @media (prefers-reduced-motion: reduce) {

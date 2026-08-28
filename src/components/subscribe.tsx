@@ -17,7 +17,7 @@ const ACTION = process.env.NEXT_PUBLIC_NEWSLETTER_ACTION ?? "";
 
 export function Subscribe({ changeCount, windowLabel }: { changeCount: number; windowLabel: string }) {
   return (
-    <section className="card relative overflow-hidden border-t-4 border-t-accent">
+    <section className="card relative overflow-hidden">
       <div className="grid gap-6 p-5 sm:p-7 lg:grid-cols-[1.35fr_1fr] lg:gap-10">
         <div>
           <p className="mono-label text-accent">Weekly edition</p>

@@ -201,7 +201,7 @@ export function ContextPriceChart({ points }: { points: ContextPricePoint[] }) {
                   const y = sy(point.context);
                   const isFrontier = frontierIds.has(point.id);
                   const isSelected = point.id === selected?.id;
-                  return <g key={point.id} role="button" tabIndex={0} aria-label={`${point.name}, ${fmtPerM(paretoPrice(point, basis))} per million, ${fmtTokens(point.context)} context`} onClick={() => setSelectedId(point.id)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setSelectedId(point.id); } }} onMouseEnter={() => setHoveredId(point.id)} onMouseLeave={() => setHoveredId(null)} onFocus={() => setHoveredId(point.id)} onBlur={() => setHoveredId(null)} className="cursor-pointer outline-none">
+                  return <g key={point.id} role="button" tabIndex={0} aria-label={`${point.name}, ${fmtPerM(paretoPrice(point, basis))} per million, ${fmtTokens(point.context)} context`} onClick={() => setSelectedId(point.id)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setSelectedId(point.id); } }} onMouseEnter={() => setHoveredId(point.id)} onMouseLeave={() => setHoveredId(null)} onFocus={() => setHoveredId(point.id)} onBlur={() => setHoveredId(null)} className="pareto-point cursor-pointer">
                     {(isFrontier || isSelected) && <circle cx={x} cy={y} r={isSelected ? 10 : 8} fill="none" stroke={isSelected ? "var(--color-accent)" : "var(--color-warn)"} strokeWidth={isSelected ? 2 : 1.5} className="pareto-halo" />}
                     {/*
                       Hundreds of models share the 128K and 1M context lines, so
