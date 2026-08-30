@@ -25,6 +25,8 @@ export async function GET() {
     "/changelog",
     "/digest",
     "/news",
+    "/field-notes",
+    "/field-notes/api-key-introspection",
     "/ecosystem",
     "/deprecations",
     "/about",

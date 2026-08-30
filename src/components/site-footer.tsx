@@ -22,6 +22,7 @@ const COLUMNS: { title: string; links: { href: string; label: string; external?:
       { href: "/benchmarks", label: "Benchmarks" },
       { href: "/trends", label: "Trends" },
       { href: "/providers", label: "Providers" },
+      { href: "/field-notes", label: "Field notes" },
     ],
   },
   {

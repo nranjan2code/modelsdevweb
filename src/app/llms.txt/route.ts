@@ -45,6 +45,8 @@ capability_changed, model_removed, provider_removed
 - /changelog — full event history (${events.length} events)
 - /digest — auto-written weekly recap of releases, repricings and sunsets
 - /news — daily model news headlines with source links
+- /field-notes — practical explainers about API keys, quotas, billing, routing and capacity
+- /field-notes/api-key-introspection — what an API key can actually tell you across providers
 
 ## Notes for agents
 
