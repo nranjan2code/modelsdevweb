@@ -281,6 +281,10 @@ body {
     padding-left: 0.45rem;
   }
 
+  .nav-more[open] {
+    display: block;
+  }
+
   .nav-more-trigger {
     display: inline-flex;
     min-height: 2.25rem;
@@ -305,10 +309,7 @@ body {
   }
 
   .nav-more-menu {
-    position: absolute;
-    top: calc(100% + 0.35rem);
-    right: 0;
-    z-index: 60;
+    position: static;
     display: grid;
     grid-template-columns: repeat(2, minmax(8rem, 1fr));
     gap: 0.65rem 1rem;

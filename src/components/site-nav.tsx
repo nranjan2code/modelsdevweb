@@ -45,7 +45,7 @@ export function SiteNav() {
     <nav aria-label="Primary" className="site-navigation">
       <div className="nav-groups">
         {renderGroups(PRIMARY_GROUPS)}
-        <details className="nav-more" open={moreActive || undefined}>
+        <details className="nav-more">
           <summary className={`nav-more-trigger ${moreActive ? "nav-link-active" : ""}`}>
             More <span aria-hidden="true">⌄</span>
           </summary>
