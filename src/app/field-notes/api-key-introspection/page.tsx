@@ -65,6 +65,48 @@ const PROVIDERS = [
     key: "Project scope, accessible models and response usage",
     unknown: "Per-key spend or rate cap; limits are organization-level",
   },
+  {
+    name: "OpenCode Zen",
+    headers: "Structured status and usage responses; no stable public quota-header contract",
+    account: "Zen console, credits, auto-reload and workspace/member limits",
+    key: "Gateway model access and request usage",
+    unknown: "Live shared capacity or upstream provider identity unless exposed by the route",
+  },
+  {
+    name: "DeepSeek",
+    headers: "HTTP status and usage; balance/concurrency failures are primarily error-body signals",
+    account: "Account billing and usage console",
+    key: "Model access, request success and token usage",
+    unknown: "A documented live-balance endpoint or stable limit-header scheme",
+  },
+  {
+    name: "NVIDIA NIM",
+    headers: "Deployment-specific; health and metrics endpoints are more important than quota headers",
+    account: "NVIDIA cloud account or local deployment configuration",
+    key: "If self-hosted: liveness, readiness, metadata and Prometheus metrics",
+    unknown: "One quota policy covering hosted and self-hosted NIM",
+  },
+  {
+    name: "ElevenLabs",
+    headers: "character-cost, request-id and x-trace-id",
+    account: "Subscription character allowance, reset and concurrency settings",
+    key: "Audio generation cost in characters and request correlation",
+    unknown: "USD cost without applying the account’s authoritative plan rate",
+  },
+  {
+    name: "Deepgram",
+    headers: "Request IDs and typed service/model/region concurrency errors",
+    account: "Project usage, billing and concurrency configuration",
+    key: "Audio request success, model/service and usage where returned",
+    unknown: "Token-style limits; audio is usually measured in duration and concurrency",
+  },
+  {
+    name: "Cartesia / Fish Audio",
+    headers: "Provider-specific request IDs and structured concurrency or wallet errors",
+    account: "Console wallet, package allowance or concurrency settings",
+    key: "Audio request outcome and provider usage units",
+    unknown: "That credits or characters represent USD without a plan-specific conversion",
+  },
 ];
 
 const TONE_CLASSES = {
@@ -170,7 +212,7 @@ display provider-reported facts separately from observed capacity`}</pre>
           the model.
         </p>
         <p className="text-xs leading-relaxed text-black/55">
-          Primary references: <LinkOut href="https://openrouter.ai/docs/api/api-reference/api-keys/get-current-key">OpenRouter</LinkOut>, <LinkOut href="https://platform.openai.com/docs/api-reference/authentication">OpenAI</LinkOut>, <LinkOut href="https://platform.claude.com/docs/en/api/rate-limits">Anthropic</LinkOut>, <LinkOut href="https://ai.google.dev/gemini-api/docs/rate-limits">Gemini</LinkOut>, <LinkOut href="https://console.groq.com/docs/rate-limits">Groq</LinkOut>, <LinkOut href="https://docs.mistral.ai/resources/known-limitations">Mistral</LinkOut>.
+          Primary references: <LinkOut href="https://openrouter.ai/docs/api/api-reference/api-keys/get-current-key">OpenRouter</LinkOut>, <LinkOut href="https://platform.openai.com/docs/api-reference/authentication">OpenAI</LinkOut>, <LinkOut href="https://platform.claude.com/docs/en/api/rate-limits">Anthropic</LinkOut>, <LinkOut href="https://ai.google.dev/gemini-api/docs/rate-limits">Gemini</LinkOut>, <LinkOut href="https://console.groq.com/docs/rate-limits">Groq</LinkOut>, <LinkOut href="https://docs.mistral.ai/resources/known-limitations">Mistral</LinkOut>, <LinkOut href="https://dev.opencode.ai/docs/zen/">OpenCode Zen</LinkOut>, <LinkOut href="https://docs.nvidia.com/nim/large-language-models/latest/api-reference.html">NVIDIA NIM</LinkOut>, <LinkOut href="https://elevenlabs.io/docs/api-reference/introduction">ElevenLabs</LinkOut>.
         </p>
       </section>
 

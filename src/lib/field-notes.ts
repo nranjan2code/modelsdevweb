@@ -17,17 +17,16 @@ export const FIELD_NOTES: FieldNote[] = [
   },
   {
     slug: "why-429-is-not-one-thing",
-    eyebrow: "Field note 02 · planned",
+    eyebrow: "Field note 02 · published",
     title: "Why a 429 is not one thing",
     summary: "Separating request limits, token limits, spend caps, acceleration limits and overloaded providers.",
-    status: "planned",
+    status: "published",
   },
   {
     slug: "same-model-different-route",
-    eyebrow: "Field note 03 · planned",
+    eyebrow: "Field note 03 · published",
     title: "The same model is not the same route",
     summary: "How gateways, first-party APIs, BYOK and fallback providers change the thing you are buying.",
-    status: "planned",
+    status: "published",
   },
 ];
-
