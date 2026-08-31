@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 
 const PRIMARY_GROUPS = [
   { label: "Explore", items: [{ href: "/browse", label: "Models" }, { href: "/compare", label: "Compare" }] },
@@ -21,12 +22,30 @@ const MORE_GROUPS = [
 
 export function SiteNav() {
   const pathname = usePathname();
+  const [moreOpen, setMoreOpen] = useState(false);
+  const moreRoot = useRef<HTMLDivElement>(null);
   const active = (href: string) => {
     const path = href.split("#", 1)[0];
     return pathname === path || pathname.startsWith(`${path}/`);
   };
 
   const moreActive = MORE_GROUPS.some((group) => group.items.some((item) => active(item.href)));
+
+  useEffect(() => {
+    if (!moreOpen) return;
+    const onPointerDown = (event: PointerEvent) => {
+      if (!moreRoot.current?.contains(event.target as Node)) setMoreOpen(false);
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMoreOpen(false);
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [moreOpen]);
 
   const renderGroups = (groups: readonly { label: string; items: readonly { href: string; label: string }[] }[]) => groups.map((group) => (
     <section key={group.label} className="nav-cluster" aria-label={group.label}>
@@ -42,18 +61,18 @@ export function SiteNav() {
   ));
 
   return (
-    <nav aria-label="Primary" className="site-navigation">
-      <div className="nav-groups">
-        {renderGroups(PRIMARY_GROUPS)}
-        <details className="nav-more">
-          <summary className={`nav-more-trigger ${moreActive ? "nav-link-active" : ""}`}>
-            More <span aria-hidden="true">⌄</span>
-          </summary>
-          <div className="nav-more-menu">
-            {renderGroups(MORE_GROUPS)}
+    <div ref={moreRoot} className="site-navigation-shell">
+      <nav aria-label="Primary" className="site-navigation">
+        <div className="nav-groups">
+          {renderGroups(PRIMARY_GROUPS)}
+          <div className="nav-more">
+            <button type="button" className={`nav-more-trigger ${moreActive || moreOpen ? "nav-link-active" : ""}`} aria-expanded={moreOpen} aria-controls="nav-more-menu" onClick={() => setMoreOpen((open) => !open)}>
+              More <span aria-hidden="true">⌄</span>
+            </button>
           </div>
-        </details>
-      </div>
-    </nav>
+        </div>
+      </nav>
+      {moreOpen ? <div id="nav-more-menu" className="nav-more-menu">{renderGroups(MORE_GROUPS)}</div> : null}
+    </div>
   );
 }
