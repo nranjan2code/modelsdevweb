@@ -71,9 +71,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           Skip to content
         </a>
         <header className="site-header">
-          <div className="mx-auto flex max-w-[90rem] items-center gap-3 px-4 py-3 sm:px-6">
+          <div className="mx-auto flex max-w-[90rem] items-center gap-3 px-4 py-2.5 sm:px-6">
             <Link href="/" className="group flex shrink-0 items-center gap-2.5">
-              <BrandMark boxClassName="h-9 w-9 transition-transform group-hover:scale-105" />
+              <BrandMark boxClassName="h-8 w-8 transition-transform group-hover:scale-105" />
               <span className="block">
                 <span className="block text-base font-bold leading-none text-black">{SITE_NAME}</span>
                 <span className="micro-label mt-1 hidden sm:block">AI model market</span>
