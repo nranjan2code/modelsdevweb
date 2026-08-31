@@ -246,9 +246,9 @@ const money = (v: number) =>
   v === 0 ? "$0" : v < 1 ? `$${Number(v.toFixed(3))}` : `$${Number(v.toFixed(2))}`;
 
 /**
- * Pick the day's lead story. Rules are tried in order and the first that
- * qualifies wins, so the selection is reproducible and explainable — every Lede
- * carries the name of the rule that chose it.
+ * Pick the day's lead story. The newest qualifying story wins; the explicit
+ * priority is only a tie-breaker, so an older dramatic move cannot mask newer
+ * news. Every Lede carries the name of the rule that chose it.
  */
 export function lede(
   moves: { firstParty: Move[]; street: Move[] },
@@ -256,20 +256,35 @@ export function lede(
   events: Event[],
   now: number = Date.now(),
 ): Lede {
-  const cut = moves.firstParty.find((m) => m.pct <= -MATERIAL_MOVE);
-  if (cut) {
+  const cut = newestMove(moves.firstParty, (m) => m.pct <= -MATERIAL_MOVE);
+  const launch = freshLaunch(catalog, now);
+  const hike = newestMove(moves.firstParty, (m) => m.pct >= MATERIAL_MOVE);
+  const sunsets = recentEvents(events, "deprecated", 7, now);
+  const street = newestMove(moves.street, (m) => Math.abs(m.pct) >= STREET_MOVE);
+
+  const candidates: Array<{ kind: LedeKind; date: string; priority: number }> = [];
+  if (cut) candidates.push({ kind: "cut", date: cut.date, priority: 0 });
+  if (launch) candidates.push({ kind: "launch", date: groupReleaseDate(launch)!, priority: 1 });
+  if (hike) candidates.push({ kind: "hike", date: hike.date, priority: 2 });
+  if (sunsets.length >= SUNSET_WAVE) candidates.push({ kind: "sunset", date: sunsets[0].date, priority: 3 });
+  if (street) candidates.push({ kind: "street", date: street.date, priority: 4 });
+
+  const selected = candidates.sort((a, b) =>
+    b.date.localeCompare(a.date) || a.priority - b.priority,
+  )[0]?.kind;
+
+  if (selected === "cut" && cut) {
     return {
       kind: "cut",
       headline: `${cut.name} is ${pct(cut.pct)} cheaper`,
       body: `${labelOf(cut)} cut input pricing from ${money(cut.from)} to ${money(cut.to)} per million tokens. Every provider reselling it now prices against a lower floor.`,
       href: cut.id ? `/m/${cut.id}` : "/changelog",
       cta: "See the listings",
-      rule: "largest first-party price cut, last 7 days",
+      rule: "newest qualifying first-party price cut, last 7 days",
     };
   }
 
-  const launch = freshLaunch(catalog, now);
-  if (launch) {
+  if (selected === "launch" && launch) {
     const price = launch.best
       ? `${money(launch.best.input)}/${money(launch.best.output)} per million`
       : launch.free
@@ -286,20 +301,18 @@ export function lede(
     };
   }
 
-  const hike = moves.firstParty.find((m) => m.pct >= MATERIAL_MOVE);
-  if (hike) {
+  if (selected === "hike" && hike) {
     return {
       kind: "hike",
       headline: `${hike.name} costs ${pct(hike.pct)} more`,
       body: `${labelOf(hike)} raised input pricing from ${money(hike.from)} to ${money(hike.to)} per million tokens — a rare direction of travel in this market.`,
       href: hike.id ? `/m/${hike.id}` : "/changelog",
       cta: "See the listings",
-      rule: "largest first-party price rise, last 7 days",
+      rule: "newest qualifying first-party price rise, last 7 days",
     };
   }
 
-  const sunsets = recentEvents(events, "deprecated", 7, now);
-  if (sunsets.length >= SUNSET_WAVE) {
+  if (selected === "sunset") {
     return {
       kind: "sunset",
       headline: `${sunsets.length} models were retired this week`,
@@ -310,8 +323,7 @@ export function lede(
     };
   }
 
-  const street = moves.street.find((m) => Math.abs(m.pct) >= STREET_MOVE);
-  if (street) {
+  if (selected === "street" && street) {
     const dir = street.pct < 0 ? "cut" : "raised";
     return {
       kind: "street",
@@ -319,7 +331,7 @@ export function lede(
       body: `The lab has not moved — this is a reseller changing its margin, from ${money(street.from)} to ${money(street.to)} per million input tokens. Worth knowing if you buy through them.`,
       href: street.id ? `/m/${street.id}` : "/changelog",
       cta: "Compare every provider",
-      rule: `no first-party move; largest gateway move over ${Math.round(STREET_MOVE * 100)}%`,
+      rule: `newest qualifying gateway move over ${Math.round(STREET_MOVE * 100)}%`,
     };
   }
 
@@ -337,6 +349,12 @@ export function lede(
   };
 }
 
+function newestMove(moves: Move[], qualifies: (move: Move) => boolean): Move | undefined {
+  return moves
+    .filter(qualifies)
+    .sort((a, b) => b.date.localeCompare(a.date) || Math.abs(b.pct) - Math.abs(a.pct))[0];
+}
+
 function labelOf(m: Move): string {
   return m.labId ? labName(m.labId) : (m.providerName ?? "The provider");
 }
@@ -345,7 +363,7 @@ function recentEvents(events: Event[], type: Event["type"], days: number, now: n
   const cutoff = now - days * DAY;
   return events.filter(
     (e) => e.type === type && Date.parse(`${e.date}T00:00:00Z`) >= cutoff,
-  );
+  ).sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id));
 }
 
 function recentAll(events: Event[], days: number, now: number): Event[] {

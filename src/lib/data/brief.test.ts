@@ -94,6 +94,22 @@ describe("lede", () => {
     expect(l.body).toContain("The lab has not moved");
   });
 
+  it("prefers a newer qualifying move over an older, larger one", () => {
+    const l = lede(
+      {
+        firstParty: [
+          { id: "openai/old", name: "Older model", labId: "openai", providerId: "openai", providerName: "OpenAI", from: 10, to: 3, pct: -0.7, date: "2026-08-17", firstParty: true },
+          { id: "openai/new", name: "Newer model", labId: "openai", providerId: "openai", providerName: "OpenAI", from: 10, to: 8, pct: -0.2, date: "2026-08-21", firstParty: true },
+        ],
+        street: [],
+      },
+      emptyCatalog, [], NOW,
+    );
+    expect(l.kind).toBe("cut");
+    expect(l.headline).toContain("Newer model");
+    expect(l.rule).toContain("newest");
+  });
+
   it("says a quiet week is quiet instead of manufacturing a story", () => {
     const l = lede(noMoves, emptyCatalog, [], NOW);
     expect(l.kind).toBe("quiet");
