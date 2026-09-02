@@ -9,7 +9,7 @@ const PRIMARY_GROUPS = [
   { label: "Decide", items: [{ href: "/calculator", label: "Calculator" }] },
   { label: "Market", items: [{ href: "/exchange", label: "Exchange" }, { href: "/changelog", label: "Changes" }] },
   { label: "Evidence", items: [{ href: "/benchmarks", label: "Benchmarks" }, { href: "/providers", label: "Providers" }, { href: "/field-notes", label: "Field notes" }] },
-  { label: "Follow", items: [{ href: "/news", label: "News" }] },
+  { label: "Follow", items: [{ href: "/news", label: "News" }, { href: "/offers", label: "Free offers" }] },
 ] as const;
 
 const MORE_GROUPS = [
