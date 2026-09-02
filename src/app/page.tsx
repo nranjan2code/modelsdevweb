@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Subscribe } from "@/components/subscribe";
 import { Badge, DeltaChip, EmptyState, SectionHead } from "@/components/ui";
-import { getCatalog, getEvents, getNews, getSnapshotMeta, groupContext, groupReleaseDate } from "@/lib/data";
+import { getCatalog, getEvents, getNews, getSnapshotMeta, getVerifiedOffers, groupContext, groupReleaseDate } from "@/lib/data";
 import { widestMarkups } from "@/lib/economics/basis";
 import { onTopic, toStories } from "@/lib/data/stories";
 import { getPriceArchive } from "@/lib/data/archive";
@@ -26,6 +26,7 @@ import type { Event, NewsItem } from "@/lib/pipeline/types";
 const LEDE_TONE: Record<Lede["kind"], "pos" | "neg" | "accent" | "warn" | "special"> = {
   cut: "pos",
   launch: "pos",
+  offer: "pos",
   hike: "neg",
   sunset: "neg",
   street: "special",
@@ -35,6 +36,7 @@ const LEDE_TONE: Record<Lede["kind"], "pos" | "neg" | "accent" | "warn" | "speci
 const LEDE_EYEBROW: Record<Lede["kind"], string> = {
   cut: "Price cut",
   launch: "New release",
+  offer: "Free offer",
   hike: "Price rise",
   sunset: "Deprecations",
   street: "Reseller move",
@@ -583,15 +585,15 @@ function tapeCount(events: Event[], c: Coverage, nowMs: number): number {
 }
 
 export default async function HomePage() {
-  const [catalog, events, boards, weights, meta, archive, news, ecosystem] = await Promise.all([
+  const [catalog, events, boards, weights, meta, archive, news, ecosystem, offers] = await Promise.all([
     getCatalog(), getEvents(), getBenchmarkBoards(), getWeights(), getSnapshotMeta(), getPriceArchive(),
-    getNews(), getEcosystemSnapshot(),
+    getNews(), getEcosystemSnapshot(), getVerifiedOffers(),
   ]);
   // This is a static export: a relative label calculated with Date.now() would
   // be frozen at build time and incorrectly remain "just now" for visitors.
   const syncedAt = meta.fetchedAt ? fmtDate(meta.fetchedAt) : null;
   const moves = marketMoves(events, catalog, 7);
-  const story = lede(moves, catalog, events);
+  const story = lede(moves, catalog, events, undefined, offers);
   const labMoves = collapseByModel(moves.firstParty).slice(0, 5);
   const streetMoves = collapseByModel(moves.street).slice(0, 5);
   const spreads = widestSpreads(catalog.tracked, 6, 6);

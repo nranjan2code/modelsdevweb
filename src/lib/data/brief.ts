@@ -2,7 +2,7 @@ import { groupContext, groupReleaseDate, type Catalog, type ModelGroup } from ".
 import { DEFAULT_WORKLOAD, flatCost, ratePerMillion, type Workload } from "../economics/workload";
 import { isFirstParty } from "./market";
 import { archiveDepth, type PriceArchive } from "./archive";
-import type { Event } from "../pipeline/types";
+import type { Event, VerifiedOffer } from "../pipeline/types";
 
 /**
  * The editorial layer.
@@ -222,7 +222,7 @@ export function frontierIndex(
   };
 }
 
-export type LedeKind = "cut" | "launch" | "hike" | "sunset" | "street" | "quiet";
+export type LedeKind = "offer" | "cut" | "launch" | "hike" | "sunset" | "street" | "quiet";
 
 export interface Lede {
   kind: LedeKind;
@@ -240,6 +240,7 @@ const MATERIAL_MOVE = 0.15;
 const STREET_MOVE = 0.4;
 const LAUNCH_WINDOW_DAYS = 3;
 const SUNSET_WAVE = 3;
+const OFFER_WINDOW_DAYS = 3;
 
 const pct = (v: number) => `${Math.round(Math.abs(v) * 100)}%`;
 const money = (v: number) =>
@@ -255,7 +256,9 @@ export function lede(
   catalog: Catalog,
   events: Event[],
   now: number = Date.now(),
+  offers: VerifiedOffer[] = [],
 ): Lede {
+  const offer = freshOffer(offers, now);
   const cut = newestMove(moves.firstParty, (m) => m.pct <= -MATERIAL_MOVE);
   const launch = freshLaunch(catalog, now);
   const hike = newestMove(moves.firstParty, (m) => m.pct >= MATERIAL_MOVE);
@@ -263,6 +266,7 @@ export function lede(
   const street = newestMove(moves.street, (m) => Math.abs(m.pct) >= STREET_MOVE);
 
   const candidates: Array<{ kind: LedeKind; date: string; priority: number }> = [];
+  if (offer) candidates.push({ kind: "offer", date: offer.startsOn ?? offer.verifiedAt.slice(0, 10), priority: -1 });
   if (cut) candidates.push({ kind: "cut", date: cut.date, priority: 0 });
   if (launch) candidates.push({ kind: "launch", date: groupReleaseDate(launch)!, priority: 1 });
   if (hike) candidates.push({ kind: "hike", date: hike.date, priority: 2 });
@@ -272,6 +276,18 @@ export function lede(
   const selected = candidates.sort((a, b) =>
     b.date.localeCompare(a.date) || a.priority - b.priority,
   )[0]?.kind;
+
+  if (selected === "offer" && offer) {
+    const expiry = offer.expiresOn ? ` through ${offer.expiresOn}` : " for a limited time";
+    return {
+      kind: "offer",
+      headline: `${offer.modelName} is free at ${offer.providerName}`,
+      body: `${offer.offer}${expiry}. We verified the offer against ${offer.sourceHost}; check the provider terms before sending production traffic.`,
+      href: `/m/${offer.modelId}`,
+      cta: "Check the offer",
+      rule: `new verified first-party free offer within ${OFFER_WINDOW_DAYS} days`,
+    };
+  }
 
   if (selected === "cut" && cut) {
     return {
@@ -347,6 +363,18 @@ export function lede(
     cta: "Read the full tape",
     rule: "nothing met the thresholds above",
   };
+}
+
+/** Recent offers only; expired or stale verification must never lead the site. */
+export function freshOffer(offers: VerifiedOffer[], now: number = Date.now()): VerifiedOffer | null {
+  const cutoff = now - OFFER_WINDOW_DAYS * DAY;
+  return [...offers]
+    .filter((offer) => {
+      const verified = Date.parse(offer.verifiedAt);
+      const expires = offer.expiresOn ? Date.parse(`${offer.expiresOn}T23:59:59Z`) : Infinity;
+      return Number.isFinite(verified) && verified >= cutoff && expires >= now;
+    })
+    .sort((a, b) => (b.startsOn ?? b.verifiedAt).localeCompare(a.startsOn ?? a.verifiedAt))[0] ?? null;
 }
 
 function newestMove(moves: Move[], qualifies: (move: Move) => boolean): Move | undefined {

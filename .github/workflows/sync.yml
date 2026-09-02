@@ -52,6 +52,11 @@ jobs:
           TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
         run: pnpm news
 
+      - name: Discover and verify first-party free offers
+        env:
+          TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
+        run: pnpm offers
+
       - name: Sync open-weight licence facts (Hugging Face, daily)
         run: pnpm sync-weights
 
@@ -77,7 +82,7 @@ jobs:
         run: |
           git config user.name "model-pulse-bot"
           git config user.email "actions@users.noreply.github.com"
-          git add snapshots events news
+          git add snapshots events news offers
           if git diff --cached --quiet; then
             echo "No data changes detected"
           else

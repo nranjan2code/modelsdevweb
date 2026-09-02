@@ -148,3 +148,19 @@ export interface NewsItem {
   modelIds: string[];
   labIds: string[];
 }
+
+/** A first-party, currently verifiable free promotion. */
+export interface VerifiedOffer {
+  id: string;
+  modelId: string;
+  modelName: string;
+  providerId: string;
+  providerName: string;
+  offer: string;
+  startsOn: string | null;
+  expiresOn: string | null;
+  sourceUrl: string;
+  sourceHost: string;
+  verifiedAt: string;
+  evidence: string;
+}

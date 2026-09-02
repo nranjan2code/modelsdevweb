@@ -3,7 +3,7 @@ import path from "node:path";
 import { buildIdentityIndex, isGenericModelId } from "../pipeline/identity";
 import { normalizeApi, normalizeModels, unlistedPrice } from "../pipeline/normalize";
 import type { GroupFacts } from "../pipeline/quality";
-import type { CanonicalModel, Cost, Event, Listing, NewsItem, Provider } from "../pipeline/types";
+import type { CanonicalModel, Cost, Event, Listing, NewsItem, Provider, VerifiedOffer } from "../pipeline/types";
 import { DEFAULT_WORKLOAD, ratePerMillion, type Workload } from "../economics/workload";
 import { rawApi, rawModels } from "../pipeline/schema";
 
@@ -508,6 +508,19 @@ export async function getNews(): Promise<NewsItem[]> {
     newsCache = [];
   }
   return newsCache;
+}
+
+let offersCache: VerifiedOffer[] | null = null;
+
+export async function getVerifiedOffers(): Promise<VerifiedOffer[]> {
+  if (offersCache) return offersCache;
+  try {
+    const buf = await readFile(path.join(process.cwd(), "offers", "index.json"), "utf8");
+    offersCache = (JSON.parse(buf) as { offers?: VerifiedOffer[] }).offers ?? [];
+  } catch {
+    offersCache = [];
+  }
+  return offersCache;
 }
 
 export async function getModel(id: string): Promise<ModelGroup | null> {

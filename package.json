@@ -16,6 +16,7 @@
     "check:style": "tsx scripts/check-style.ts",
     "check:docs": "tsx scripts/check-docs.ts",
     "news": "tsx scripts/news.ts",
+    "offers": "tsx scripts/offers.ts",
     "og": "tsx scripts/og.tsx",
     "badges": "tsx scripts/badges.ts",
     "notify": "tsx scripts/notify.ts",

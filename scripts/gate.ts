@@ -5,6 +5,7 @@ import { getCatalog, groupToFacts } from "../src/lib/data";
 import { runQuality, type QualityInput, type QualityIssue } from "../src/lib/pipeline/quality";
 import type { Event } from "../src/lib/pipeline/types";
 import type { ExternalSignalsSnapshot } from "../src/lib/pipeline/external-types";
+import type { VerifiedOffer } from "../src/lib/pipeline/types";
 
 const ROOT = path.dirname(import.meta.dirname);
 const LATEST = path.join(ROOT, "snapshots", "latest");
@@ -37,6 +38,22 @@ function printIssues(label: string, issues: QualityIssue[]): void {
   }
 }
 
+function checkOffers(offers: VerifiedOffer[], catalog: Awaited<ReturnType<typeof getCatalog>>): QualityIssue[] {
+  const out: QualityIssue[] = [];
+  const ids = new Set(catalog.groups.map((g) => g.id));
+  const providers = new Set(catalog.providers.map((p) => p.id));
+  for (const offer of offers) {
+    if (!ids.has(offer.modelId)) out.push({ check: "offers-integrity", message: `${offer.id} references unknown model ${offer.modelId}` });
+    if (!providers.has(offer.providerId)) out.push({ check: "offers-integrity", message: `${offer.id} references unknown provider ${offer.providerId}` });
+    if (!offer.sourceUrl || !offer.sourceHost || !/^https:\/\//.test(offer.sourceUrl)) out.push({ check: "offers-integrity", message: `${offer.id} has no HTTPS first-party source` });
+    if (!offer.evidence || !/\bfree\b|no[- ]cost|free credits?/i.test(offer.evidence)) out.push({ check: "offers-integrity", message: `${offer.id} has no free-offer evidence` });
+    if (!offer.verifiedAt || !Number.isFinite(Date.parse(offer.verifiedAt))) out.push({ check: "offers-integrity", message: `${offer.id} has invalid verification time` });
+    if (offer.startsOn && !/^\d{4}-\d{2}-\d{2}$/.test(offer.startsOn)) out.push({ check: "offers-integrity", message: `${offer.id} has invalid start date` });
+    if (offer.expiresOn && !/^\d{4}-\d{2}-\d{2}$/.test(offer.expiresOn)) out.push({ check: "offers-integrity", message: `${offer.id} has invalid expiry date` });
+  }
+  return out;
+}
+
 async function main(): Promise<void> {
   const offline = process.argv.includes("--offline");
   console.log(`[gate] ${new Date().toISOString()} checking snapshots/latest${offline ? " (offline)" : ""}`);
@@ -46,6 +63,7 @@ async function main(): Promise<void> {
   const meta = await readJson<{ date?: string; fetchedAt?: string }>(path.join(LATEST, "meta.json"));
   const events = (await readJson<Event[]>(path.join(ROOT, "events", "index.json"))) ?? [];
   const newsJson = await readJson<{ items?: QualityInput["news"]; fetchedAt?: string }>(path.join(ROOT, "news", "index.json"));
+  const offersJson = await readJson<{ offers?: VerifiedOffer[] }>(path.join(ROOT, "offers", "index.json"));
 
   if (!apiRaw || !meta) {
     console.error("[gate] FAIL: snapshots/latest/api.json or meta.json unreadable");
@@ -100,6 +118,7 @@ async function main(): Promise<void> {
   };
 
   const result = runQuality(input);
+  result.errors.push(...checkOffers(offersJson?.offers ?? [], catalog));
   printIssues("FAIL", result.errors);
   printIssues("WARN", result.warnings);
 
