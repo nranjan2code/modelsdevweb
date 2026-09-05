@@ -8,6 +8,7 @@ const ROOT = path.dirname(import.meta.dirname);
 const FILE = path.join(ROOT, "offers", "index.json");
 const TAVILY_ENDPOINT = "https://api.tavily.com/search";
 const MAX_QUERIES = 12;
+const MIN_INTERVAL_HOURS = Number(process.env.OFFERS_MIN_INTERVAL_H ?? 48);
 const FREE_TERMS = /\bfree\b|no[- ]cost|complimentary|free credits?|free tier/i;
 const CAMPAIGN_TERMS = /limited[- ]time|ends? on|until|through|promo|promotion|campaign|introductory|while supplies last|for \d+ days?/i;
 
@@ -76,6 +77,14 @@ function dates(text: string): { startsOn: string | null; expiresOn: string | nul
 async function main(): Promise<void> {
   const key = process.env.TAVILY_API_KEY;
   if (!key) { console.warn("[offers] TAVILY_API_KEY not set — keeping last verified offers"); return; }
+  const stored = await readJson<Stored>(FILE);
+  if (stored?.fetchedAt) {
+    const ageH = (Date.now() - Date.parse(stored.fetchedAt)) / 3_600_000;
+    if (Number.isFinite(ageH) && ageH < MIN_INTERVAL_HOURS) {
+      console.log(`[offers] last fetch ${ageH.toFixed(1)}h ago (< ${MIN_INTERVAL_HOURS}h) — skipping fetch`);
+      return;
+    }
+  }
   const catalog = await getCatalog();
   const hosts = sourceHosts(catalog.providers);
   const recent = [...catalog.groups]
@@ -111,7 +120,7 @@ async function main(): Promise<void> {
       }
     } catch (err) { console.warn(`[offers] query failed: ${query}`, err instanceof Error ? err.message : err); }
   }
-  const previous = (await readJson<Stored>(FILE))?.offers ?? [];
+  const previous = stored?.offers ?? [];
   const byId = new Map(previous.map((o) => [o.id, o]));
   for (const offer of found) byId.set(offer.id, offer);
   // Keep expired offers as an audit trail. They disappear from the hero via

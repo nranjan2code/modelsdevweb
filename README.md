@@ -25,10 +25,11 @@ It answers four questions:
 ## How it works
 
 ```
-GitHub Actions (hourly cron)
+GitHub Actions (daily cron at 08:00 Asia/Kolkata)
   └─ fetch https://models.dev/{api,models}.json
   └─ validate + normalize + diff against previous snapshot; append permanent price archive
-  └─ fetch model news via Tavily (refreshes every 4 hours; keeps the last good result on failure)
+  └─ fetch model news via Tavily (refreshes every 24 hours; keeps the last good result on failure)
+  └─ check first-party free offers via Tavily (refreshes every 48 hours)
   └─ refresh HF licence/access/parameter facts (skips when less than 20h old)
   └─ refresh HF + GitHub signals and write a dated external-signal history snapshot
   └─ run quality gates over the complete candidate state; notify configured watchers
@@ -94,7 +95,7 @@ Local secrets live in `.env.local` (gitignored): `TAVILY_API_KEY` is read automa
 | `scripts/sync-weights.ts` | daily Hugging Face licence/gating/params refresh |
 | `scripts/sync-external.ts` | Hugging Face/GitHub signal refresh + dated history |
 | `scripts/notify.ts` | filtered watcher webhook delivery with retry state |
-| `scripts/sync.ts` | hourly sync job: fetch → gate → archive → diff → commit |
+| `scripts/sync.ts` | daily sync job: fetch → gate → archive → diff → commit |
 | `scripts/news.ts` | daily Tavily news job: top models → headlines → `news/index.json` |
 | `scripts/og.tsx` | OG social cards → `public/og/` (build-time, gitignored) |
 | `scripts/badges.ts` | SVG price badges → `public/badge/` (build-time, gitignored) |
@@ -209,8 +210,8 @@ gh run list --limit 3              # sync workflow health
 
 If a sync run fails, check `gh run view <id> --log-failed` and inspect `/status` after the next
 successful commit. Tavily failures keep the previous `news/index.json`, so stale-but-valid news is
-preferred over an empty section. News refreshes every four hours; licence facts refresh daily, while
-the model catalog runs hourly and external signals refresh every 6 hours.
+preferred over an empty section. News refreshes every 24 hours; licence facts refresh daily, while
+the model catalog runs daily and external signals refresh with the daily job.
 
 ## Data & pricing caveats
 

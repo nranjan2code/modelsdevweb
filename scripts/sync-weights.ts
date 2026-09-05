@@ -26,7 +26,7 @@ async function readExisting(): Promise<WeightsSnapshot> {
 
 /**
  * Licences change on the order of months, and a full pass is ~140 requests, so
- * this runs once a day even though the workflow fires hourly.
+ * this runs once a day alongside the scheduled workflow.
  */
 const REFRESH_INTERVAL_HOURS = 20;
 

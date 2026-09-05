@@ -11,7 +11,8 @@ on:
       - "scripts/**"
       - "src/**"
   schedule:
-    - cron: "17 * * * *"
+    # 08:00 Asia/Kolkata (02:30 UTC)
+    - cron: "30 2 * * *"
   workflow_dispatch:
 
 permissions:

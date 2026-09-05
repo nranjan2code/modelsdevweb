@@ -12,8 +12,8 @@ const EXTERNAL_FILE = path.join(ROOT, "snapshots", "latest", "external-signals.j
 const TAVILY_ENDPOINT = "https://api.tavily.com/search";
 const MAX_ITEMS = 24;
 const MAX_QUERIES = 12;
-/** Minimum hours between fetches; the hourly cron naturally yields ~6 runs/day. */
-const MIN_INTERVAL_HOURS = Number(process.env.NEWS_MIN_INTERVAL_H ?? 4);
+/** Minimum hours between fetches; keep news to at most one refresh per day. */
+const MIN_INTERVAL_HOURS = Number(process.env.NEWS_MIN_INTERVAL_H ?? 24);
 /** Items older than this drop out of the feed entirely. */
 const ITEM_MAX_AGE_DAYS = 7;
 /** Recency half-life used by the relevance score. */

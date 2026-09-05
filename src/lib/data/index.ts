@@ -388,7 +388,7 @@ export async function getPipelineStatus(): Promise<PipelineStatus> {
         id: "news",
         label: "Model news",
         description: "A curated daily brief, refreshed from the latest market coverage.",
-        cadence: "Every 4 hours",
+        cadence: "Every 24 hours",
         fetchedAt: newsRaw?.fetchedAt ?? null,
         state: newsRaw?.fetchedAt ? "current" : "unknown",
       },
