@@ -34,6 +34,18 @@ export const CONTEXT_REVIEWS: Readonly<Record<string, ContextReview>> = {
     sourceUrl: "https://console.pokee.ai/model",
     note: "Pokee's model page publishes and evaluates a 10 million token window.",
   },
+  "amazon-bedrock/us.meta.llama4-scout-17b-instruct-v1:0": {
+    claimedContext: 10_000_000,
+    decision: "verified",
+    sourceUrl: "https://models.dev/api.json",
+    note: "models.dev publishes this Amazon Bedrock route with a 10 million token context window.",
+  },
+  "amazon-bedrock/meta.llama4-scout-17b-instruct-v1:0": {
+    claimedContext: 10_000_000,
+    decision: "verified",
+    sourceUrl: "https://models.dev/api.json",
+    note: "models.dev publishes this Amazon Bedrock route with a 10 million token context window.",
+  },
   "qiniu-ai/kling-v2-6": {
     claimedContext: 99_999_999,
     decision: "reject",
